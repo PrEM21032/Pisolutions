@@ -108,6 +108,14 @@ try {
   assert.match(linear.answer, /At 300 customers: A = \$10,000; B = \$12,000; Channel A is cheaper/);
   assert.doesNotMatch(linear.answer, /167 customers[^\n.]{0,80}(?:equal|same)/i);
 
+  const cashFlowResponse = await ask('cash is 1.2m. expenses 250k every month. revenue starts 80k month one and climbs 20k every month. after 4 months what is left?');
+  const cashFlow = await cashFlowResponse.json();
+  assert.equal(cashFlowResponse.status, 200);
+  assert.equal(cashFlow.ok, true);
+  assert.equal(cashFlow.source, 'pi-deterministic-cash-flow');
+  assert.equal(cashFlow.truth, 'deterministic-verified');
+  assert.match(cashFlow.answer, /Cash remaining after month 4: \\$640,000/);
+
   const clockResponse = await ask('What is the current UTC date right now?');
   const clock = await clockResponse.json();
   assert.equal(clockResponse.status, 200);
