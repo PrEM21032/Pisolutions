@@ -532,7 +532,7 @@ function weatherLocationQuery(message=''){
   const prefix=value.match(/^\s*([A-Za-z][A-Za-z .,'-]{1,80}?)\s+(?:weather|forecast|temperature)\b/i);
   if(prefix?.[1]){
     const cleaned=prefix[1].trim();
-    const looksLikeQuestionLead=/^(?:what|whats|what's|how|tell|give|is|are|can|could|would)\b/i.test(cleaned);
+    const looksLikeQuestionLead=/^(?:what|whats|what's|how|tell|give|is|are|can|could|would|im|i'm|i am)\b/i.test(cleaned);
     if(cleaned&&!looksLikeQuestionLead)return cleaned.slice(0,120);
   }
   const coarse=value.match(/\b(?:in|around|near)\s+([^,?.!]{2,100})/i);
@@ -564,14 +564,16 @@ async function directWeatherAnswer(message='',history=[]){
   }
   try{
     let place=null;
-    for(const query of [...new Set([location,location.split(',')[0].trim()].filter(Boolean))]){
+    const requestedState=[...US_STATE_ABBREVIATIONS.values()].find(state=>location.toLowerCase().endsWith(' '+state.toLowerCase()));
+    const city=requestedState?location.slice(0,-requestedState.length).replace(/,\s*$/,'').trim():location.split(',')[0].trim();
+    for(const query of [...new Set([location,city].filter(Boolean))]){
       try{
         const geocodeUrl='https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(query)+'&count=3&language=en&format=json';
         const geocodeResponse=await fetch(geocodeUrl,{headers:{accept:'application/json'}});
         if(geocodeResponse.ok){
           const geocode=await geocodeResponse.json();
           const candidates=Array.isArray(geocode?.results)?geocode.results:[];
-          const candidate=candidates.find(item=>item&&Number.isFinite(item.latitude)&&Number.isFinite(item.longitude));
+          const candidate=candidates.find(item=>item&&Number.isFinite(item.latitude)&&Number.isFinite(item.longitude)&&(!requestedState||String(item.admin1||'').toLowerCase()===requestedState.toLowerCase()));
           if(candidate){place=candidate;break;}
         }
       }catch{}
