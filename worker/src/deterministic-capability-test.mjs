@@ -221,6 +221,33 @@ try {
 
   globalThis.fetch = async (url) => {
     const value=String(url);
+    if(value.startsWith('https://geocoding-api.open-meteo.com/v1/search')){
+      const query=new URL(value).searchParams.get('name');
+      if(query==='Pensacola Florida')return new Response(JSON.stringify({results:[]}),{status:200});
+      assert.equal(query,'Pensacola');
+      return new Response(JSON.stringify({results:[
+        {name:'Pensacola',admin1:'Oklahoma',country:'United States',latitude:36.45509,longitude:-95.13052},
+        {name:'Pensacola',admin1:'Florida',country:'United States',latitude:30.42131,longitude:-87.21691}
+      ]}),{status:200});
+    }
+    if(value.startsWith('https://api.open-meteo.com/v1/forecast')){
+      const params=new URL(value).searchParams;
+      assert.equal(params.get('latitude'),'30.42131');
+      assert.equal(params.get('longitude'),'-87.21691');
+      return new Response(JSON.stringify({timezone:'America/Chicago',current:{time:'2026-10-13T05:00',temperature_2m:76,weather_code:2},hourly:{time:['2026-10-13T06:00'],precipitation_probability:[40],precipitation:[0.02]}}),{status:200});
+    }
+    throw new Error('unexpected Pensacola weather URL: '+url);
+  };
+  const pensacolaResponse=await ask('im near Pensacola Florida, heading out later. weather now and highest rain chance next 6 hours? live source please.');
+  const pensacola=await pensacolaResponse.json();
+  assert.equal(pensacolaResponse.status,200);
+  assert.equal(pensacola.source,'pi-weather-open-meteo');
+  assert.equal(pensacola.truth,'live-data-response');
+  assert.match(pensacola.answer,/Pensacola, Florida, United States/);
+  assert.match(pensacola.answer,/highest precipitation probability 40%/);
+
+  globalThis.fetch = async (url) => {
+    const value=String(url);
     if(value.startsWith('https://serpapi.com/search.json?')){
       const parsed=new URL(value);
       assert.equal(parsed.searchParams.get('engine'),'google');
