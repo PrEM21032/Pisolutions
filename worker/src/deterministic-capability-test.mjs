@@ -114,7 +114,7 @@ try {
   assert.equal(cashFlow.ok, true);
   assert.equal(cashFlow.source, 'pi-deterministic-cash-flow');
   assert.equal(cashFlow.truth, 'deterministic-verified');
-  assert.match(cashFlow.answer, /Cash remaining after month 4: \\$640,000/);
+  assert.match(cashFlow.answer, /Cash remaining after month 4: \$640,000/);
 
   const clockResponse = await ask('What is the current UTC date right now?');
   const clock = await clockResponse.json();
