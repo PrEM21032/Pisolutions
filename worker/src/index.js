@@ -858,7 +858,8 @@ function shoppingRetailerDomain(message=''){
 
 function compactShoppingQuery(message=''){
   return String(message)
-    .replace(/\b(find|search|shop|shopping|buy|purchase|order|available|availability|in stock|give me|show me|the|a|an|product|item|link|listing|currently|online)\b/gi,' ')
+    .replace(/\b(find|search|shop|shopping|buy|purchase|order|available|availability|in stock|give me|show me|the|a|an|product|item|link|listing|currently|online|me|on|at|from|and|for|amazon|walmart|ebay|best buy|bestbuy|target)\b/gi,' ')
+    .replace(/^[\s.,;:!?-]+|[\s.,;:!?-]+$/g,' ')
     .replace(/\s+/g,' ')
     .trim()
     .slice(0,220);
