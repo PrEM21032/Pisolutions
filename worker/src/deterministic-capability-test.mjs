@@ -245,6 +245,13 @@ try {
   assert.equal(shopping.sources?.[0]?.title,'Laptop A - $649');
 
   globalThis.fetch = async () => { throw new Error('network must not be used by deterministic capabilities'); };
+  const searchResponse = await ask('Find me a stainless steel water bottle currently available on Amazon and give me the product link.');
+  const search = await searchResponse.json();
+  assert.equal(searchResponse.status,200);
+  assert.equal(search.source,'pi-shopping-search-link');
+  assert.equal(search.truth,'retailer-search-link');
+  assert.equal(search.sources?.[0]?.url,'https://www.amazon.com/s?k=stainless%20steel%20water%20bottle');
+  assert.match(search.answer,/availability and price are not independently verified/i);
 
   console.log('PI provider-independent deterministic capability tests passed');
 } finally {
