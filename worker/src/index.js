@@ -252,7 +252,7 @@ function cashFlowSequenceAnswer(message='',history=[]){
   const isFollowup=Boolean(priorUser)&&/\b(now|same|change|recalculate|recalc|starting in month|from month|drop to|increase to|decrease to|cut to|expenses?|spending|revenue|cash)\b/i.test(current);
   if(priorUser&&!isFollowup)return null;
   const baseText=priorUser?String(priorUser):current;
-  const initialMatch=baseText.match(/(?:starts? with|initial cash(?: is|:)?|cash(?: on hand)?(?: is|:)?)[^$0-9]{0,20}(\$?[0-9]+(?:\.[0-9]+)?\s*(?:million|m|thousand|k)?)/i);
+  const initialMatch=baseText.match(/(?:starts? with|initial cash(?: is|:)?|cash(?: on hand)?(?: is|:)?)[^$0-9]{0,20}(\$?[0-9][0-9,]*(?:\.[0-9]+)?\s*(?:million|m|thousand|k)?)/i);
   const expenseMatch=baseText.match(/(?:operating expenses?|spending|monthly spending|expenses?)(?: are| is|:)?\s*(\$?[0-9][0-9,]*(?:\.[0-9]+)?\s*(?:million|m|thousand|k)?)(?:\s+(?:a|per|every)\s+month)?/i);
   const revenueMatch=baseText.match(/revenue(?:\s+(?:is|starts?|begins?))?\s*(\$?[0-9][0-9,]*(?:\.[0-9]+)?\s*(?:million|m|thousand|k)?)\s+(?:in\s+)?month\s*(?:1|one)/i);
   const growthMatch=baseText.match(/(?:grows? by|goes? up|increases? by|climbs?(?: by)?|rises?(?: by)?)\s*(\$?[0-9][0-9,]*(?:\.[0-9]+)?\s*(?:million|m|thousand|k)?)\s*(?:each|every|per)\s+month/i);

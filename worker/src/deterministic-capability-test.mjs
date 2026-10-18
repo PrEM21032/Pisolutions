@@ -116,6 +116,13 @@ try {
   assert.equal(cashFlow.truth, 'deterministic-verified');
   assert.match(cashFlow.answer, /Cash remaining after month 4: \$640,000/);
 
+  const commaCashFlowResponse = await ask('A company starts with $1,000,000 cash. Operating expenses are $200,000 per month. Revenue is $100,000 in month 1 and grows by $20,000 each month. How much cash remains after 6 months?');
+  const commaCashFlow = await commaCashFlowResponse.json();
+  assert.equal(commaCashFlowResponse.status, 200);
+  assert.equal(commaCashFlow.source, 'pi-deterministic-cash-flow');
+  assert.equal(commaCashFlow.truth, 'deterministic-verified');
+  assert.match(commaCashFlow.answer, /Cash remaining after month 6: \$700,000/);
+
   const clockResponse = await ask('What is the current UTC date right now?');
   const clock = await clockResponse.json();
   assert.equal(clockResponse.status, 200);
