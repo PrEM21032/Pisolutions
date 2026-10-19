@@ -45,10 +45,26 @@ function hasLink(entry) {
     || typeof entry.ref === 'string' && entry.ref.trim().length > 0;
 }
 
-function ageHours(observedAt, now) {
+// A timestamp later than the generation time cannot be an observation; allow only small clock skew.
+export const MAX_CLOCK_SKEW_MINUTES = 5;
+
+// Returns 'fresh' | 'stale' | 'future' | 'undated'.
+export function freshness(observedAt, now, maxAgeHours) {
   const t = Date.parse(observedAt);
-  if (Number.isNaN(t)) return Infinity;
-  return (now - t) / 3_600_000;
+  if (!observedAt || Number.isNaN(t)) return 'undated';
+  if (t - now > MAX_CLOCK_SKEW_MINUTES * 60_000) return 'future';
+  return (now - t) / 3_600_000 <= maxAgeHours ? 'fresh' : 'stale';
+}
+
+// A ci_run proves CI only when the supplied record says it completed successfully, ran at least
+// one job, and names the exact commit it ran on. Returns the missing/failed requirements.
+export function ciRunProblems(ev) {
+  const problems = [];
+  if (ev.status !== 'completed') problems.push(`status:${ev.status ?? 'missing'}`);
+  if (ev.conclusion !== 'success') problems.push(`conclusion:${ev.conclusion ?? 'missing'}`);
+  if (!Number.isInteger(ev.jobs) || ev.jobs < 1) problems.push(`jobs:${ev.jobs ?? 'missing'}`);
+  if (!FULL_SHA.test(ev.head_sha || '')) problems.push('head_sha:not_full_sha');
+  return problems;
 }
 
 // Optional offline integrity check: a probe may point at a saved response file inside the
@@ -93,7 +109,7 @@ function classifyAttestOnly(item, evidence, { now, maxAgeHours, readArtifact }) 
   for (const ev of probes) {
     const missing = PROBE_PROVENANCE_FIELDS.filter((f) => f === 'url' ? !hasLink(ev) : !ev[f]);
     if (missing.length) continue;
-    if (ageHours(ev.observed_at, now) > maxAgeHours) continue;
+    if (freshness(ev.observed_at, now, maxAgeHours) !== 'fresh') continue;
     const artifact = checkArtifact(ev, readArtifact);
     if (artifact !== 'no_artifact' && artifact !== 'artifact_sha256_matches') continue;
     return {
@@ -105,7 +121,8 @@ function classifyAttestOnly(item, evidence, { now, maxAgeHours, readArtifact }) 
   const ev = probes[0];
   const missing = PROBE_PROVENANCE_FIELDS.filter((f) => f === 'url' ? !hasLink(ev) : !ev[f]);
   const why = missing.length ? `probe_missing_provenance(${missing.join(',')})`
-    : ageHours(ev.observed_at, now) > maxAgeHours ? `stale_probe(>${maxAgeHours}h)`
+    : freshness(ev.observed_at, now, maxAgeHours) === 'future' ? 'future_observed_at'
+    : freshness(ev.observed_at, now, maxAgeHours) !== 'fresh' ? `stale_probe(>${maxAgeHours}h)`
     : checkArtifact(ev, readArtifact);
   return { bucket: 'unproven', attested: false, reasons: [base, why] };
 }
@@ -131,8 +148,14 @@ export function classifyItem(item, { now, maxAgeHours = DEFAULT_MAX_AGE_HOURS, r
     const offered = [...new Set(evidence.map((ev) => ev.kind))].join(',') || 'none';
     return { bucket: 'unproven', reasons: [`no_linked_${item.scope}_proof(offered:${offered})`] };
   }
-  const fresh = proofs.filter((ev) => ev.observed_at && ageHours(ev.observed_at, now) <= maxAgeHours);
-  if (!fresh.length) return { bucket: 'unproven', reasons: [`stale_or_undated_proof(>${maxAgeHours}h)`] };
+  const fresh = proofs.filter((ev) => freshness(ev.observed_at, now, maxAgeHours) === 'fresh');
+  if (!fresh.length) {
+    const future = proofs.some((ev) => freshness(ev.observed_at, now, maxAgeHours) === 'future');
+    return { bucket: 'unproven', reasons: [future ? 'future_observed_at' : `stale_or_undated_proof(>${maxAgeHours}h)`] };
+  }
+  if (item.scope === 'ci' && !fresh.some((ev) => ciRunProblems(ev).length === 0)) {
+    return { bucket: 'unproven', reasons: [`ci_run_not_completed_success(${ciRunProblems(fresh[0]).join(',')})`] };
+  }
   if (item.scope === 'test' && !fresh.some((ev) => ev.exit_code === 0)) {
     return { bucket: 'unproven', reasons: ['test_run_without_exit_code_0'] };
   }
@@ -183,7 +206,8 @@ export function buildPrompt(doc, { now = Date.now(), maxAgeHours = DEFAULT_MAX_A
     '',
     '## Trust limits (read before relying on any bucket)',
     '- This generator ran offline and observed nothing itself. Every entry below is supplied evidence; the supplier is shown next to each link.',
-    '- VERIFIED DONE means only: the supplied evidence is of the right kind for the claim, linked (full commit sha or https URL), and fresh. It does not authenticate the evidence.',
+    '- VERIFIED DONE means only: the supplied evidence is of the right kind for the claim, linked (full commit sha or https URL), and fresh (not older than the window, not later than generation time). It does not authenticate the evidence.',
+    '- A CI claim needs a supplied ci_run record saying status completed, conclusion success, at least one job, and the full head sha it ran on. The generator did not fetch that run; re-read it before relying on it.',
     '- Live deployment and running-session claims are never VERIFIED DONE here. A supplied probe with full provenance is shown as ATTESTED, NOT VERIFIED under UNPROVEN / BLOCKED; re-probe before relying on it.',
     '- An artifact sha256 match proves only that a saved file is unchanged since it was recorded, not that it came from the live system.',
     '',

@@ -58,6 +58,7 @@ const probePrompt = buildPrompt(probeDoc, { now });
 const verifiedSection = probePrompt.split('## VERIFIED DONE')[1].split('## IN PROGRESS')[0];
 expect(!verifiedSection.includes('live-claim') && !verifiedSection.includes('session-claim'), 'live_or_session_rendered_as_verified');
 expect(probePrompt.includes('ATTESTED, NOT VERIFIED') && probePrompt.includes('## Trust limits') && probePrompt.includes('observed nothing itself'), 'trust_limits_not_visible');
+expect(probePrompt.includes('status completed, conclusion success, at least one job') && probePrompt.includes('not later than generation time'), 'ci_or_time_trust_limit_hidden');
 expect(probePrompt.includes('(supplied by operator)'), 'supplier_not_visible');
 
 // Verified requires a source link, fresh observation and (for tests) exit code 0.
@@ -71,6 +72,46 @@ for (const ref of ['abc123', 'whatever', 'main', SHA.slice(0, 7)]) {
 }
 expect(bucket({ id: 'a', claim: 'c', status: 'verified', scope: 'source', evidence: [{ kind: 'pr', ref: '#999', observed_at: fresh }] }) === 'unproven', 'pr_ref_without_url_accepted');
 expect(bucket({ id: 'c', claim: 'c', status: 'verified', scope: 'ci', evidence: [{ kind: 'ci_run', ref: 'green', observed_at: fresh }] }) === 'unproven', 'ci_ref_without_url_accepted');
+
+// Regression (found by Codex on 7663b38): any fresh linked ci_run was VERIFIED, even action_required with no jobs.
+const ciRun = { kind: 'ci_run', url: 'https://github.com/x/y/actions/runs/1', observed_at: fresh, status: 'completed', conclusion: 'success', jobs: 3, head_sha: SHA };
+const ciBucket = (ev) => classifyItem({ id: 'ci', claim: 'CI green', status: 'verified', scope: 'ci', evidence: [ev] }, { now });
+expect(ciBucket(ciRun).bucket === 'verified', 'completed_success_ci_rejected');
+for (const [name, ev] of [
+  ['action_required_no_jobs', { ...ciRun, conclusion: 'action_required', jobs: 0 }],
+  ['no_status_or_conclusion', { kind: 'ci_run', url: ciRun.url, observed_at: fresh }],
+  ['in_progress', { ...ciRun, status: 'in_progress', conclusion: null }],
+  ['failure', { ...ciRun, conclusion: 'failure' }],
+  ['skipped', { ...ciRun, conclusion: 'skipped' }],
+  ['neutral', { ...ciRun, conclusion: 'neutral' }],
+  ['zero_jobs', { ...ciRun, jobs: 0 }],
+  ['jobs_missing', { ...ciRun, jobs: undefined }],
+  ['jobs_string', { ...ciRun, jobs: '3' }],
+  ['short_head_sha', { ...ciRun, head_sha: SHA.slice(0, 7) }],
+  ['head_sha_missing', { ...ciRun, head_sha: undefined }]
+]) {
+  const r = ciBucket(ev);
+  expect(r.bucket === 'unproven' && r.reasons.some((x) => x.startsWith('ci_run_not_completed_success(')), `ci_${name}_verified`);
+}
+expect(ciBucket({ ...ciRun, conclusion: 'action_required', jobs: 0 }).reasons[0].includes('conclusion:action_required') && ciBucket({ ...ciRun, conclusion: 'action_required', jobs: 0 }).reasons[0].includes('jobs:0'), 'ci_failure_reason_hidden');
+expect(classifyItem({ id: 'ci', claim: 'c', status: 'verified', scope: 'ci', evidence: [{ ...ciRun, conclusion: 'action_required', jobs: 0 }, ciRun] }, { now }).bucket === 'verified', 'one_success_run_among_several_rejected');
+
+// Regression (found by Codex on 7663b38): observed_at in the future was accepted as fresh.
+const future = '2026-10-19T12:30:00Z';
+const skew = '2026-10-19T12:04:00Z';
+const futureCases = [
+  { id: 'f1', claim: 'c', status: 'verified', scope: 'source', evidence: [{ kind: 'commit', ref: SHA, observed_at: future }] },
+  { id: 'f2', claim: 'c', status: 'verified', scope: 'test', evidence: [{ kind: 'test_run', ref: 'node x', observed_at: future, exit_code: 0 }] },
+  { id: 'f3', claim: 'c', status: 'verified', scope: 'ci', evidence: [{ ...ciRun, observed_at: future }] },
+  { id: 'f4', claim: 'c', status: 'verified', scope: 'source', evidence: [{ kind: 'commit', ref: SHA, observed_at: '2027-01-01T00:00:00Z' }] }
+];
+for (const item of futureCases) {
+  const r = classifyItem(item, { now });
+  expect(r.bucket === 'unproven' && r.reasons.includes('future_observed_at'), `${item.id}_future_observed_at_accepted`);
+}
+const futureProbe = classifyItem({ id: 'fp', claim: 'c', status: 'verified', scope: 'live_deployment', evidence: [{ kind: 'live_probe', url: 'https://example.invalid/health', observed_at: future, observed_by: 'operator', method: 'curl', result: 'HTTP 200' }] }, { now });
+expect(!futureProbe.attested && futureProbe.reasons.includes('future_observed_at'), 'future_probe_attested');
+expect(bucket({ id: 'sk', claim: 'c', status: 'verified', scope: 'source', evidence: [{ kind: 'commit', ref: SHA, observed_at: skew }] }) === 'verified', 'small_clock_skew_rejected');
 expect(bucket({ id: 't', claim: 'c', status: 'verified', scope: 'test', evidence: [{ kind: 'test_run', ref: 'node x', observed_at: fresh, exit_code: 1 }] }) === 'unproven', 'failing_test_accepted');
 expect(bucket({ id: 't', claim: 'c', status: 'verified', scope: 'test', evidence: [{ kind: 'test_run', ref: 'node x', observed_at: fresh, exit_code: 0 }] }) === 'verified', 'passing_test_rejected');
 expect(bucket({ id: 'c', claim: 'c', status: 'verified', scope: 'ci', evidence: [{ kind: 'test_run', ref: 'local', observed_at: fresh, exit_code: 0 }] }) === 'unproven', 'local_test_counted_as_ci');
@@ -110,4 +151,4 @@ for (const banned of ['fetch(', "'node:http", "'node:https", "'node:net", 'child
   expect(!src.includes(banned), `provider_free_violation_${banned}`);
 }
 
-console.log(JSON.stringify({ ok: true, liveNeverVerified: true, sessionNeverVerified: true, probesAttestedOnly: true, artifactIntegrityChecked: true, fullShaRequired: true, linksRequired: true, freshnessEnforced: true, committedPromptCurrent: true, providerFree: true }));
+console.log(JSON.stringify({ ok: true, liveNeverVerified: true, sessionNeverVerified: true, probesAttestedOnly: true, artifactIntegrityChecked: true, fullShaRequired: true, ciNeedsCompletedSuccess: true, futureTimestampsRejected: true, linksRequired: true, freshnessEnforced: true, committedPromptCurrent: true, providerFree: true }));

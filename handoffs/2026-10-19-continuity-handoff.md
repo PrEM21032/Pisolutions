@@ -61,3 +61,30 @@ instrumentation (#214/#215) untouched.
 - Still offline shape checks. A hand-written source/test/ci entry with correct shape is
   accepted; the prompt says the generator observed nothing and names the supplier.
 - Commit sha format is checked, not existence.
+
+---
+
+# Cycle 3 — 2026-10-19 — CI-completion and future-timestamp fix
+
+Scope: `pi/continuity-handoff.mjs`, its test, its doc and these handoff files. This is a fast-forward commit on
+`claude/practical-johnson-hy0vob`, on top of `7663b38` (the #218 head at 14:40:11Z); the draft history is kept.
+
+## Reproduced on 7663b38 (reported by Codex; its comment could not be read here, API 403)
+- A `ci_run` with `conclusion: "action_required", jobs: 0` was classified VERIFIED.
+- A `ci_run` with no status or conclusion was also VERIFIED.
+- `observed_at: 2027-01-01` on a commit was classified fresh, so the item was VERIFIED.
+- The new regression cases fail on 7663b38's module: `ci_action_required_no_jobs_verified`,
+  `f1_future_observed_at_accepted`, `ci_or_time_trust_limit_hidden`.
+
+## Fix
+- A `ci_run` proves CI only with `status: completed`, `conclusion: success`, integer `jobs >= 1` and a
+  full `head_sha`. Otherwise the reason lists what failed, e.g. `ci_run_not_completed_success(conclusion:action_required,jobs:0)`.
+- A shared `freshness()` check rejects `observed_at` later than `--now` + 5 min skew (`future_observed_at`)
+  for every proof kind and for probes.
+- The Trust limits section states both rules and that the generator did not fetch any CI run.
+
+## Local tests vs CI
+- All tests below ran locally only. No CI observed for this commit in this session.
+
+## Limitations
+- CI fields are taken as supplied. A hand-copied record with the right fields still counts; the prompt says so.

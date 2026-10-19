@@ -39,11 +39,12 @@ least one evidence entry that:
    |---|---|
    | source | commit, pr, doc |
    | test | test_run with `exit_code: 0` |
-   | ci | ci_run |
+   | ci | ci_run with `status: "completed"`, `conclusion: "success"`, integer `jobs >= 1` and a full 40-hex `head_sha` |
 2. carries a source link of the right shape: `commit` needs a full 40-hex sha in `ref`;
    `pr`, `issue`, `doc`, `ci_run` and probes need an `https://` `url` (a free-text `ref` is not
    enough); other kinds accept either, and
-3. has `observed_at` within the freshness window.
+3. has `observed_at` within the freshness window and not later than the generation time
+   (`--now`) plus 5 minutes of clock skew. Future timestamps are rejected as `future_observed_at`.
 
 Otherwise it is demoted to UNPROVEN with the reason printed.
 
@@ -59,6 +60,10 @@ its `sha256`; the generator checks the hash locally and drops the attestation on
 A match proves only that the saved file is unchanged since recording, not that it came from
 the live system. No offline parser can authenticate a probe; re-probe before relying on one.
 
+(Found by Codex on `7663b38`: a fresh linked `ci_run` was VERIFIED with no completion check, so an
+`action_required` run with zero jobs passed; and future `observed_at` values counted as fresh.
+Both are covered by regression tests.)
+
 (Found on `6d8ee2f`: a hand-written probe with only `ref: "trust me"`, or a free-text commit
 ref, was classified VERIFIED. Regression tests in `pi/continuity-handoff-test.mjs` cover it.)
 `in_progress` needs a pr/branch/commit/issue link or it is demoted too. `blocked` and
@@ -70,6 +75,8 @@ ref, was classified VERIFIED. Regression tests in `pi/continuity-handoff-test.mj
   with the right shape is still accepted as VERIFIED DONE (the prompt says so in its Trust
   limits section and names the supplier). Gather evidence with real commands.
 - A full commit sha is checked for format only, not that the commit exists.
+- CI fields (`status`, `conclusion`, `jobs`, `head_sha`) are taken as supplied. The generator does not fetch
+  the run, so it cannot tell whether the record was copied from GitHub correctly.
 - It does not fetch GitHub state itself (by design, so it stays provider-free and offline).
 - Freshness is relative to `--now`; the committed prompt is a snapshot, not current state.
 
