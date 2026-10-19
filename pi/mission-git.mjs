@@ -5,7 +5,7 @@
 //   Mission-Task: <task id>
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { realpathSync } from 'node:fs';
+import { realpathSync, writeFileSync } from 'node:fs';
 import { loadLedger, reconcile, selectNext, continuationPrompt } from './mission-ledger.mjs';
 
 const FULL_SHA = /^[0-9a-f]{40}$/;
@@ -68,21 +68,31 @@ export function gitFacts(repo, ledger) {
   return { commits, ancestor, branchHeads, taskCommits };
 }
 
-// CLI: node pi/mission-git.mjs <reconcile|next|prompt> --ledger <file> [--repo <dir>] [--executor <name>] [--now <ISO>]
+// CLI: node pi/mission-git.mjs <reconcile|next|prompt|check> --ledger <file> [--repo <dir>] [--executor <name>] [--now <ISO>] [--out <file>]
+// `check` exits 1 when any task has a contradiction, so a script can stop before acting on a bad ledger.
 async function main(argv) {
   const [cmd, ...rest] = argv;
   const args = Object.fromEntries(rest.reduce((acc, a, i) => (a.startsWith('--') ? [...acc, [a.slice(2), rest[i + 1]]] : acc), []));
-  if (!['reconcile', 'next', 'prompt'].includes(cmd) || !args.ledger) {
-    console.error('usage: node pi/mission-git.mjs <reconcile|next|prompt> --ledger <file> [--repo <dir>] [--executor <name>] [--now <ISO>]');
+  if (!['reconcile', 'next', 'prompt', 'check'].includes(cmd) || !args.ledger) {
+    console.error('usage: node pi/mission-git.mjs <reconcile|next|prompt|check> --ledger <file> [--repo <dir>] [--executor <name>] [--now <ISO>] [--out <file>]');
     process.exit(2);
   }
   const now = args.now ? Date.parse(args.now) : Date.now();
   const { ledger, leftovers } = loadLedger(args.ledger);
   const rec = reconcile(ledger, gitFacts(args.repo || '.', ledger), { now });
   const next = selectNext(ledger, rec, { executor: args.executor || 'claude', now });
-  if (cmd === 'reconcile') console.log(JSON.stringify({ seq: ledger.seq, leftovers, tasks: rec }, null, 2));
-  else if (cmd === 'next') console.log(JSON.stringify(next, null, 2));
-  else process.stdout.write(continuationPrompt(ledger, rec, next));
+  if (cmd === 'check') {
+    const bad = Object.entries(rec).filter(([, r]) => r.contradictions.length).map(([id, r]) => `${id}: ${r.contradictions.join('; ')}`);
+    if (leftovers.length) bad.push(`leftover partial checkpoints: ${leftovers.join(', ')}`);
+    if (bad.length) { console.error(bad.join('\n')); process.exit(1); }
+    console.log(`ledger ${ledger.mission_id} seq ${ledger.seq}: no contradictions`);
+    return;
+  }
+  const text = cmd === 'reconcile' ? JSON.stringify({ seq: ledger.seq, leftovers, tasks: rec }, null, 2) + '\n'
+    : cmd === 'next' ? JSON.stringify(next, null, 2) + '\n'
+    : continuationPrompt(ledger, rec, next);
+  if (args.out) writeFileSync(args.out, text);
+  else process.stdout.write(text);
 }
 
 function isEntryPoint(argvPath) {

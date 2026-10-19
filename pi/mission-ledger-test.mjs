@@ -160,8 +160,25 @@ console.log(JSON.stringify({ leftovers, recovered: rec.T1.unknowns, exit: run.st
   assert.equal(sel.task, null);
   assert.deepEqual(sel.skipped, [{ id: 'T5', reason: 'stale_intent:objective_changed' }]);
 
+  // CLI in a fresh process: `check` passes on a consistent ledger, fails on contradictions or leftovers; --out writes.
+  const cli = (...a) => spawnSync(process.execPath, [new URL('./mission-git.mjs', import.meta.url).pathname, ...a, '--ledger', ledgerPath, '--repo', repo, '--now', new Date(T0).toISOString()], { encoding: 'utf8' });
+  rmSync(`${ledgerPath}.tmp-99999`, { force: true });
+  assert.equal(cli('check').status, 0, cli('check').stderr);
+  const outFile = join(box, 'next-prompt.md');
+  assert.equal(cli('prompt', '--out', outFile).status, 0);
+  assert.match(readFileSync(outFile, 'utf8'), /- T2: implement/);
+  writeFileSync(`${ledgerPath}.tmp-1`, '{');
+  assert.equal(cli('check').status, 1, 'leftover partial checkpoint fails check');
+  rmSync(`${ledgerPath}.tmp-1`);
+  ({ l } = state());
+  saveLedger(ledgerPath, setStatus(l, 'T3', 'production_verified'), { expectSeq: l.seq });
+  const failing = cli('check');
+  assert.equal(failing.status, 1);
+  assert.match(failing.stderr, /T3: .*unverifiable_offline:production_verified/);
+  const diskAfter = readFileSync(ledgerPath, 'utf8');
+
   // 10. Corrupted checkpoint is detected instead of trusted.
-  writeFileSync(ledgerPath, disk.replace('"pending"', '"tested"'));
+  writeFileSync(ledgerPath, diskAfter.replace('"pending"', '"tested"'));
   assert.throws(() => loadLedger(ledgerPath), /ledger_corrupt/);
   writeFileSync(ledgerPath, '{"sha256":');
   assert.throws(() => loadLedger(ledgerPath), /ledger_corrupt/);
@@ -186,4 +203,4 @@ for (const banned of ["'fetch'", "'push'", "'pull'", "'clone'", "'ls-remote'", "
   assert.ok(!gitSrc.includes(banned), `mission-git.mjs must not use ${banned}`);
 }
 
-console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true }));
+console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true, cliCheckAndOut: true }));
