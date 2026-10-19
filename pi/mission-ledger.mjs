@@ -159,11 +159,16 @@ export function reconcile(ledger, facts, { now }) {
     if (rank(task.status) > rank(earned)) contradictions.push(`claimed_above_evidence:${task.status}>${earned}`);
     if (rank(earned) > rank(task.status)) unknowns.push(`evidence_ahead_of_ledger:${task.status}->${earned}`);
     const stale = (task.objective_rev ?? ledger.objective_rev) < ledger.objective_rev;
+    const doneNow = rank(earned) >= rank(task.target || 'tested');
+    // An executor that stopped mid-task leaves an expired lease; make that abandoned work visible.
+    if (task.lease && !leaseActive(task.lease, now) && !doneNow) {
+      unknowns.push(`lease_expired_unfinished:${task.lease.executor}@${task.lease.expires_at}`);
+    }
     out[task.id] = {
       claimed: task.status,
       earned,
       commit,
-      done: rank(earned) >= rank(task.target || 'tested'),
+      done: doneNow,
       stale_intent: stale,
       lease: task.lease ? { ...task.lease, active: leaseActive(task.lease, now) } : null,
       contradictions,

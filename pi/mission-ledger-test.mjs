@@ -127,6 +127,9 @@ console.log(JSON.stringify({ leftovers, recovered: rec.T1.unknowns, exit: run.st
   l = acquireLease(l, 'T2', 'claude', { now: T0, ttlMinutes: 30, baseSha: head() });
   l = saveLedger(ledgerPath, l, { expectSeq: l.seq });
   assert.throws(() => acquireLease(l, 'T2', 'codex-sim', { now: T0 + 10 * 60_000, baseSha: head() }), /lease_held:T2:claude/);
+  assert.ok(!reconcile(l, gitFacts(repo, l), { now: T0 + 10 * 60_000 }).T2.unknowns.some((u) => u.startsWith('lease_expired_unfinished')));
+  assert.ok(reconcile(l, gitFacts(repo, l), { now: T0 + 31 * 60_000 }).T2.unknowns.includes(`lease_expired_unfinished:claude@${new Date(T0 + 30 * 60_000).toISOString()}`), 'abandoned lease visible');
+  assert.ok(!reconcile(l, gitFacts(repo, l), { now: T0 + 31 * 60_000 }).T1.unknowns.some((u) => u.startsWith('lease_expired_unfinished')), 'finished tasks are not flagged');
   const takeover = acquireLease(l, 'T2', 'codex-sim', { now: T0 + 31 * 60_000, baseSha: head() });
   assert.equal(takeover.tasks.find((t) => t.id === 'T2').lease_history.at(-1).ended, 'expired_takeover');
 
@@ -228,4 +231,4 @@ for (const banned of ["'fetch'", "'push'", "'pull'", "'clone'", "'ls-remote'", "
   assert.ok(!gitSrc.includes(banned), `mission-git.mjs must not use ${banned}`);
 }
 
-console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true, cliCheckAndOut: true, fixupCommitsResolved: true, uncommittedWorkUnderLeaseReported: true }));
+console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true, cliCheckAndOut: true, fixupCommitsResolved: true, uncommittedWorkUnderLeaseReported: true, abandonedLeaseVisible: true }));
