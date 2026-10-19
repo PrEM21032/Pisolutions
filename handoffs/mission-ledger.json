@@ -1,5 +1,5 @@
 {
-  "sha256": "3fa5f63dda5565def00ce6768771adcaf53070bb537d43e4126eb55191864543",
+  "sha256": "34cf21b5af9703e65593d403daf05eb8bea48b14d6a50f0271a6fff2b969ab0c",
   "ledger": {
     "mission_id": "PI-CONTINUITY-2026-10",
     "objective": "Make PI engineering work interruption-tolerant: never lose verified mission state, never confuse claims with evidence, resume safely after interruption (owner directive V2, 2026-10-19).",
@@ -131,8 +131,27 @@
           "code",
           "local_test"
         ],
-        "status": "pending",
-        "objective_rev": 1
+        "status": "tested",
+        "objective_rev": 1,
+        "lease": {
+          "executor": "claude",
+          "base_sha": "fb0e1bbb633f6adfbb0463758f9acdd06599f5be",
+          "acquired_at": "2026-10-19T20:35:16.799Z",
+          "expires_at": "2026-10-19T21:35:16.799Z"
+        },
+        "lease_history": [],
+        "evidence": {
+          "commit": "7ed61b4e72147bc0b9866dd7035c2ee9b36ccd60",
+          "implemented_by": "claude",
+          "tests": [
+            {
+              "cmd": "npm run test:continuity && npm test && npm run test:v1.02 && npm run test:security",
+              "exit_code": 0,
+              "commit": "7ed61b4e72147bc0b9866dd7035c2ee9b36ccd60",
+              "observed_at": "2026-10-19T20:36:40Z"
+            }
+          ]
+        }
       }
     ],
     "blockers": [
@@ -147,6 +166,6 @@
       "node pi/mission-git.mjs prompt --ledger handoffs/mission-ledger.json",
       "Before changing a task: acquire its lease and re-run reconcile; never edit evidence by hand to raise a level"
     ],
-    "seq": 1
+    "seq": 3
   }
 }
