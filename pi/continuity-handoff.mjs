@@ -145,6 +145,15 @@ function classifyAttestOnly(item, evidence, { now, maxAgeHours, readArtifact }) 
   return { bucket: 'unproven', attested: false, reasons: [base, why] };
 }
 
+// A fresh record of the same kind that reports failure contradicts a passing one: a later failing
+// test run, or another workflow on the same head that did not succeed. Links are not required here,
+// because evidence against a claim counts even when it is unlinked.
+function contradicts(scope, ev) {
+  if (scope === 'test') return ev.kind === 'test_run' && ev.exit_code !== undefined && ev.exit_code !== 0;
+  if (scope === 'ci') return ev.kind === 'ci_run' && ev.status === 'completed' && ev.conclusion !== 'success';
+  return false;
+}
+
 // Returns { bucket, reasons, attested? } for one item. Buckets: verified | in_progress | unproven.
 export function classifyItem(item, { now, maxAgeHours = DEFAULT_MAX_AGE_HOURS, readArtifact } = {}) {
   const evidence = Array.isArray(item.evidence) ? item.evidence : [];
@@ -176,6 +185,11 @@ export function classifyItem(item, { now, maxAgeHours = DEFAULT_MAX_AGE_HOURS, r
   }
   if (item.scope === 'test' && !fresh.some((ev) => ev.exit_code === 0)) {
     return { bucket: 'unproven', reasons: ['test_run_without_exit_code_0'] };
+  }
+  const against = evidence.filter((ev) => contradicts(item.scope, ev) && freshness(ev.observed_at, now, maxAgeHours) === 'fresh');
+  if (against.length) {
+    const what = against.map((ev) => (ev.kind === 'ci_run' ? `ci_run:${ev.conclusion}` : `test_run:exit_${ev.exit_code}`)).join(',');
+    return { bucket: 'unproven', reasons: [`conflicting_fresh_evidence(${what})`] };
   }
   return { bucket: 'verified', reasons: [] };
 }
@@ -226,6 +240,7 @@ export function buildPrompt(doc, { now = Date.now(), maxAgeHours = DEFAULT_MAX_A
     '- This generator ran offline and observed nothing itself. Every entry below is supplied evidence; the supplier is shown next to each link.',
     '- VERIFIED DONE means only: the supplied evidence is of the right kind for the claim, linked (full commit sha or https URL), and fresh (not older than the window, not later than generation time). It does not authenticate the evidence.',
     '- A CI claim needs a supplied ci_run record saying status completed, conclusion success, at least one job, and the full head sha it ran on. The generator did not fetch that run; re-read it before relying on it.',
+    '- Any fresh failing test_run or completed non-success ci_run supplied for the same claim demotes it, even if another record passed.',
     '- Live deployment and running-session claims are never VERIFIED DONE here. A supplied probe with full provenance is shown as ATTESTED, NOT VERIFIED under UNPROVEN / BLOCKED; re-probe before relying on it.',
     '- An artifact sha256 match proves only that a saved file is unchanged since it was recorded, not that it came from the live system.',
     '',

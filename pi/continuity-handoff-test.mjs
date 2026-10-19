@@ -131,6 +131,7 @@ const probePrompt = buildPrompt(probeDoc, { now });
 const verifiedSection = probePrompt.split('## VERIFIED DONE')[1].split('## IN PROGRESS')[0];
 expect(!verifiedSection.includes('live-claim') && !verifiedSection.includes('session-claim'), 'live_or_session_rendered_as_verified');
 expect(probePrompt.includes('ATTESTED, NOT VERIFIED') && probePrompt.includes('## Trust limits') && probePrompt.includes('observed nothing itself'), 'trust_limits_not_visible');
+expect(probePrompt.includes('demotes it, even if another record passed'), 'conflict_trust_limit_hidden');
 expect(probePrompt.includes('status completed, conclusion success, at least one job') && probePrompt.includes('not later than generation time'), 'ci_or_time_trust_limit_hidden');
 expect(probePrompt.includes('(supplied by operator)'), 'supplier_not_visible');
 
@@ -167,7 +168,26 @@ for (const [name, ev] of [
   expect(r.bucket === 'unproven' && r.reasons.some((x) => x.startsWith('ci_run_not_completed_success(')), `ci_${name}_verified`);
 }
 expect(ciBucket({ ...ciRun, conclusion: 'action_required', jobs: 0 }).reasons[0].includes('conclusion:action_required') && ciBucket({ ...ciRun, conclusion: 'action_required', jobs: 0 }).reasons[0].includes('jobs:0'), 'ci_failure_reason_hidden');
-expect(classifyItem({ id: 'ci', claim: 'c', status: 'verified', scope: 'ci', evidence: [{ ...ciRun, conclusion: 'action_required', jobs: 0 }, ciRun] }, { now }).bucket === 'verified', 'one_success_run_among_several_rejected');
+// Tightened (was expected VERIFIED on 53a7157..13d5c8a): a non-success run beside a success no longer passes.
+expect(classifyItem({ id: 'ci', claim: 'c', status: 'verified', scope: 'ci', evidence: [{ ...ciRun, conclusion: 'action_required', jobs: 0 }, ciRun] }, { now }).bucket === 'unproven', 'action_required_beside_success_verified');
+expect(classifyItem({ id: 'ci', claim: 'c', status: 'verified', scope: 'ci', evidence: [ciRun, { ...ciRun, url: 'https://github.com/x/y/actions/runs/2' }] }, { now }).bucket === 'verified', 'two_success_runs_rejected');
+
+// Regression (found on 13d5c8a): one passing proof outweighed fresh failing ones for the same claim.
+const passRun = { kind: 'test_run', ref: 'npm test', observed_at: '2026-10-19T10:00:00Z', exit_code: 0 };
+for (const [name, items, scope] of [
+  ['test_later_failure', [passRun, { ...passRun, observed_at: fresh, exit_code: 1 }], 'test'],
+  ['test_unlinked_failure', [passRun, { kind: 'test_run', observed_at: fresh, exit_code: 2 }], 'test'],
+  ['ci_other_workflow_failure', [ciRun, { ...ciRun, url: 'https://github.com/x/y/actions/runs/2', conclusion: 'failure' }], 'ci'],
+  ['ci_cancelled', [ciRun, { ...ciRun, conclusion: 'cancelled' }], 'ci'],
+  ['ci_timed_out_unlinked', [ciRun, { kind: 'ci_run', status: 'completed', conclusion: 'timed_out', observed_at: fresh }], 'ci']
+]) {
+  const r = classifyItem({ id: name, claim: 'c', status: 'verified', scope, evidence: items }, { now });
+  expect(r.bucket === 'unproven' && r.reasons.some((x) => x.startsWith('conflicting_fresh_evidence(')), `${name}_verified`);
+}
+// Stale failures and still-running CI do not contradict; a lone pass still verifies.
+expect(classifyItem({ id: 's', claim: 'c', status: 'verified', scope: 'test', evidence: [{ ...passRun, observed_at: fresh }, { ...passRun, observed_at: stale, exit_code: 1 }] }, { now }).bucket === 'verified', 'stale_failure_blocked_fresh_pass');
+expect(classifyItem({ id: 'r', claim: 'c', status: 'verified', scope: 'ci', evidence: [ciRun, { ...ciRun, status: 'in_progress', conclusion: null }] }, { now }).bucket === 'verified', 'in_progress_run_counted_as_failure');
+expect(classifyItem({ id: 'p', claim: 'c', status: 'verified', scope: 'test', evidence: [passRun] }, { now }).bucket === 'verified', 'lone_pass_rejected');
 
 // Regression (found by Codex on 7663b38): observed_at in the future was accepted as fresh.
 const future = '2026-10-19T12:30:00Z';
@@ -224,4 +244,4 @@ for (const banned of ['fetch(', "'node:http", "'node:https", "'node:net", "'node
   expect(!src.includes(banned), `provider_free_violation_${banned}`);
 }
 
-console.log(JSON.stringify({ ok: true, liveNeverVerified: true, sessionNeverVerified: true, probesAttestedOnly: true, artifactIntegrityChecked: true, fullShaRequired: true, ciNeedsCompletedSuccess: true, artifactSymlinkEscapeBlocked: true, crossPlatformCliEntry: true, futureTimestampsRejected: true, linksRequired: true, freshnessEnforced: true, committedPromptCurrent: true, providerFree: true }));
+console.log(JSON.stringify({ ok: true, liveNeverVerified: true, sessionNeverVerified: true, probesAttestedOnly: true, artifactIntegrityChecked: true, fullShaRequired: true, ciNeedsCompletedSuccess: true, artifactSymlinkEscapeBlocked: true, crossPlatformCliEntry: true, conflictingEvidenceDemotes: true, futureTimestampsRejected: true, linksRequired: true, freshnessEnforced: true, committedPromptCurrent: true, providerFree: true }));
