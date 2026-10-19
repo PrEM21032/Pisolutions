@@ -167,6 +167,13 @@ console.log(JSON.stringify({ leftovers, recovered: rec.T1.unknowns, exit: run.st
   const outFile = join(box, 'next-prompt.md');
   assert.equal(cli('prompt', '--out', outFile).status, 0);
   assert.match(readFileSync(outFile, 'utf8'), /- T2: implement/);
+  // Uncommitted edits in the checkout while a lease is active (T2, claude) make check fail and name the file.
+  writeFileSync(join(repo, 'unsaved.mjs'), 'export const wip = 1;\n');
+  const wip = cli('check');
+  assert.equal(wip.status, 1);
+  assert.match(wip.stderr, /uncommitted_work_under_lease:T2: unsaved\.mjs/);
+  rmSync(join(repo, 'unsaved.mjs'));
+  assert.equal(cli('check').status, 0);
   writeFileSync(`${ledgerPath}.tmp-1`, '{');
   assert.equal(cli('check').status, 1, 'leftover partial checkpoint fails check');
   rmSync(`${ledgerPath}.tmp-1`);
@@ -221,4 +228,4 @@ for (const banned of ["'fetch'", "'push'", "'pull'", "'clone'", "'ls-remote'", "
   assert.ok(!gitSrc.includes(banned), `mission-git.mjs must not use ${banned}`);
 }
 
-console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true, cliCheckAndOut: true, fixupCommitsResolved: true }));
+console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true, cliCheckAndOut: true, fixupCommitsResolved: true, uncommittedWorkUnderLeaseReported: true }));

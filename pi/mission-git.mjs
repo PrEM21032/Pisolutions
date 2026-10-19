@@ -6,6 +6,7 @@
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { realpathSync, writeFileSync } from 'node:fs';
+import { relative, resolve } from 'node:path';
 import { loadLedger, reconcile, selectNext, continuationPrompt } from './mission-ledger.mjs';
 
 const FULL_SHA = /^[0-9a-f]{40}$/;
@@ -17,6 +18,15 @@ function git(repo, args) {
 }
 function tryGit(repo, args) {
   try { return git(repo, args); } catch { return null; }
+}
+
+// Uncommitted paths in the checkout, excluding the ledger file and its temp files. Read untrimmed: trimming would
+// strip the leading status space of the first porcelain line (" M path").
+export function dirtyPaths(repo, ledgerPath) {
+  const ledgerRel = relative(realpathSync(repo), realpathSync(resolve(ledgerPath)));
+  const status = execFileSync('git', ['status', '--porcelain=v1', '-z'], { cwd: repo, encoding: 'utf8' });
+  return status.split('\0').filter(Boolean).map((entry) => entry.slice(3))
+    .filter((p) => p !== ledgerRel && !p.startsWith(`${ledgerRel}.tmp-`));
 }
 
 export function branchHead(repo, branch) {
@@ -84,6 +94,10 @@ async function main(argv) {
   if (cmd === 'check') {
     const bad = Object.entries(rec).filter(([, r]) => r.contradictions.length).map(([id, r]) => `${id}: ${r.contradictions.join('; ')}`);
     if (leftovers.length) bad.push(`leftover partial checkpoints: ${leftovers.join(', ')}`);
+    // An interrupted executor can leave edits that were never committed; they exist only in this checkout.
+    const leased = ledger.tasks.filter((t) => rec[t.id].lease?.active && !rec[t.id].done).map((t) => t.id);
+    const dirty = leased.length ? dirtyPaths(args.repo || '.', args.ledger) : [];
+    if (dirty.length) bad.push(`uncommitted_work_under_lease:${leased.join(',')}: ${dirty.join(', ')} (commit or discard before another executor continues)`);
     if (bad.length) { console.error(bad.join('\n')); process.exit(1); }
     console.log(`ledger ${ledger.mission_id} seq ${ledger.seq}: no contradictions`);
     return;

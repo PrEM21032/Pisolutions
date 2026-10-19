@@ -6,23 +6,16 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, relative, resolve } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { acquireLease, leaseActive, loadLedger, reconcile, recordEvidence, saveLedger, selectNext, setStatus } from './mission-ledger.mjs';
-import { gitFacts } from './mission-git.mjs';
+import { dirtyPaths, gitFacts } from './mission-git.mjs';
+
+export { dirtyPaths };
 
 const git = (repo, args) => execFileSync('git', args, { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 const normalize = (text) => String(text).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const fail = (code, message) => { throw Object.assign(new Error(message), { code }); };
-
-// Uncommitted changes other than the ledger file itself; begin/verify refuse to act on a dirty tree.
-export function dirtyPaths(repo, ledgerPath) {
-  const ledgerRel = relative(realpathSync(repo), realpathSync(resolve(ledgerPath)));
-  // Not via git(): trimming would strip the leading status space of the first line (" M path").
-  const status = execFileSync('git', ['status', '--porcelain=v1', '-z'], { cwd: repo, encoding: 'utf8' });
-  return status.split('\0').filter(Boolean).map((entry) => entry.slice(3))
-    .filter((p) => p !== ledgerRel && !p.startsWith(`${ledgerRel}.tmp-`));
-}
 
 export function addTask(ledgerPath, spec) {
   const { ledger } = loadLedger(ledgerPath);
