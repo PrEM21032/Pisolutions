@@ -132,6 +132,7 @@ const verifiedSection = probePrompt.split('## VERIFIED DONE')[1].split('## IN PR
 expect(!verifiedSection.includes('live-claim') && !verifiedSection.includes('session-claim'), 'live_or_session_rendered_as_verified');
 expect(probePrompt.includes('ATTESTED, NOT VERIFIED') && probePrompt.includes('## Trust limits') && probePrompt.includes('observed nothing itself'), 'trust_limits_not_visible');
 expect(probePrompt.includes('demotes it, even if another record passed'), 'conflict_trust_limit_hidden');
+expect(probePrompt.includes('full subject_sha') && probePrompt.includes('never used to match'), 'subject_sha_trust_limit_hidden');
 expect(probePrompt.includes('status completed, conclusion success, at least one job') && probePrompt.includes('not later than generation time'), 'ci_or_time_trust_limit_hidden');
 expect(probePrompt.includes('(supplied by operator)'), 'supplier_not_visible');
 
@@ -145,11 +146,11 @@ for (const ref of ['abc123', 'whatever', 'main', SHA.slice(0, 7)]) {
   expect(bucket({ id: 'a', claim: 'c', status: 'verified', scope: 'source', evidence: [{ kind: 'commit', ref, observed_at: fresh }] }) === 'unproven', `short_or_free_commit_ref_accepted_${ref}`);
 }
 expect(bucket({ id: 'a', claim: 'c', status: 'verified', scope: 'source', evidence: [{ kind: 'pr', ref: '#999', observed_at: fresh }] }) === 'unproven', 'pr_ref_without_url_accepted');
-expect(bucket({ id: 'c', claim: 'c', status: 'verified', scope: 'ci', evidence: [{ kind: 'ci_run', ref: 'green', observed_at: fresh }] }) === 'unproven', 'ci_ref_without_url_accepted');
+expect(bucket({ id: 'c', claim: 'c', status: 'verified', scope: 'ci', subject_sha: SHA, evidence: [{ kind: 'ci_run', ref: 'green', observed_at: fresh }] }) === 'unproven', 'ci_ref_without_url_accepted');
 
 // Regression (found by Codex on 7663b38): any fresh linked ci_run was VERIFIED, even action_required with no jobs.
 const ciRun = { kind: 'ci_run', url: 'https://github.com/x/y/actions/runs/1', observed_at: fresh, status: 'completed', conclusion: 'success', jobs: 3, head_sha: SHA };
-const ciBucket = (ev) => classifyItem({ id: 'ci', claim: 'CI green', status: 'verified', scope: 'ci', evidence: [ev] }, { now });
+const ciBucket = (ev) => classifyItem({ id: 'ci', claim: 'CI green', status: 'verified', scope: 'ci', subject_sha: SHA, evidence: [ev] }, { now });
 expect(ciBucket(ciRun).bucket === 'verified', 'completed_success_ci_rejected');
 for (const [name, ev] of [
   ['action_required_no_jobs', { ...ciRun, conclusion: 'action_required', jobs: 0 }],
@@ -169,8 +170,30 @@ for (const [name, ev] of [
 }
 expect(ciBucket({ ...ciRun, conclusion: 'action_required', jobs: 0 }).reasons[0].includes('conclusion:action_required') && ciBucket({ ...ciRun, conclusion: 'action_required', jobs: 0 }).reasons[0].includes('jobs:0'), 'ci_failure_reason_hidden');
 // Tightened (was expected VERIFIED on 53a7157..13d5c8a): a non-success run beside a success no longer passes.
-expect(classifyItem({ id: 'ci', claim: 'c', status: 'verified', scope: 'ci', evidence: [{ ...ciRun, conclusion: 'action_required', jobs: 0 }, ciRun] }, { now }).bucket === 'unproven', 'action_required_beside_success_verified');
-expect(classifyItem({ id: 'ci', claim: 'c', status: 'verified', scope: 'ci', evidence: [ciRun, { ...ciRun, url: 'https://github.com/x/y/actions/runs/2' }] }, { now }).bucket === 'verified', 'two_success_runs_rejected');
+expect(classifyItem({ id: 'ci', claim: 'c', status: 'verified', scope: 'ci', subject_sha: SHA, evidence: [{ ...ciRun, conclusion: 'action_required', jobs: 0 }, ciRun] }, { now }).bucket === 'unproven', 'action_required_beside_success_verified');
+expect(classifyItem({ id: 'ci', claim: 'c', status: 'verified', scope: 'ci', subject_sha: SHA, evidence: [ciRun, { ...ciRun, url: 'https://github.com/x/y/actions/runs/2' }] }, { now }).bucket === 'verified', 'two_success_runs_rejected');
+
+// Regression (found on 6ca8125): a CI run on one commit verified a claim about another; nothing tied them.
+const OTHER = '6ca81257262418417bf4e172e25209f9e14da8a5';
+const ciClaim = (extra, evidence) => classifyItem({ id: 'cs', claim: `CI green on ${OTHER}`, status: 'verified', scope: 'ci', ...extra, evidence }, { now });
+for (const [name, r, reason] of [
+  ['run_on_other_commit', ciClaim({ subject_sha: OTHER }, [ciRun]), 'ci_run_head_sha_mismatch(subject:6ca8125,runs:13c0c94)'],
+  ['url_names_subject_but_head_sha_differs', ciClaim({ subject_sha: OTHER }, [{ ...ciRun, url: `https://github.com/x/y/commit/${OTHER}/checks` }]), 'ci_run_head_sha_mismatch('],
+  ['no_subject_sha', ciClaim({}, [ciRun]), 'ci_claim_missing_full_subject_sha'],
+  ['short_subject_sha', ciClaim({ subject_sha: SHA.slice(0, 7) }, [ciRun]), 'ci_claim_missing_full_subject_sha'],
+  ['uppercase_subject_sha', ciClaim({ subject_sha: SHA.toUpperCase() }, [ciRun]), 'ci_claim_missing_full_subject_sha'],
+  ['short_head_sha_prefix_of_subject', ciClaim({ subject_sha: SHA }, [{ ...ciRun, head_sha: SHA.slice(0, 7) }]), 'ci_run_not_completed_success(head_sha:not_full_sha']
+]) {
+  expect(r.bucket === 'unproven' && r.reasons.some((x) => x.startsWith(reason)), `ci_subject_${name}_verified`);
+}
+expect(ciClaim({ subject_sha: SHA }, [ciRun]).bucket === 'verified', 'ci_subject_matching_run_rejected');
+expect(ciClaim({ subject_sha: SHA }, [ciRun, { ...ciRun, head_sha: OTHER, conclusion: 'failure', url: 'https://github.com/x/y/actions/runs/9' }]).bucket === 'verified', 'ci_failure_on_other_commit_blocked_subject');
+expect(ciClaim({ subject_sha: SHA }, [{ ...ciRun, head_sha: OTHER }, ciRun]).bucket === 'verified', 'ci_matching_run_beside_other_commit_rejected');
+const unplaced = ciClaim({ subject_sha: SHA }, [ciRun, { kind: 'ci_run', status: 'completed', conclusion: 'failure', observed_at: fresh }]);
+expect(unplaced.bucket === 'unproven' && unplaced.reasons[0].startsWith('conflicting_fresh_evidence('), 'ci_failure_without_head_sha_ignored');
+// subject_sha does not change source/test classification.
+expect(classifyItem({ id: 'st', claim: 'c', status: 'verified', scope: 'test', subject_sha: OTHER, evidence: [{ kind: 'test_run', ref: 'npm test', observed_at: fresh, exit_code: 0 }] }, { now }).bucket === 'verified', 'subject_sha_changed_test_scope');
+expect(classifyItem({ id: 'ss', claim: 'c', status: 'verified', scope: 'source', subject_sha: OTHER, evidence: [{ kind: 'commit', ref: SHA, observed_at: fresh }] }, { now }).bucket === 'verified', 'subject_sha_changed_source_scope');
 
 // Regression (found on 13d5c8a): one passing proof outweighed fresh failing ones for the same claim.
 const passRun = { kind: 'test_run', ref: 'npm test', observed_at: '2026-10-19T10:00:00Z', exit_code: 0 };
@@ -181,12 +204,12 @@ for (const [name, items, scope] of [
   ['ci_cancelled', [ciRun, { ...ciRun, conclusion: 'cancelled' }], 'ci'],
   ['ci_timed_out_unlinked', [ciRun, { kind: 'ci_run', status: 'completed', conclusion: 'timed_out', observed_at: fresh }], 'ci']
 ]) {
-  const r = classifyItem({ id: name, claim: 'c', status: 'verified', scope, evidence: items }, { now });
+  const r = classifyItem({ id: name, claim: 'c', status: 'verified', scope, subject_sha: SHA, evidence: items }, { now });
   expect(r.bucket === 'unproven' && r.reasons.some((x) => x.startsWith('conflicting_fresh_evidence(')), `${name}_verified`);
 }
 // Stale failures and still-running CI do not contradict; a lone pass still verifies.
 expect(classifyItem({ id: 's', claim: 'c', status: 'verified', scope: 'test', evidence: [{ ...passRun, observed_at: fresh }, { ...passRun, observed_at: stale, exit_code: 1 }] }, { now }).bucket === 'verified', 'stale_failure_blocked_fresh_pass');
-expect(classifyItem({ id: 'r', claim: 'c', status: 'verified', scope: 'ci', evidence: [ciRun, { ...ciRun, status: 'in_progress', conclusion: null }] }, { now }).bucket === 'verified', 'in_progress_run_counted_as_failure');
+expect(classifyItem({ id: 'r', claim: 'c', status: 'verified', scope: 'ci', subject_sha: SHA, evidence: [ciRun, { ...ciRun, status: 'in_progress', conclusion: null }] }, { now }).bucket === 'verified', 'in_progress_run_counted_as_failure');
 expect(classifyItem({ id: 'p', claim: 'c', status: 'verified', scope: 'test', evidence: [passRun] }, { now }).bucket === 'verified', 'lone_pass_rejected');
 
 // Regression (found by Codex on 7663b38): observed_at in the future was accepted as fresh.
@@ -195,7 +218,7 @@ const skew = '2026-10-19T12:04:00Z';
 const futureCases = [
   { id: 'f1', claim: 'c', status: 'verified', scope: 'source', evidence: [{ kind: 'commit', ref: SHA, observed_at: future }] },
   { id: 'f2', claim: 'c', status: 'verified', scope: 'test', evidence: [{ kind: 'test_run', ref: 'node x', observed_at: future, exit_code: 0 }] },
-  { id: 'f3', claim: 'c', status: 'verified', scope: 'ci', evidence: [{ ...ciRun, observed_at: future }] },
+  { id: 'f3', claim: 'c', status: 'verified', scope: 'ci', subject_sha: SHA, evidence: [{ ...ciRun, observed_at: future }] },
   { id: 'f4', claim: 'c', status: 'verified', scope: 'source', evidence: [{ kind: 'commit', ref: SHA, observed_at: '2027-01-01T00:00:00Z' }] }
 ];
 for (const item of futureCases) {
@@ -207,7 +230,7 @@ expect(!futureProbe.attested && futureProbe.reasons.includes('future_observed_at
 expect(bucket({ id: 'sk', claim: 'c', status: 'verified', scope: 'source', evidence: [{ kind: 'commit', ref: SHA, observed_at: skew }] }) === 'verified', 'small_clock_skew_rejected');
 expect(bucket({ id: 't', claim: 'c', status: 'verified', scope: 'test', evidence: [{ kind: 'test_run', ref: 'node x', observed_at: fresh, exit_code: 1 }] }) === 'unproven', 'failing_test_accepted');
 expect(bucket({ id: 't', claim: 'c', status: 'verified', scope: 'test', evidence: [{ kind: 'test_run', ref: 'node x', observed_at: fresh, exit_code: 0 }] }) === 'verified', 'passing_test_rejected');
-expect(bucket({ id: 'c', claim: 'c', status: 'verified', scope: 'ci', evidence: [{ kind: 'test_run', ref: 'local', observed_at: fresh, exit_code: 0 }] }) === 'unproven', 'local_test_counted_as_ci');
+expect(bucket({ id: 'c', claim: 'c', status: 'verified', scope: 'ci', subject_sha: SHA, evidence: [{ kind: 'test_run', ref: 'local', observed_at: fresh, exit_code: 0 }] }) === 'unproven', 'local_test_counted_as_ci');
 
 // In progress needs a branch/PR/issue link; blocked stays blocked.
 expect(bucket({ id: 'p', claim: 'c', status: 'in_progress', evidence: [{ kind: 'plan', ref: 'doc' }] }) === 'unproven', 'in_progress_without_pr_accepted');
@@ -244,4 +267,4 @@ for (const banned of ['fetch(', "'node:http", "'node:https", "'node:net", "'node
   expect(!src.includes(banned), `provider_free_violation_${banned}`);
 }
 
-console.log(JSON.stringify({ ok: true, liveNeverVerified: true, sessionNeverVerified: true, probesAttestedOnly: true, artifactIntegrityChecked: true, fullShaRequired: true, ciNeedsCompletedSuccess: true, artifactSymlinkEscapeBlocked: true, crossPlatformCliEntry: true, conflictingEvidenceDemotes: true, futureTimestampsRejected: true, linksRequired: true, freshnessEnforced: true, committedPromptCurrent: true, providerFree: true }));
+console.log(JSON.stringify({ ok: true, liveNeverVerified: true, sessionNeverVerified: true, probesAttestedOnly: true, artifactIntegrityChecked: true, fullShaRequired: true, ciNeedsCompletedSuccess: true, artifactSymlinkEscapeBlocked: true, crossPlatformCliEntry: true, conflictingEvidenceDemotes: true, ciTiedToSubjectSha: true, futureTimestampsRejected: true, linksRequired: true, freshnessEnforced: true, committedPromptCurrent: true, providerFree: true }));

@@ -39,12 +39,17 @@ least one evidence entry that:
    |---|---|
    | source | commit, pr, doc |
    | test | test_run with `exit_code: 0` |
-   | ci | ci_run with `status: "completed"`, `conclusion: "success"`, integer `jobs >= 1` and a full 40-hex `head_sha` |
+   | ci | ci_run with `status: "completed"`, `conclusion: "success"`, integer `jobs >= 1` and a full 40-hex `head_sha` equal to the item's `subject_sha` |
 2. carries a source link of the right shape: `commit` needs a full 40-hex sha in `ref`;
    `pr`, `issue`, `doc`, `ci_run` and probes need an `https://` `url` (a free-text `ref` is not
    enough); other kinds accept either, and
 3. has `observed_at` within the freshness window and not later than the generation time
    (`--now`) plus 5 minutes of clock skew. Future timestamps are rejected as `future_observed_at`.
+
+A `ci` item must also carry `subject_sha`: the full, lowercase 40-hex sha of the commit the claim is about.
+Only passing runs whose `head_sha` equals it count. Short shas, urls and claim text are never used to match.
+A completed non-success run on the same sha (or with no usable `head_sha`) demotes the claim; a failing run on
+a different full sha does not.
 
 Otherwise it is demoted to UNPROVEN with the reason printed.
 
@@ -62,6 +67,9 @@ Every symlink is followed to its real path, and the file is read only if that re
 inside that directory and is a regular file. Otherwise the result is `artifact_path_outside_repo` or `artifact_missing`.
 A match proves only that the saved file is unchanged since recording, not that it came from
 the live system. No offline parser can authenticate a probe; re-probe before relying on one.
+
+(Found on `6ca8125`: a passing CI run for one commit verified a claim about another, because nothing tied the
+claim to a commit. `subject_sha` is now required for `ci` claims.)
 
 (Found on `53a7157`: `handoffs/x.json` could be a symlink to a file outside the repo, and its content
 was read and hashed. Covered by a regression that uses only a temporary dummy file.)
