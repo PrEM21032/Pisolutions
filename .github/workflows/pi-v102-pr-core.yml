@@ -7,6 +7,7 @@ on:
       - 'worker/**'
       - 'package.json'
       - '.github/workflows/pi-v102-pr-core.yml'
+      - '.github/workflows/pi-chat-worker.yml'
 
 permissions:
   contents: read
@@ -29,3 +30,8 @@ jobs:
       - name: Pre-deploy configuration validation (provider-free)
         working-directory: worker
         run: node scripts/validate-deploy-configuration-test.mjs
+      - name: Deploy configuration shell/validator parity (provider-free)
+        working-directory: worker
+        run: |
+          node scripts/validate-deploy-configuration-parity-test.mjs
+          node scripts/pr-core-workflow-test.mjs

@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateDeployConfiguration } from './validate-deploy-configuration.mjs';
 
@@ -43,6 +46,35 @@ assert.match(missing.stderr, /CLOUDFLARE_API_TOKEN is missing/);
 assert.doesNotMatch(missing.stdout + missing.stderr, /canary/);
 const good = run({...cloudflare, ...stripe, ...fallback});
 assert.equal(good.status, 0);
+assert.match(good.stdout, /passed offline validation/);
 assert.doesNotMatch(good.stdout + good.stderr, /canary/);
+
+// Running through a symlink must still validate (it used to exit 0 silently), and importing the
+// module must never run the CLI.
+const dir = mkdtempSync(join(tmpdir(), 'pi-validate-'));
+try {
+  const link = join(dir, 'validate-link.mjs');
+  symlinkSync(cli, link);
+  const viaLink = env => spawnSync(process.execPath, [link], {env:{PATH:process.env.PATH, ...env}, encoding:'utf8'});
+  const linkEmpty = viaLink({});
+  assert.equal(linkEmpty.status, 1);
+  assert.match(linkEmpty.stderr, /CLOUDFLARE_API_TOKEN is missing/);
+  assert.match(linkEmpty.stderr, /production Worker was not changed/);
+  const linkBad = viaLink({...cloudflare, ...stripe, PI_STRIPE_SECRET_KEY:'sensitive-canary-key'});
+  assert.equal(linkBad.status, 1);
+  assert.doesNotMatch(linkBad.stdout + linkBad.stderr, /canary/);
+  const linkGood = viaLink({...cloudflare, ...stripe, ...fallback});
+  assert.equal(linkGood.status, 0);
+  assert.match(linkGood.stdout, /passed offline validation/);
+  assert.doesNotMatch(linkGood.stdout + linkGood.stderr, /canary/);
+
+  const importer = join(dir, 'importer.mjs');
+  writeFileSync(importer, `import ${JSON.stringify(new URL('./validate-deploy-configuration.mjs', import.meta.url).href)};\n`);
+  const imported = spawnSync(process.execPath, [importer], {env:{PATH:process.env.PATH}, encoding:'utf8'});
+  assert.equal(imported.status, 0);
+  assert.equal(imported.stdout + imported.stderr, '');
+} finally {
+  rmSync(dir, {recursive:true, force:true});
+}
 
 console.log('Pre-deploy configuration validation tests passed.');
