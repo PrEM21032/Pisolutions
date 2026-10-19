@@ -76,3 +76,42 @@ Durable state: `handoffs/mission-ledger.json` (seq 3, checksummed). Next prompt:
 ## Rollback
 Delete `claude/continuity-mission-ledger`, or revert its commits. #218, #217, the fork PR #2 branches and all
 workflows are untouched.
+
+---
+
+# Run 2 — 2026-10-19 21:00–21:09Z — durable loop and three task transitions
+
+## Why run 1 stopped (from evidence, 21:00:51Z)
+- **Published:** the local head `06b0598` equaled the remote, the tree was clean, the ledger was at seq 3, and
+  `check` was 0.
+- **Stop cause:** `next` returned no eligible task. C1 needed a reviewer, C4 upstream access (403), C5 the owner's
+  decision, and C7 is forbidden. This was the designed stop, not a crash, a context limit or a tool failure.
+- **Structural gap:** leases, evidence and the ledger had been written with `/tmp/claude-0/{lease,record,make-ledger}.mjs`.
+  Those scripts aren't in the repo, so a new session could read the mission but not advance it. Nothing turned
+  documented limits into new tasks, so the queue ran dry.
+
+## Mechanism added
+- `pi/mission-run.mjs`:
+  - `add-task`: duplicate ids and intents are refused;
+  - `begin`: only the selector's task, only on a clean tree; takes the lease;
+  - `verify`: needs the lease; tests run in a temp worktree at the task's exact commit, which is then removed.
+- Bugs found by using it on the real repo (`ecf7dce`):
+  - porcelain trimming made the ledger look like foreign dirty work;
+  - linear fix-up commits per task were treated as a conflict.
+
+## Transitions (each: engine `next` → `begin` → commit with trailers → `verify` in worktree → checkpoint, pushed)
+| Task | Commit | Verified (all four suites, worktree at commit) | Ledger seq |
+|---|---|---|---|
+| C8 executor CLI | `ecf7dcea3653de824f86cbaa80674723541531df` (fix-up of `6f67917`) | exit 0, 21:05:03Z | 8 |
+| C9 uncommitted work under a lease → `check` fails | `fc84ad60c19328f95c934c316ea3974060f3f10b` | exit 0, 21:06:43Z | 10 |
+| C10 expired lease on unfinished task → visible | `7a6432d3fcd87a739371e7d11bfe06cbbaa9aed9` | exit 0, 21:08:07Z | 12 |
+
+Each new regression fails on the pre-task code. No CI ran (fork branch, no PR). After C10, `next` stopped again on the
+same four genuine blockers. One executable backlog task was added for the next session (C11, seq 13); it has not
+been started.
+
+## Remaining limits
+- Evidence records can still be hand-written; C11 addresses distinguishing them.
+- No scheduler or automatic resumption.
+- No real executor adapter for Codex.
+- Lease base equal to the task commit reports a `base_moved` note. This is cosmetic.

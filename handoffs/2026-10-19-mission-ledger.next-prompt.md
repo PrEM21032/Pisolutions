@@ -1,4 +1,4 @@
-# PI mission PI-CONTINUITY-2026-10 — continuation (seq 3)
+# PI mission PI-CONTINUITY-2026-10 — continuation (seq 13)
 
 > Built offline from the mission ledger and local git. NOT DISPATCHED. Levels are earned from evidence;
 > deployed / production_verified can never be earned offline.
@@ -14,9 +14,13 @@ Repository: https://github.com/pisolutions9/Pisolutions9 (canonical); work publi
 - C4 [pending -> pending] Record #218 CI check runs on its head as ci_run evidence with subject_sha
 - C5 [pending -> pending] Decide fork draft PR #2 (#217 follow-ups): review-only, CI-run PR to fork main, or adoption into #217
 - C6 [tested -> tested, done] Ledger CLI: `check` command (non-zero exit on contradictions) and --out for the continuation prompt @ 7ed61b4e72147bc0b9866dd7035c2ee9b36ccd60
+- C8 [tested -> tested, done] Durable executor CLI: add-task, begin, verify (tests in worktree at exact commit) @ ecf7dcea3653de824f86cbaa80674723541531df — base_moved:ecf7dce->parent_6f67917
+- C9 [tested -> tested, done] check reports uncommitted work in the checkout while a lease is active (unsaved work at risk after interruption) @ fc84ad60c19328f95c934c316ea3974060f3f10b
+- C10 [tested -> tested, done] reconcile flags expired leases on unfinished tasks so abandoned work is visible in next/prompt @ 7a6432d3fcd87a739371e7d11bfe06cbbaa9aed9
+- C11 [pending -> pending] Distinguish test evidence recorded by mission-run verify (in_worktree) from hand-written test records in reconcile and the continuation prompt
 
 ## Next safe action
-- none eligible for this executor
+- C11: implement
 - skipped C7: forbidden_action:deploy
 - skipped C1: needs_independent_reviewer
 - skipped C4: needs_authorization:github_read_upstream

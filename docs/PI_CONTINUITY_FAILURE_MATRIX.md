@@ -24,3 +24,22 @@ temporary git repo and separate node processes. The crash, the second executor a
 - Each write must name the `seq` it loaded. An older writer gets `stale_checkpoint` and the disk is unchanged
   (test §3, §10).
 - Leftover `*.tmp-*` files are reported, never read.
+
+## Advancing a mission (durable executor commands, `pi/mission-run.mjs`)
+A fresh session needs only the repository:
+
+```sh
+node pi/mission-git.mjs check --ledger handoffs/mission-ledger.json          # contradictions, partial checkpoints, unsaved work under a lease
+node pi/mission-git.mjs next  --ledger handoffs/mission-ledger.json --executor <name>
+node pi/mission-run.mjs begin  --task <id> --executor <name>                 # only the selector's choice, clean tree, takes the lease
+#   implement; commit with trailers: Mission-Id: <mission_id> / Mission-Task: <id>
+node pi/mission-run.mjs verify --task <id> --executor <name> --cmd "<tests>"  # runs in a temp worktree at the task's exact commit
+node pi/mission-run.mjs add-task --id <id> --intent "..." [--branch b] [--depends a,b]   # duplicate ids/intents refused
+```
+
+Commit the ledger after each command that changes it. When `next` returns no task, stop: the skipped reasons
+are the blockers, so record them rather than inventing work.
+
+(Why the 2026-10-19 20:37Z run stopped: `next` returned no eligible task. That was the designed stop. The structural
+gap was that lease, evidence and task writes were done with scripts outside the repo, so a new session could not
+advance the mission with repo tools. `mission-run.mjs` closes that gap.)
