@@ -26,11 +26,13 @@ Top level: `generated_at`, `goal`, `repo {name, ref, sha?, work_branch?}`, `item
 
 Each item: `id`, `claim`, `status` (`verified | in_progress | unproven | blocked`), `scope`
 (required when verified: `source | test | ci | live_deployment | running_session`) and
-`evidence[]` entries `{kind, ref?, url?, observed_at?, exit_code?, observed_by?}`.
+`evidence[]` entries `{kind, ref?, url?, observed_at?, exit_code?, observed_by?, method?, result?, artifact?, sha256?}`.
+`observed_by` is printed next to every link so the reader can see who supplied each piece.
 
 ## Classification rules (enforced, not trusted)
 
-A `verified` claim lands in VERIFIED DONE only when it has at least one evidence entry that:
+A `verified` claim in scope `source`, `test` or `ci` lands in VERIFIED DONE only when it has at
+least one evidence entry that:
 
 1. is of a kind allowed for its scope:
    | scope | accepted proof kinds |
@@ -38,25 +40,41 @@ A `verified` claim lands in VERIFIED DONE only when it has at least one evidence
    | source | commit, pr, doc |
    | test | test_run with `exit_code: 0` |
    | ci | ci_run |
-   | live_deployment | live_probe **only** |
-   | running_session | session_probe **only** |
-2. carries a source link (`url` starting `https://` or a non-empty `ref`), and
+2. carries a source link of the right shape: `commit` needs a full 40-hex sha in `ref`;
+   `pr`, `issue`, `doc`, `ci_run` and probes need an `https://` `url` (a free-text `ref` is not
+   enough); other kinds accept either, and
 3. has `observed_at` within the freshness window.
 
-Otherwise it is demoted to UNPROVEN with the reason printed. So a plan, CI run, merged PR or
-passing test can never make a deployment "live" or a session "running".
+Otherwise it is demoted to UNPROVEN with the reason printed.
+
+### Live deployment and running sessions: attest-only
+
+`live_deployment` and `running_session` claims are **never** placed in VERIFIED DONE. The
+generator runs offline and observes nothing, so it cannot verify either. A plan, CI run, PR or
+test is never accepted for them. A matching `live_probe` / `session_probe` is shown under
+UNPROVEN / BLOCKED as **ATTESTED, NOT VERIFIED** only when it carries full provenance
+(`url`, `observed_at` within the window, `observed_by`, `method`, `result`); otherwise the missing
+fields are listed. A probe may also name a saved response `artifact` (repo-relative path) and
+its `sha256`; the generator checks the hash locally and drops the attestation on mismatch.
+A match proves only that the saved file is unchanged since recording, not that it came from
+the live system. No offline parser can authenticate a probe; re-probe before relying on one.
+
+(Found on `6d8ee2f`: a hand-written probe with only `ref: "trust me"`, or a free-text commit
+ref, was classified VERIFIED. Regression tests in `pi/continuity-handoff-test.mjs` cover it.)
 `in_progress` needs a pr/branch/commit/issue link or it is demoted too. `blocked` and
 `unproven` are never promoted.
 
 ## Limitations
 
-- It checks the shape of evidence, not its truth: a hand-written `live_probe` entry is
-  accepted as written. Gather evidence with real commands and record who observed it.
+- It checks the shape of evidence, not its truth. For source/test/ci a hand-written entry
+  with the right shape is still accepted as VERIFIED DONE (the prompt says so in its Trust
+  limits section and names the supplier). Gather evidence with real commands.
+- A full commit sha is checked for format only, not that the commit exists.
 - It does not fetch GitHub state itself (by design, so it stays provider-free and offline).
 - Freshness is relative to `--now`; the committed prompt is a snapshot, not current state.
 
 ## Rollback
 
-Additive only: `pi/continuity-handoff.mjs`, `pi/continuity-handoff-test.mjs`, this doc,
+Revert the cycle's commit to return to the previous behaviour. Files: `pi/continuity-handoff.mjs`, `pi/continuity-handoff-test.mjs`, this doc,
 `handoffs/`, and the `test:continuity` script line in `package.json`. Revert the commit or
 delete the branch. Nothing is wired into deploy or gate workflows.

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-19T14:00:00Z",
+  "generated_at": "2026-10-19T14:25:41Z",
   "author": "Claude Code session (cloud container), fork PrEM21032/Pisolutions9",
   "goal": "Advance the PI Continuity Engine with one reversible, provider-free step per session, reporting only what fresh evidence proves.",
   "repo": {
@@ -15,7 +15,13 @@
       "status": "verified",
       "scope": "source",
       "evidence": [
-        { "kind": "commit", "ref": "13c0c943cf75ddbf61fc568971426610e61e1985", "url": "https://github.com/pisolutions9/Pisolutions9/commit/13c0c943cf75ddbf61fc568971426610e61e1985", "observed_at": "2026-10-19T13:50:00Z", "observed_by": "git ls-remote" }
+        {
+          "kind": "commit",
+          "ref": "13c0c943cf75ddbf61fc568971426610e61e1985",
+          "url": "https://github.com/pisolutions9/Pisolutions9/commit/13c0c943cf75ddbf61fc568971426610e61e1985",
+          "observed_at": "2026-10-19T14:25:00Z",
+          "observed_by": "git ls-remote"
+        }
       ]
     },
     {
@@ -24,16 +30,28 @@
       "status": "verified",
       "scope": "source",
       "evidence": [
-        { "kind": "commit", "ref": "8a99ee4032bfda07d3c0b0856ea4008f93084817", "url": "https://github.com/pisolutions9/Pisolutions9/blob/coordination/continuity-engine-v1/docs/PI_CONTINUITY_ENGINE.md", "observed_at": "2026-10-19T13:50:00Z", "observed_by": "git fetch + git show" }
+        {
+          "kind": "commit",
+          "ref": "8a99ee4032bfda07d3c0b0856ea4008f93084817",
+          "url": "https://github.com/pisolutions9/Pisolutions9/blob/coordination/continuity-engine-v1/docs/PI_CONTINUITY_ENGINE.md",
+          "observed_at": "2026-10-19T13:50:00Z",
+          "observed_by": "git fetch + git show"
+        }
       ]
     },
     {
       "id": "continuity-handoff-builder-tests",
-      "claim": "Provider-free handoff builder test passes locally (live/session never inferred, links + freshness required, committed prompt current)",
+      "claim": "Handoff builder test passes locally incl. false-verification regressions (ref-only/hand-written live & session probes never VERIFIED; full-sha commits; https links for PR/CI/probes; artifact sha256 check)",
       "status": "verified",
       "scope": "test",
       "evidence": [
-        { "kind": "test_run", "ref": "node pi/continuity-handoff-test.mjs", "exit_code": 0, "observed_at": "2026-10-19T14:00:00Z", "observed_by": "local run in this session" }
+        {
+          "kind": "test_run",
+          "ref": "node pi/continuity-handoff-test.mjs",
+          "exit_code": 0,
+          "observed_at": "2026-10-19T14:25:41Z",
+          "observed_by": "claude-code session (this container)"
+        }
       ]
     },
     {
@@ -41,8 +59,20 @@
       "claim": "Chat stage timing instrumentation for #213 exists in two alternatives: #214 (head 821202d) and #215 (head 793c1ff). Codex owns the comparison.",
       "status": "in_progress",
       "evidence": [
-        { "kind": "pr", "ref": "#214@821202d", "url": "https://github.com/pisolutions9/Pisolutions9/pull/214", "observed_at": "2026-10-19T13:50:00Z" },
-        { "kind": "pr", "ref": "#215@793c1ff", "url": "https://github.com/pisolutions9/Pisolutions9/pull/215", "observed_at": "2026-10-19T13:50:00Z" }
+        {
+          "kind": "pr",
+          "ref": "#214@821202d",
+          "url": "https://github.com/pisolutions9/Pisolutions9/pull/214",
+          "observed_at": "2026-10-19T13:50:00Z",
+          "observed_by": "claude-code session (this container)"
+        },
+        {
+          "kind": "pr",
+          "ref": "#215@793c1ff",
+          "url": "https://github.com/pisolutions9/Pisolutions9/pull/215",
+          "observed_at": "2026-10-19T13:50:00Z",
+          "observed_by": "claude-code session (this container)"
+        }
       ]
     },
     {
@@ -50,15 +80,48 @@
       "claim": "Offline deploy-configuration validator for #216 exists as PR #217 (head 9ec0def, +97 lines, 4 files)",
       "status": "in_progress",
       "evidence": [
-        { "kind": "pr", "ref": "#217@9ec0def", "url": "https://github.com/pisolutions9/Pisolutions9/pull/217", "observed_at": "2026-10-19T13:50:00Z" }
+        {
+          "kind": "pr",
+          "ref": "#217@9ec0def",
+          "url": "https://github.com/pisolutions9/Pisolutions9/pull/217",
+          "observed_at": "2026-10-19T13:50:00Z",
+          "observed_by": "claude-code session (this container)"
+        }
       ]
     },
     {
       "id": "continuity-handoff-builder",
-      "claim": "pi/continuity-handoff.mjs + test + docs/PI_CONTINUITY_HANDOFF.md on the fork work branch (not merged, not in upstream)",
+      "claim": "Continuity handoff builder on fork branch claude/practical-johnson-hy0vob, offered upstream as draft PR #218 (not merged). This cycle adds the false-verification fix on top of 6d8ee2f.",
       "status": "in_progress",
       "evidence": [
-        { "kind": "branch", "ref": "PrEM21032/Pisolutions9:claude/practical-johnson-hy0vob", "url": "https://github.com/PrEM21032/Pisolutions9/tree/claude/practical-johnson-hy0vob" }
+        {
+          "kind": "branch",
+          "ref": "PrEM21032/Pisolutions9:claude/practical-johnson-hy0vob",
+          "url": "https://github.com/PrEM21032/Pisolutions9/tree/claude/practical-johnson-hy0vob",
+          "observed_by": "claude-code session (this container)"
+        },
+        {
+          "kind": "pr",
+          "ref": "#218@6d8ee2f (head before this cycle's push)",
+          "url": "https://github.com/pisolutions9/Pisolutions9/pull/218",
+          "observed_at": "2026-10-19T14:25:00Z",
+          "observed_by": "git ls-remote refs/pull/218/head"
+        }
+      ]
+    },
+    {
+      "id": "old-false-verification-risk",
+      "claim": "False-verification risk existed in 6d8ee2f: a live_probe/session_probe with only ref:'trust me' (or a free-text commit ref) classified VERIFIED. Reproduced by running this cycle's tests against 6d8ee2f's module: failed with live_deployment_ref_only_probe_accepted (expected failure)",
+      "status": "verified",
+      "scope": "source",
+      "evidence": [
+        {
+          "kind": "commit",
+          "ref": "6d8ee2f5625377cb7f802ebfd3fff49bb804d770",
+          "url": "https://github.com/PrEM21032/Pisolutions9/commit/6d8ee2f5625377cb7f802ebfd3fff49bb804d770",
+          "observed_at": "2026-10-19T14:25:00Z",
+          "observed_by": "claude-code session (this container)"
+        }
       ]
     },
     {
@@ -66,46 +129,64 @@
       "claim": "Current text/state of issues #213 and #216 not read: upstream GitHub API is not enabled for this session",
       "status": "blocked",
       "evidence": [
-        { "kind": "issue", "ref": "#213", "url": "https://github.com/pisolutions9/Pisolutions9/issues/213" },
-        { "kind": "issue", "ref": "#216", "url": "https://github.com/pisolutions9/Pisolutions9/issues/216" }
+        {
+          "kind": "issue",
+          "ref": "#213",
+          "url": "https://github.com/pisolutions9/Pisolutions9/issues/213",
+          "observed_by": "claude-code session (this container)"
+        },
+        {
+          "kind": "issue",
+          "ref": "#216",
+          "url": "https://github.com/pisolutions9/Pisolutions9/issues/216",
+          "observed_by": "claude-code session (this container)"
+        }
       ]
     },
     {
-      "id": "pr-draft-state-and-ci",
-      "claim": "Draft state, reviews and CI results of #214/#215/#217 not observed (API blocked); only git heads were seen",
-      "status": "blocked",
-      "evidence": []
-    },
-    {
-      "id": "upstream-draft-pr",
-      "claim": "No draft PR to upstream was opened: add_repo refused to attach pisolutions9/Pisolutions9 (same-name collision with the fork in this container), so no upstream credentials",
-      "status": "blocked",
-      "evidence": []
-    },
-    {
       "id": "live-worker-deployment",
-      "claim": "Production Worker / customer chat health — not probed in this session; no live evidence",
+      "claim": "Production Worker / customer chat health \u2014 not probed in this session; no live evidence",
       "status": "unproven",
       "evidence": []
     },
     {
       "id": "agent-sessions-running",
-      "claim": "Whether any Codex/ChatGPT/Claude session is currently running on this work — no session probe available; assume NOT running",
+      "claim": "Whether any Codex/ChatGPT/Claude session is currently running on this work \u2014 no session probe available; assume NOT running",
       "status": "unproven",
+      "evidence": []
+    },
+    {
+      "id": "pr-218-ci",
+      "claim": "PR Core, PR Gate and V1.02 Gate passing on 6d8ee2f \u2014 reported by Codex, NOT observed in this session (upstream API not enabled here); not yet run on this cycle's commit",
+      "status": "unproven",
+      "evidence": [
+        {
+          "kind": "pr",
+          "ref": "#218",
+          "url": "https://github.com/pisolutions9/Pisolutions9/pull/218",
+          "observed_by": "Codex (relayed by owner)"
+        }
+      ]
+    },
+    {
+      "id": "pr-218-draft-state",
+      "claim": "PR #218 draft flag/reviews not observed here (only its git head ref was)",
+      "status": "blocked",
       "evidence": []
     }
   ],
   "next_action": {
-    "task": "Queue item B: in a session that has read access to the canonical upstream API, review PR #217's offline configuration validator against issue #216. Record each finding (coverage gaps, false-pass risks, CI wiring) as evidence entries in a new handoffs/<date>-*.evidence.json and regenerate the prompt with pi/continuity-handoff.mjs. Review only: no pushes to #217.",
+    "task": "With read access to the canonical upstream API, re-check PR #218 on its new head: record CI check runs (PR Core, PR Gate, V1.02 Gate) with observed_at and review state as evidence entries. Then do queue item B: review PR #217's offline configuration validator against issue #216 (review only, no pushes to #217), and regenerate this prompt.",
     "acceptance": [
+      "PR #218 head sha and each check-run conclusion recorded with url + observed_at, or marked BLOCKED if unreadable",
       "Issue #216 acceptance criteria quoted with source link and mapped to #217 code/tests (covered / not covered)",
       "node worker/scripts/validate-deploy-configuration-test.mjs run on #217 head with exit code recorded",
-      "CI state of #217 recorded from the check-runs API with observed_at, or marked BLOCKED if unreadable",
-      "node pi/continuity-handoff-test.mjs passes with the regenerated prompt committed"
+      "npm run test:continuity passes with the regenerated prompt committed"
     ],
     "avoid": [
-      "Do not touch timing instrumentation (#214/#215) — Codex is comparing them",
-      "Do not push to or merge #217; findings go in a review/handoff, not commits on that branch"
+      "Do not touch timing instrumentation (#214/#215) \u2014 Codex is comparing them",
+      "Do not touch the local PI City game visuals \u2014 Codex is changing them",
+      "Do not push to or merge #217 or #218"
     ]
   },
   "safety": [
@@ -115,13 +196,13 @@
     "If an agent is not dispatched, say so; never describe a halted session as running"
   ],
   "rollback": [
-    "This work is additive files only: pi/continuity-handoff.mjs, pi/continuity-handoff-test.mjs, docs/PI_CONTINUITY_HANDOFF.md, handoffs/*, one package.json script line",
-    "Revert with: git revert <commit> on the work branch, or delete branch claude/practical-johnson-hy0vob; nothing deployed or configured"
+    "This cycle changes only pi/continuity-handoff.mjs, pi/continuity-handoff-test.mjs, docs/PI_CONTINUITY_HANDOFF.md and handoffs/2026-10-19-*",
+    "Revert with: git revert <this cycle's commit> on claude/practical-johnson-hy0vob (returns to 6d8ee2f); nothing deployed or configured"
   ],
   "next_inspect": [
-    "git ls-remote https://github.com/pisolutions9/Pisolutions9 (main, coordination/continuity-engine-v1, refs/pull/214..217/head) — compare with shas above",
-    "Issues #213, #216 and PRs #214/#215/#217: state, draft flag, reviews, check runs",
-    "Codex's #214 vs #215 comparison outcome, if posted",
-    "Whether this fork branch was offered upstream as a draft PR, and its CI"
+    "git ls-remote https://github.com/pisolutions9/Pisolutions9 main refs/pull/218/head refs/pull/217/head \u2014 compare with shas above",
+    "PR #218: draft flag, reviews, check runs on its current head",
+    "Issues #213, #216 and PRs #214/#215/#217: state, reviews, check runs",
+    "Codex's #214 vs #215 comparison outcome and City visual change, if posted (do not duplicate)"
   ]
 }

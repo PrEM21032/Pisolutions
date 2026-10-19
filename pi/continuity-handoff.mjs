@@ -1,34 +1,67 @@
 // PI Continuity Engine — provider-free handoff builder.
 // Builds a next-session prompt from an explicit evidence file. It performs no network
 // calls, reads no secrets and never infers state: every bucket placement comes from the
-// evidence entries supplied, and claims about live deployment or running sessions are
-// only accepted with a direct probe of that exact thing.
+// evidence entries supplied. The generator observes nothing itself, so it can never verify
+// live deployment or a running session: supplied probes for those are shown as ATTESTED
+// (unauthenticated, re-probe before relying) under UNPROVEN, never as VERIFIED DONE.
+import { readFileSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { isAbsolute, normalize } from 'node:path';
 
 export const STATUSES = ['verified', 'in_progress', 'unproven', 'blocked'];
 export const EVIDENCE_KINDS = ['commit', 'test_run', 'ci_run', 'pr', 'branch', 'issue', 'doc', 'plan', 'live_probe', 'session_probe'];
 
 // Which evidence kinds may prove a verified claim of a given scope.
-// A plan, CI run, merged PR or passing test can never prove live deployment or a running session.
 export const PROOF_KINDS = {
   source: ['commit', 'pr', 'doc'],
   test: ['test_run'],
-  ci: ['ci_run'],
-  live_deployment: ['live_probe'],
-  running_session: ['session_probe']
+  ci: ['ci_run']
 };
+
+// Scopes an offline generator can never verify. A plan, CI run, merged PR or passing test
+// is never accepted for them, and even a direct probe is only an unauthenticated attestation.
+export const ATTEST_ONLY_SCOPES = {
+  live_deployment: 'live_probe',
+  running_session: 'session_probe'
+};
+
+// Fields a probe must carry before it is even shown as an attestation.
+export const PROBE_PROVENANCE_FIELDS = ['url', 'observed_at', 'observed_by', 'method', 'result'];
 
 export const DEFAULT_MAX_AGE_HOURS = 24;
 
+const FULL_SHA = /^[0-9a-f]{40}$/;
+const HTTPS = /^https:\/\//;
+
+// What counts as a source link differs by kind: commits need a full sha, remote things an https URL.
 function hasLink(entry) {
-  return typeof entry?.url === 'string' && /^https:\/\//.test(entry.url)
-    || typeof entry?.ref === 'string' && entry.ref.trim().length > 0;
+  if (!entry) return false;
+  if (entry.kind === 'commit') return FULL_SHA.test(entry.ref || '');
+  if (['pr', 'issue', 'doc', 'ci_run', 'live_probe', 'session_probe'].includes(entry.kind)) {
+    return typeof entry.url === 'string' && HTTPS.test(entry.url);
+  }
+  return typeof entry.url === 'string' && HTTPS.test(entry.url)
+    || typeof entry.ref === 'string' && entry.ref.trim().length > 0;
 }
 
 function ageHours(observedAt, now) {
   const t = Date.parse(observedAt);
   if (Number.isNaN(t)) return Infinity;
   return (now - t) / 3_600_000;
+}
+
+// Optional offline integrity check: a probe may point at a saved response file inside the
+// repo plus its sha256. A match proves only that the file is unchanged since it was recorded,
+// not that it came from the live system.
+export function checkArtifact(ev, readArtifact = (p) => readFileSync(p)) {
+  if (!ev.artifact && !ev.sha256) return 'no_artifact';
+  if (!ev.artifact || !ev.sha256) return 'artifact_and_sha256_must_be_given_together';
+  const p = normalize(ev.artifact);
+  if (isAbsolute(p) || p.startsWith('..')) return 'artifact_path_outside_repo';
+  let bytes;
+  try { bytes = readArtifact(p); } catch { return 'artifact_missing'; }
+  return createHash('sha256').update(bytes).digest('hex') === ev.sha256 ? 'artifact_sha256_matches' : 'artifact_sha256_mismatch';
 }
 
 export function validateEvidence(doc) {
@@ -41,7 +74,7 @@ export function validateEvidence(doc) {
   for (const [i, item] of (doc.items || []).entries()) {
     if (!item.id || !item.claim) errors.push(`item_${i}_missing_id_or_claim`);
     if (!STATUSES.includes(item.status)) errors.push(`item_${item.id || i}_bad_status`);
-    if (item.status === 'verified' && !PROOF_KINDS[item.scope]) errors.push(`item_${item.id || i}_bad_scope`);
+    if (item.status === 'verified' && !PROOF_KINDS[item.scope] && !ATTEST_ONLY_SCOPES[item.scope]) errors.push(`item_${item.id || i}_bad_scope`);
     for (const ev of item.evidence || []) {
       if (!EVIDENCE_KINDS.includes(ev.kind)) errors.push(`item_${item.id || i}_bad_evidence_kind_${ev.kind}`);
     }
@@ -49,8 +82,36 @@ export function validateEvidence(doc) {
   return errors;
 }
 
-// Returns { bucket, reasons } for one item. Buckets: verified | in_progress | unproven.
-export function classifyItem(item, { now, maxAgeHours = DEFAULT_MAX_AGE_HOURS } = {}) {
+function classifyAttestOnly(item, evidence, { now, maxAgeHours, readArtifact }) {
+  const probeKind = ATTEST_ONLY_SCOPES[item.scope];
+  const probes = evidence.filter((ev) => ev.kind === probeKind);
+  const base = `not_verifiable_by_offline_generator(${item.scope})`;
+  if (!probes.length) {
+    const offered = [...new Set(evidence.map((ev) => ev.kind))].join(',') || 'none';
+    return { bucket: 'unproven', attested: false, reasons: [base, `no_${probeKind}(offered:${offered})`] };
+  }
+  for (const ev of probes) {
+    const missing = PROBE_PROVENANCE_FIELDS.filter((f) => f === 'url' ? !hasLink(ev) : !ev[f]);
+    if (missing.length) continue;
+    if (ageHours(ev.observed_at, now) > maxAgeHours) continue;
+    const artifact = checkArtifact(ev, readArtifact);
+    if (artifact !== 'no_artifact' && artifact !== 'artifact_sha256_matches') continue;
+    return {
+      bucket: 'unproven',
+      attested: true,
+      reasons: [base, `ATTESTED by ${ev.observed_by} at ${ev.observed_at} via ${ev.method} -> ${ev.result}`, artifact, 'unauthenticated: re-probe before relying']
+    };
+  }
+  const ev = probes[0];
+  const missing = PROBE_PROVENANCE_FIELDS.filter((f) => f === 'url' ? !hasLink(ev) : !ev[f]);
+  const why = missing.length ? `probe_missing_provenance(${missing.join(',')})`
+    : ageHours(ev.observed_at, now) > maxAgeHours ? `stale_probe(>${maxAgeHours}h)`
+    : checkArtifact(ev, readArtifact);
+  return { bucket: 'unproven', attested: false, reasons: [base, why] };
+}
+
+// Returns { bucket, reasons, attested? } for one item. Buckets: verified | in_progress | unproven.
+export function classifyItem(item, { now, maxAgeHours = DEFAULT_MAX_AGE_HOURS, readArtifact } = {}) {
   const evidence = Array.isArray(item.evidence) ? item.evidence : [];
   const linked = evidence.filter(hasLink);
   if (item.status === 'blocked' || item.status === 'unproven') {
@@ -63,11 +124,12 @@ export function classifyItem(item, { now, maxAgeHours = DEFAULT_MAX_AGE_HOURS } 
       : { bucket: 'unproven', reasons: ['in_progress_without_branch_pr_or_issue_link'] };
   }
   // status === 'verified': must be earned.
+  if (ATTEST_ONLY_SCOPES[item.scope]) return classifyAttestOnly(item, evidence, { now, maxAgeHours, readArtifact });
   const allowed = PROOF_KINDS[item.scope] || [];
   const proofs = linked.filter((ev) => allowed.includes(ev.kind));
   if (!proofs.length) {
     const offered = [...new Set(evidence.map((ev) => ev.kind))].join(',') || 'none';
-    return { bucket: 'unproven', reasons: [`no_direct_${item.scope}_proof(offered:${offered})`] };
+    return { bucket: 'unproven', reasons: [`no_linked_${item.scope}_proof(offered:${offered})`] };
   }
   const fresh = proofs.filter((ev) => ev.observed_at && ageHours(ev.observed_at, now) <= maxAgeHours);
   if (!fresh.length) return { bucket: 'unproven', reasons: [`stale_or_undated_proof(>${maxAgeHours}h)`] };
@@ -80,16 +142,19 @@ export function classifyItem(item, { now, maxAgeHours = DEFAULT_MAX_AGE_HOURS } 
 export function classifyAll(doc, opts) {
   const out = { verified: [], in_progress: [], unproven: [] };
   for (const item of doc.items) {
-    const { bucket, reasons } = classifyItem(item, opts);
-    out[bucket].push({ ...item, reasons, demoted: item.status === 'verified' && bucket !== 'verified' });
+    const { bucket, reasons, attested = false } = classifyItem(item, opts);
+    out[bucket].push({ ...item, reasons, attested, demoted: item.status === 'verified' && bucket !== 'verified' });
   }
+  // Defence in depth: nothing in an attest-only scope may ever reach VERIFIED DONE.
+  if (out.verified.some((item) => ATTEST_ONLY_SCOPES[item.scope])) throw new Error('attest_only_scope_classified_verified');
   return out;
 }
 
 function linkList(item) {
   const links = (item.evidence || []).filter(hasLink).map((ev) => {
     const label = `${ev.kind}${ev.ref ? `:${ev.ref}` : ''}`;
-    return ev.url ? `[${label}](${ev.url})` : `\`${label}\``;
+    const by = ev.observed_by ? ` (supplied by ${ev.observed_by})` : ' (supplier not recorded)';
+    return (ev.url ? `[${label}](${ev.url})` : `\`${label}\``) + by;
   });
   return links.length ? links.join(', ') : '_no source link_';
 }
@@ -97,15 +162,16 @@ function linkList(item) {
 function bucketLines(items, emptyText) {
   if (!items.length) return [`- ${emptyText}`];
   return items.map((item) => {
-    const note = item.reasons.length ? ` — ${item.demoted ? 'DEMOTED from verified: ' : ''}${item.reasons.join('; ')}` : '';
+    const tag = item.attested ? 'ATTESTED, NOT VERIFIED: ' : item.demoted ? 'DEMOTED from verified: ' : '';
+    const note = item.reasons.length ? ` — ${tag}${item.reasons.join('; ')}` : '';
     return `- **${item.id}** — ${item.claim} — ${linkList(item)}${note}`;
   });
 }
 
-export function buildPrompt(doc, { now = Date.now(), maxAgeHours = DEFAULT_MAX_AGE_HOURS } = {}) {
+export function buildPrompt(doc, { now = Date.now(), maxAgeHours = DEFAULT_MAX_AGE_HOURS, readArtifact } = {}) {
   const errors = validateEvidence(doc);
   if (errors.length) throw new Error(`invalid_evidence: ${errors.join(', ')}`);
-  const b = classifyAll(doc, { now, maxAgeHours });
+  const b = classifyAll(doc, { now, maxAgeHours, readArtifact });
   const na = doc.next_action;
   const list = (xs, fallback) => (xs?.length ? xs.map((x) => `- ${x}`) : [`- ${fallback}`]);
   return [
@@ -114,6 +180,12 @@ export function buildPrompt(doc, { now = Date.now(), maxAgeHours = DEFAULT_MAX_A
     `> Generated ${new Date(now).toISOString()} by \`pi/continuity-handoff.mjs\` from \`${doc.source_file || 'evidence input'}\`.`,
     '> NOT DISPATCHED. This file is a ready-to-paste prompt; no session was started by generating it.',
     '> Buckets are computed from the evidence entries only. Plans, CI and merged PRs never count as live deployment or a running session.',
+    '',
+    '## Trust limits (read before relying on any bucket)',
+    '- This generator ran offline and observed nothing itself. Every entry below is supplied evidence; the supplier is shown next to each link.',
+    '- VERIFIED DONE means only: the supplied evidence is of the right kind for the claim, linked (full commit sha or https URL), and fresh. It does not authenticate the evidence.',
+    '- Live deployment and running-session claims are never VERIFIED DONE here. A supplied probe with full provenance is shown as ATTESTED, NOT VERIFIED under UNPROVEN / BLOCKED; re-probe before relying on it.',
+    '- An artifact sha256 match proves only that a saved file is unchanged since it was recorded, not that it came from the live system.',
     '',
     '## Goal',
     doc.goal,
