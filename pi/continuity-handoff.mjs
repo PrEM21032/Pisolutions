@@ -8,6 +8,7 @@ import { readFileSync, realpathSync, statSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { isAbsolute, normalize, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const STATUSES = ['verified', 'in_progress', 'unproven', 'blocked'];
 export const EVIDENCE_KINDS = ['commit', 'test_run', 'ci_run', 'pr', 'branch', 'issue', 'doc', 'plan', 'live_probe', 'session_probe'];
@@ -280,6 +281,18 @@ async function main(argv) {
   else process.stdout.write(prompt);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Compare real filesystem paths, not `file://${argv[1]}`: import.meta.url is percent-encoded and on
+// Windows is file:///C:/..., so the string form never matched there (or for spaces/symlinks), and the
+// CLI exited 0 without writing anything.
+function isEntryPoint(argvPath) {
+  if (!argvPath) return false;
+  try {
+    return realpathSync(argvPath) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isEntryPoint(process.argv[1])) {
   main(process.argv.slice(2)).catch((err) => { console.error(err.message); process.exit(1); });
 }
