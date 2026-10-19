@@ -8,6 +8,7 @@
 - This generator ran offline and observed nothing itself. Every entry below is supplied evidence; the supplier is shown next to each link.
 - VERIFIED DONE means only: the supplied evidence is of the right kind for the claim, linked (full commit sha or https URL), and fresh (not older than the window, not later than generation time). It does not authenticate the evidence.
 - A CI claim needs a supplied ci_run record saying status completed, conclusion success, at least one job, and the full head sha it ran on. The generator did not fetch that run; re-read it before relying on it.
+- A CI claim must name its commit as a full subject_sha, and only runs whose head_sha equals it count; short shas, urls and claim text are never used to match.
 - Any fresh failing test_run or completed non-success ci_run supplied for the same claim demotes it, even if another record passed.
 - Live deployment and running-session claims are never VERIFIED DONE here. A supplied probe with full provenance is shown as ATTESTED, NOT VERIFIED under UNPROVEN / BLOCKED; re-probe before relying on it.
 - An artifact sha256 match proves only that a saved file is unchanged since it was recorded, not that it came from the live system.
