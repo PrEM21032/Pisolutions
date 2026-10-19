@@ -76,7 +76,9 @@ const row={
   workerPassed:passed.filter(r=>/^PI Chat Worker$/i.test(String(r.name||''))).length,
   additions:null,
   deletions:null,
-  filesChanged:null
+  filesChanged:null,
+  // The collector only records completed UTC days, so its rows are final, not partial snapshots.
+  snapshotPartialDay:false
 };
 
 history.daily=Array.isArray(history.daily)?history.daily:[];

@@ -52,6 +52,9 @@ assert.equal(history.backfill?.unavailableFields?.additions,null,'unknown_additi
 assert.equal(history.backfill?.unavailableFields?.deletions,null,'unknown_deletions_must_not_be_faked');
 assert.equal(history.backfill?.unavailableFields?.filesChanged,null,'unknown_files_changed_must_not_be_faked');
 assert.ok(history.daily.every((row)=>Object.hasOwn(row,'additions') && Object.hasOwn(row,'deletions') && Object.hasOwn(row,'filesChanged')),'daily_code_volume_unknowns_must_be_explicit');
-assert.equal(history.daily.at(-1).snapshotPartialDay,true,'current_snapshot_must_be_marked_partial');
+const finalizedThrough=history.backfill?.autoUpdate?.finalizedThrough;
+const latest=history.daily.at(-1);
+assert.ok(latest.snapshotPartialDay===true || (latest.snapshotPartialDay===false && typeof finalizedThrough==='string' && latest.date<=finalizedThrough),'current_snapshot_must_be_marked_partial_or_finalized');
+assert.ok(history.daily.every((row)=>row.snapshotPartialDay!==false || (typeof finalizedThrough==='string' && row.date<=finalizedThrough)),'finalized_rows_must_not_exceed_collector_finalized_date');
 
 console.log('PI owner privacy and Day 1 history contract tests passed.');
