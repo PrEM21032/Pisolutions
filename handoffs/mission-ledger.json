@@ -1,5 +1,5 @@
 {
-  "sha256": "34cf21b5af9703e65593d403daf05eb8bea48b14d6a50f0271a6fff2b969ab0c",
+  "sha256": "62428d3e362642326df1488b08b8183ecbf6814dcbacb20e783d9717f82b62bc",
   "ledger": {
     "mission_id": "PI-CONTINUITY-2026-10",
     "objective": "Make PI engineering work interruption-tolerant: never lose verified mission state, never confuse claims with evidence, resume safely after interruption (owner directive V2, 2026-10-19).",
@@ -152,6 +152,74 @@
             }
           ]
         }
+      },
+      {
+        "id": "C8",
+        "intent": "Durable executor CLI: add-task, begin, verify (tests in worktree at exact commit)",
+        "branch": "claude/continuity-mission-ledger",
+        "target": "tested",
+        "priority": 7,
+        "depends_on": [
+          "C3"
+        ],
+        "requires": [
+          "code",
+          "local_test"
+        ],
+        "status": "tested",
+        "objective_rev": 1,
+        "lease": {
+          "executor": "claude",
+          "base_sha": "ecf7dcea3653de824f86cbaa80674723541531df",
+          "acquired_at": "2026-10-19T21:04:15.060Z",
+          "expires_at": "2026-10-19T22:04:15.060Z"
+        },
+        "lease_history": [],
+        "evidence": {
+          "commit": "ecf7dcea3653de824f86cbaa80674723541531df",
+          "implemented_by": "claude",
+          "tests": [
+            {
+              "cmd": "npm run -s test:continuity >/dev/null && npm test >/dev/null 2>&1 && npm run -s test:v1.02 >/dev/null 2>&1 && npm run -s test:security >/dev/null 2>&1 && echo ALL_SUITES_PASS",
+              "exit_code": 0,
+              "commit": "ecf7dcea3653de824f86cbaa80674723541531df",
+              "observed_at": "2026-10-19T21:04:15.229Z",
+              "in_worktree": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "C9",
+        "intent": "check reports uncommitted work in the checkout while a lease is active (unsaved work at risk after interruption)",
+        "branch": "claude/continuity-mission-ledger",
+        "target": "tested",
+        "priority": 8,
+        "depends_on": [
+          "C8"
+        ],
+        "requires": [
+          "code",
+          "local_test"
+        ],
+        "status": "pending",
+        "objective_rev": 1
+      },
+      {
+        "id": "C10",
+        "intent": "reconcile flags expired leases on unfinished tasks so abandoned work is visible in next/prompt",
+        "branch": "claude/continuity-mission-ledger",
+        "target": "tested",
+        "priority": 9,
+        "depends_on": [
+          "C8"
+        ],
+        "requires": [
+          "code",
+          "local_test"
+        ],
+        "status": "pending",
+        "objective_rev": 1
       }
     ],
     "blockers": [
@@ -166,6 +234,6 @@
       "node pi/mission-git.mjs prompt --ledger handoffs/mission-ledger.json",
       "Before changing a task: acquire its lease and re-run reconcile; never edit evidence by hand to raise a level"
     ],
-    "seq": 3
+    "seq": 8
   }
 }
