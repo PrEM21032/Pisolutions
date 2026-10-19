@@ -1,0 +1,152 @@
+{
+  "sha256": "3fa5f63dda5565def00ce6768771adcaf53070bb537d43e4126eb55191864543",
+  "ledger": {
+    "mission_id": "PI-CONTINUITY-2026-10",
+    "objective": "Make PI engineering work interruption-tolerant: never lose verified mission state, never confuse claims with evidence, resume safely after interruption (owner directive V2, 2026-10-19).",
+    "objective_rev": 1,
+    "repo": "https://github.com/pisolutions9/Pisolutions9 (canonical); work published on fork https://github.com/PrEM21032/Pisolutions9",
+    "base_sha": "13c0c943cf75ddbf61fc568971426610e61e1985",
+    "authorized_actions": [
+      "code",
+      "local_test",
+      "fork_push"
+    ],
+    "tasks": [
+      {
+        "id": "C7",
+        "intent": "Production verification of the PI Worker (live)",
+        "priority": 0,
+        "requires": [
+          "deploy"
+        ],
+        "status": "pending",
+        "objective_rev": 1
+      },
+      {
+        "id": "C1",
+        "intent": "Offline continuity handoff builder, draft #218 (CI tied to subject_sha)",
+        "branch": "claude/practical-johnson-hy0vob",
+        "target": "independently_verified",
+        "priority": 1,
+        "requires": [
+          "code",
+          "local_test"
+        ],
+        "status": "tested",
+        "objective_rev": 1,
+        "evidence": {
+          "commit": "1ce9b4b96aedf1791ed255395fb9d68d1c9776c1",
+          "implemented_by": "claude",
+          "tests": [
+            {
+              "cmd": "npm run test:continuity && npm test && npm run test:v1.02 && npm run test:security",
+              "exit_code": 0,
+              "commit": "1ce9b4b96aedf1791ed255395fb9d68d1c9776c1",
+              "observed_at": "2026-10-19T19:56:34Z"
+            }
+          ],
+          "note": "Codex verified the same change on fix branch c444549, not on 1ce9b4b itself; no review is recorded against 1ce9b4b."
+        }
+      },
+      {
+        "id": "C2",
+        "intent": "#217 follow-ups: F4 symlink guard, F5 parity test, PR Core parity step (fork draft PR #2)",
+        "branch": "claude/pr217-parity-pr-core",
+        "target": "tested",
+        "priority": 2,
+        "requires": [
+          "code",
+          "local_test"
+        ],
+        "status": "tested",
+        "objective_rev": 1,
+        "evidence": {
+          "commit": "4a504e9807e986a0e9dc02e6d1744591f9035052",
+          "implemented_by": "claude",
+          "tests": [
+            {
+              "cmd": "bash -e replay of PR Core steps; npm run test:security; npm test",
+              "exit_code": 0,
+              "commit": "4a504e9807e986a0e9dc02e6d1744591f9035052",
+              "observed_at": "2026-10-19T19:19:00Z"
+            }
+          ]
+        }
+      },
+      {
+        "id": "C3",
+        "intent": "Mission ledger engine: checkpoints, leases, reconciler, selector, recovery test",
+        "branch": "claude/continuity-mission-ledger",
+        "target": "tested",
+        "priority": 3,
+        "requires": [
+          "code",
+          "local_test"
+        ],
+        "status": "tested",
+        "objective_rev": 1,
+        "evidence": {
+          "commit": "c969913ee2e09f829c3599b77087f9785d48b179",
+          "implemented_by": "claude",
+          "tests": [
+            {
+              "cmd": "npm run test:continuity && npm test && npm run test:v1.02 && npm run test:security",
+              "exit_code": 0,
+              "commit": "c969913ee2e09f829c3599b77087f9785d48b179",
+              "observed_at": "2026-10-19T20:34:11Z"
+            }
+          ]
+        }
+      },
+      {
+        "id": "C4",
+        "intent": "Record #218 CI check runs on its head as ci_run evidence with subject_sha",
+        "priority": 4,
+        "requires": [
+          "github_read_upstream"
+        ],
+        "status": "pending",
+        "objective_rev": 1
+      },
+      {
+        "id": "C5",
+        "intent": "Decide fork draft PR #2 (#217 follow-ups): review-only, CI-run PR to fork main, or adoption into #217",
+        "priority": 5,
+        "requires": [
+          "owner_decision"
+        ],
+        "status": "pending",
+        "objective_rev": 1
+      },
+      {
+        "id": "C6",
+        "intent": "Ledger CLI: `check` command (non-zero exit on contradictions) and --out for the continuation prompt",
+        "branch": "claude/continuity-mission-ledger",
+        "target": "tested",
+        "priority": 6,
+        "depends_on": [
+          "C3"
+        ],
+        "requires": [
+          "code",
+          "local_test"
+        ],
+        "status": "pending",
+        "objective_rev": 1
+      }
+    ],
+    "blockers": [
+      "C4: this session cannot read canonical GitHub API (403) — needs a session with pisolutions9/Pisolutions9 as source, or Codex/owner to supply check runs",
+      "C5: owner decision on fork PR #2",
+      "C1: independent review of 1ce9b4b itself (Codex reviewed identical content on c444549)",
+      "C7: production verification is forbidden for this engine; requires separate owner-approved live process"
+    ],
+    "recovery": [
+      "git fetch origin claude/continuity-mission-ledger && git checkout claude/continuity-mission-ledger",
+      "node pi/mission-git.mjs next --ledger handoffs/mission-ledger.json --executor claude",
+      "node pi/mission-git.mjs prompt --ledger handoffs/mission-ledger.json",
+      "Before changing a task: acquire its lease and re-run reconcile; never edit evidence by hand to raise a level"
+    ],
+    "seq": 1
+  }
+}
