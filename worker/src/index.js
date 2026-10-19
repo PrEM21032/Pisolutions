@@ -532,8 +532,10 @@ function weatherLocationQuery(message=''){
   const prefix=value.match(/^\s*([A-Za-z][A-Za-z .,'-]{1,80}?)\s+(?:weather|forecast|temperature)\b/i);
   if(prefix?.[1]){
     const cleaned=prefix[1].trim();
-    const looksLikeQuestionLead=/^(?:what|whats|what's|how|tell|give|is|are|can|could|would|im|i'm|i am)\b/i.test(cleaned);
-    if(cleaned&&!looksLikeQuestionLead)return cleaned.slice(0,120);
+    const looksLikeQuestionLead=/^(?:what|whats|what's|how|tell|give|is|are|can|could|would|im|i'm|i am|hey|hi|hello|yo|ok|okay|so)\b/i.test(cleaned);
+    // A place name never spans a sentence; fall through to the in/around/near extraction instead.
+    const spansSentence=/[.?!]/.test(cleaned);
+    if(cleaned&&!looksLikeQuestionLead&&!spansSentence)return cleaned.slice(0,120);
   }
   const coarse=value.match(/\b(?:in|around|near)\s+([^,?.!]{2,100})/i);
   if(coarse?.[1]){

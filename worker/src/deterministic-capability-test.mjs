@@ -253,6 +253,37 @@ try {
   assert.match(pensacola.answer,/Pensacola, Florida, United States/);
   assert.match(pensacola.answer,/highest precipitation probability 40%/);
 
+  // A greeting lead and a sentence boundary before "weather" must not become the geocoded place name.
+  const birminghamQueries=[];
+  globalThis.fetch = async (url) => {
+    const value=String(url);
+    if(value.startsWith('https://geocoding-api.open-meteo.com/v1/search')){
+      const query=new URL(value).searchParams.get('name');
+      birminghamQueries.push(query);
+      if(query==='Birmingham Alabama')return new Response(JSON.stringify({results:[]}),{status:200});
+      assert.equal(query,'Birmingham');
+      return new Response(JSON.stringify({results:[
+        {name:'Birmingham',admin1:'England',country:'United Kingdom',latitude:52.48142,longitude:-1.89983},
+        {name:'Birmingham',admin1:'Alabama',country:'United States',latitude:33.52066,longitude:-86.80249}
+      ]}),{status:200});
+    }
+    if(value.startsWith('https://api.open-meteo.com/v1/forecast')){
+      const params=new URL(value).searchParams;
+      assert.equal(params.get('latitude'),'33.52066');
+      assert.equal(params.get('longitude'),'-86.80249');
+      return new Response(JSON.stringify({timezone:'America/Chicago',current:{time:'2026-10-19T05:00',temperature_2m:61,weather_code:3},hourly:{time:['2026-10-19T06:00'],precipitation_probability:[35],precipitation:[0.01]}}),{status:200});
+    }
+    throw new Error('unexpected Birmingham weather URL: '+url);
+  };
+  const birminghamResponse=await ask('hey im around Birmingham Alabama, leaving later. what is weather right now and chance of rain in next six hours? source it.');
+  const birmingham=await birminghamResponse.json();
+  assert.deepEqual(birminghamQueries,['Birmingham Alabama','Birmingham']);
+  assert.equal(birminghamResponse.status,200);
+  assert.equal(birmingham.source,'pi-weather-open-meteo');
+  assert.equal(birmingham.truth,'live-data-response');
+  assert.match(birmingham.answer,/Birmingham, Alabama, United States/);
+  assert.match(birmingham.answer,/highest precipitation probability 35%/);
+
   globalThis.fetch = async (url) => {
     const value=String(url);
     if(value.startsWith('https://serpapi.com/search.json?')){
