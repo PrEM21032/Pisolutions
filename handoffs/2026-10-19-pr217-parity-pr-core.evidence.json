@@ -1,0 +1,166 @@
+{
+  "generated_at": "2026-10-19T19:19:49Z",
+  "author": "Claude Code cloud session; generator pi/continuity-handoff.mjs @ 1cf9229b951ffa03a08d8dd4baee94f8621df994 (PR #218), run from scratch copy",
+  "goal": "Advance the PI Continuity Engine with one reversible, provider-free step per session, reporting only what fresh evidence proves.",
+  "repo": {
+    "name": "https://github.com/pisolutions9/Pisolutions9",
+    "ref": "main",
+    "sha": "13c0c943cf75ddbf61fc568971426610e61e1985",
+    "work_branch": "PrEM21032/Pisolutions9:claude/pr217-parity-pr-core (based on integration head e026f56)"
+  },
+  "items": [
+    {
+      "id": "heads",
+      "claim": "At 19:17Z: #217 head 9ec0def (fork claude/predeploy-config-validation also 9ec0def), integration branch claude/pr217-f4-f5-integration at e026f56, upstream main 13c0c94 \u2014 unchanged",
+      "status": "verified",
+      "scope": "source",
+      "evidence": [
+        {
+          "kind": "commit",
+          "ref": "e026f5645d806c06f0315203499503f234437361",
+          "url": "https://github.com/PrEM21032/Pisolutions9/commit/e026f5645d806c06f0315203499503f234437361",
+          "observed_at": "2026-10-19T19:17:18Z",
+          "observed_by": "git ls-remote"
+        },
+        {
+          "kind": "commit",
+          "ref": "9ec0def5e8c6cf3c35e1407c06102c61822c1c39",
+          "url": "https://github.com/pisolutions9/Pisolutions9/pull/217/commits/9ec0def5e8c6cf3c35e1407c06102c61822c1c39",
+          "observed_at": "2026-10-19T19:17:18Z",
+          "observed_by": "git ls-remote"
+        }
+      ]
+    },
+    {
+      "id": "why-not-run",
+      "claim": "Before this change PR Core did not run parity: its steps are npm run test:v1.02 (package.json script has no validate-deploy reference) and validate-deploy-configuration-test.mjs only; grep for 'parity' in .github and package.json is empty; and paths did not include pi-chat-worker.yml, so shell-only drift would not even trigger PR Core",
+      "status": "verified",
+      "scope": "source",
+      "evidence": [
+        {
+          "kind": "commit",
+          "ref": "e026f5645d806c06f0315203499503f234437361",
+          "url": "https://github.com/PrEM21032/Pisolutions9/blob/e026f5645d806c06f0315203499503f234437361/.github/workflows/pi-v102-pr-core.yml",
+          "observed_at": "2026-10-19T19:17:18Z",
+          "observed_by": "claude-code session (this container)"
+        }
+      ]
+    },
+    {
+      "id": "additive-diff",
+      "claim": "Workflow diff vs e026f56 is +6/-0 in pi-v102-pr-core.yml only (one trigger path, one step); pi-chat-worker.yml and package.json unchanged; both workflows parse with PyYAML 6.0.1",
+      "status": "verified",
+      "scope": "source",
+      "evidence": [
+        {
+          "kind": "commit",
+          "ref": "4a504e9807e986a0e9dc02e6d1744591f9035052",
+          "url": "https://github.com/PrEM21032/Pisolutions9/commit/4a504e9807e986a0e9dc02e6d1744591f9035052",
+          "observed_at": "2026-10-19T19:18:10Z",
+          "observed_by": "git diff + python3 yaml.safe_load (this container)"
+        }
+      ]
+    },
+    {
+      "id": "workflow-regression",
+      "claim": "pr-core-workflow-test.mjs passes and catches 6 mutations (parity command removed, `|| true` on v1.02, trigger path removed, continue-on-error, focused step removed, secret referenced); workflow restored byte-identical after",
+      "status": "verified",
+      "scope": "test",
+      "evidence": [
+        {
+          "kind": "test_run",
+          "ref": "cd worker && node scripts/pr-core-workflow-test.mjs (+ sed mutations, each exit 1; recorded exit is the unmutated run)",
+          "exit_code": 0,
+          "observed_at": "2026-10-19T19:18:00Z",
+          "observed_by": "claude-code session (this container)"
+        }
+      ]
+    },
+    {
+      "id": "pr-core-replay",
+      "claim": "Local replay of PR Core run steps with bash -e: npm run test:v1.02, validate-deploy-configuration-test, and the new step (parity 45 cases + workflow test) all exit 0; also test:security and npm test exit 0",
+      "status": "verified",
+      "scope": "test",
+      "evidence": [
+        {
+          "kind": "test_run",
+          "ref": "bash -e replay of each run: block @4a504e9807e986a0e9dc02e6d1744591f9035052; npm run test:security; npm test",
+          "exit_code": 0,
+          "observed_at": "2026-10-19T19:19:00Z",
+          "observed_by": "claude-code session (this container)"
+        }
+      ]
+    },
+    {
+      "id": "pr-core-branch",
+      "claim": "PR Core parity step on isolated fork branch; #217 branch, integration branch, deploy workflow, secrets and thresholds untouched",
+      "status": "in_progress",
+      "evidence": [
+        {
+          "kind": "branch",
+          "ref": "PrEM21032/Pisolutions9:claude/pr217-parity-pr-core",
+          "url": "https://github.com/PrEM21032/Pisolutions9/tree/claude/pr217-parity-pr-core",
+          "observed_by": "claude-code session (this container)"
+        }
+      ]
+    },
+    {
+      "id": "pr-core-ci",
+      "claim": "No GitHub Actions run exists for this commit: PR Core triggers only on pull_request to main, and this fork branch has no PR. The new step has never run on a GitHub runner",
+      "status": "unproven",
+      "evidence": []
+    },
+    {
+      "id": "runner-differences",
+      "claim": "Not verified on ubuntu-latest: python availability (test falls back from python to python3), bash/coreutils paths used by the parity stubs; no actionlint available locally",
+      "status": "unproven",
+      "evidence": []
+    },
+    {
+      "id": "upstream-write",
+      "claim": "No upstream write or API access verified in this session",
+      "status": "blocked",
+      "evidence": []
+    },
+    {
+      "id": "live-worker-deployment",
+      "claim": "Production Worker health \u2014 not probed; no live evidence",
+      "status": "unproven",
+      "evidence": []
+    },
+    {
+      "id": "agent-sessions-running",
+      "claim": "Whether Codex or any other session is running now \u2014 no session probe; assume NOT running",
+      "status": "unproven",
+      "evidence": []
+    }
+  ],
+  "next_action": {
+    "task": "With owner approval, get a real PR Core run for 4a504e9: open a DRAFT PR (fork or upstream, whichever the owner authorizes) whose base triggers PR Core, then record the run as a full ci_run entry (status, conclusion, jobs, head_sha, url, observed_at) and classify it with the #218 builder. Do not merge.",
+    "acceptance": [
+      "Owner authorization for the draft PR recorded",
+      "PR Core run on head 4a504e9 recorded with all ci_run fields, or marked UNPROVEN if no run appears",
+      "If the run fails, root-cause from logs before changing anything; never weaken the step",
+      "Regenerated prompt"
+    ],
+    "avoid": [
+      "No pushes to #217's branch, the integration/F4/F5 branches, #218 or the deploy workflow",
+      "Do not touch PI City or #218 artifact-boundary review (Codex), or #214/#215"
+    ]
+  },
+  "safety": [
+    "No merge, deploy, secret read/write, billing/Stripe change, paid model/provider call, purchase or hardware motion without separate explicit owner approval",
+    "Do not weaken or skip any gate or test; the workflow regression forbids continue-on-error, `|| true`, step if:, secrets and wrangler in PR Core",
+    "Local replay is not CI; claim CI only from a real run on the current head",
+    "Live/session claims need a direct probe and stay attested, never verified"
+  ],
+  "rollback": [
+    "Delete branch claude/pr217-parity-pr-core, or git revert 4a504e9; it adds one trigger path, one PR Core step and one test file",
+    "Nothing deployed; #217 and its branch untouched"
+  ],
+  "next_inspect": [
+    "git ls-remote upstream refs/pull/217/head and fork branches claude/pr217-parity-pr-core, claude/pr217-f4-f5-integration, claude/predeploy-config-validation",
+    "Any GitHub Actions run of 'PI V1.02 PR Core' on 4a504e9 (all ci_run fields)",
+    "Codex's #218 artifact-boundary review and City work (do not duplicate)"
+  ]
+}
