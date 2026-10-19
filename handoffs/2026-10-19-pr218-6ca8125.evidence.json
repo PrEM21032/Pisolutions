@@ -1,0 +1,159 @@
+{
+  "generated_at": "2026-10-19T19:49:03Z",
+  "author": "Claude Code cloud session; generator = pi/continuity-handoff.mjs @ 6ca81257262418417bf4e172e25209f9e14da8a5 (direct CLI)",
+  "goal": "Advance the PI Continuity Engine with one reversible, provider-free step per session, reporting only what fresh evidence proves.",
+  "repo": {
+    "name": "https://github.com/pisolutions9/Pisolutions9",
+    "ref": "main",
+    "sha": "13c0c943cf75ddbf61fc568971426610e61e1985",
+    "work_branch": "PrEM21032/Pisolutions9:claude/practical-johnson-hy0vob (#218) at 6ca8125; handoff on claude/continuity-pr218-6ca8125-handoff"
+  },
+  "items": [
+    {
+      "id": "pre-push-heads",
+      "claim": "Before push (19:47:20Z, re-checked immediately before push): canonical #218 head and fork claude/practical-johnson-hy0vob = 13d5c8a; fix branch claude/pr218-conflicting-evidence = 6caa191",
+      "status": "verified",
+      "scope": "source",
+      "evidence": [
+        {
+          "kind": "commit",
+          "ref": "13d5c8a50bd0feeb47e7018e26e8027bf2c503fe",
+          "url": "https://github.com/pisolutions9/Pisolutions9/pull/218/commits/13d5c8a50bd0feeb47e7018e26e8027bf2c503fe",
+          "observed_at": "2026-10-19T19:47:20Z",
+          "observed_by": "git ls-remote"
+        }
+      ]
+    },
+    {
+      "id": "cherry-pick",
+      "claim": "Only b6b768c cherry-picked (-x) onto 13d5c8a as 6ca8125: clean; pi/ and handoffs/ identical to b6b768c; .github and package.json unchanged; fast-forward; handoff commit 6caa191 not included",
+      "status": "verified",
+      "scope": "source",
+      "evidence": [
+        {
+          "kind": "commit",
+          "ref": "6ca81257262418417bf4e172e25209f9e14da8a5",
+          "url": "https://github.com/PrEM21032/Pisolutions9/commit/6ca81257262418417bf4e172e25209f9e14da8a5",
+          "observed_at": "2026-10-19T19:47:28Z",
+          "observed_by": "claude-code session (this container, Linux)"
+        }
+      ]
+    },
+    {
+      "id": "suites",
+      "claim": "On 6ca8125: npm run test:continuity, npm test, npm run test:v1.02, npm run test:security exit 0; direct CLI --out output byte-identical to the committed #218 prompt",
+      "status": "verified",
+      "scope": "test",
+      "evidence": [
+        {
+          "kind": "test_run",
+          "ref": "npm run test:continuity; npm test; npm run test:v1.02; npm run test:security; direct CLI + cmp @6ca81257262418417bf4e172e25209f9e14da8a5",
+          "exit_code": 0,
+          "observed_at": "2026-10-19T19:48:17Z",
+          "observed_by": "claude-code session (this container, Linux)"
+        }
+      ]
+    },
+    {
+      "id": "push-ff",
+      "claim": "Fast-forward push 13d5c8a..6ca8125 to fork claude/practical-johnson-hy0vob; canonical PR #218 head followed to 6ca8125 by 19:48:33Z",
+      "status": "verified",
+      "scope": "source",
+      "evidence": [
+        {
+          "kind": "pr",
+          "ref": "#218@6ca8125",
+          "url": "https://github.com/pisolutions9/Pisolutions9/pull/218",
+          "observed_at": "2026-10-19T19:48:33Z",
+          "observed_by": "git push output + git ls-remote refs/pull/218/head"
+        }
+      ]
+    },
+    {
+      "id": "codex-verification",
+      "claim": "Codex independently verified the fix before this push (four mixed pass/fail cases VERIFIED on 13d5c8a, UNPROVEN on 6caa191; compare 2 ahead/0 behind, no workflow/package changes) \u2014 relayed by owner, not observed here",
+      "status": "unproven",
+      "evidence": [
+        {
+          "kind": "pr",
+          "ref": "#218",
+          "url": "https://github.com/pisolutions9/Pisolutions9/pull/218",
+          "observed_by": "Codex (relayed by owner)"
+        }
+      ]
+    },
+    {
+      "id": "pr218",
+      "claim": "Draft #218 continuity builder now includes contradicting-evidence demotion; draft state not re-read here (API 403); not merged",
+      "status": "in_progress",
+      "evidence": [
+        {
+          "kind": "pr",
+          "ref": "#218@6ca8125",
+          "url": "https://github.com/pisolutions9/Pisolutions9/pull/218",
+          "observed_at": "2026-10-19T19:48:33Z",
+          "observed_by": "git ls-remote"
+        }
+      ]
+    },
+    {
+      "id": "pr218-ci",
+      "claim": "CI for 6ca8125 not observed: canonical check-runs API 403 here; fork has 0 workflow runs for the branch. Held runs, if any, not approved by this session",
+      "status": "unproven",
+      "evidence": [
+        {
+          "kind": "pr",
+          "ref": "#218 checks",
+          "url": "https://github.com/pisolutions9/Pisolutions9/pull/218/checks",
+          "observed_by": "claude-code session (this container, Linux)"
+        }
+      ]
+    },
+    {
+      "id": "audit-open-items",
+      "claim": "Still open from the audit: ci_run head_sha not tied to the claim's commit; supplier-chosen scope; ci_run url not checked to be GitHub Actions",
+      "status": "unproven",
+      "evidence": []
+    },
+    {
+      "id": "live-worker-deployment",
+      "claim": "Production Worker health \u2014 not probed; no live evidence",
+      "status": "unproven",
+      "evidence": []
+    },
+    {
+      "id": "agent-sessions-running",
+      "claim": "Whether Codex or any other session is running now \u2014 no session probe; assume NOT running",
+      "status": "unproven",
+      "evidence": []
+    }
+  ],
+  "next_action": {
+    "task": "Have Codex (or the owner) record #218's check runs on 6ca8125 as full ci_run entries and classify them. Then, on a NEW isolated branch from 6ca8125, address audit item 1: an optional per-item subject_sha for ci claims that every passing ci_run.head_sha must equal (failing-before/passing-after regression), without moving #218.",
+    "acceptance": [
+      "#218 head re-checked (expect 6ca8125)",
+      "Each check run recorded with status/conclusion/jobs/head_sha/url/observed_at, or UNPROVEN",
+      "subject_sha regression fails on 6ca8125 and passes after; existing evidence buckets unchanged",
+      "Regenerated prompt"
+    ],
+    "avoid": [
+      "No further pushes to #218 without owner approval and a fresh head check; no merge; no workflow changes",
+      "Do not touch #217, fork PR #2, PI City or #214/#215"
+    ]
+  },
+  "safety": [
+    "No merge, deploy, secret read/write, billing/Stripe change, paid model/provider call, purchase or hardware motion without separate explicit owner approval",
+    "Do not approve held Actions or weaken/skip any gate or test",
+    "Local Linux runs are not CI",
+    "Live/session claims need a direct probe and stay attested, never verified"
+  ],
+  "rollback": [
+    "git revert 6ca8125 on claude/practical-johnson-hy0vob (returns #218 content to 13d5c8a), or with owner approval force-with-lease back to 13d5c8a",
+    "Delete claude/continuity-pr218-6ca8125-handoff; nothing deployed"
+  ],
+  "next_inspect": [
+    "git ls-remote upstream refs/pull/218/head and fork claude/practical-johnson-hy0vob",
+    "#218 check runs and comments",
+    "Fork PR #2 and Codex's City work (do not duplicate)"
+  ]
+}
