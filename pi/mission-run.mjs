@@ -18,8 +18,10 @@ const fail = (code, message) => { throw Object.assign(new Error(message), { code
 // Uncommitted changes other than the ledger file itself; begin/verify refuse to act on a dirty tree.
 export function dirtyPaths(repo, ledgerPath) {
   const ledgerRel = relative(realpathSync(repo), realpathSync(resolve(ledgerPath)));
-  return git(repo, ['status', '--porcelain']).split('\n').filter(Boolean)
-    .map((line) => line.slice(3)).filter((p) => p !== ledgerRel && !p.startsWith(`${ledgerRel}.tmp-`));
+  // Not via git(): trimming would strip the leading status space of the first line (" M path").
+  const status = execFileSync('git', ['status', '--porcelain=v1', '-z'], { cwd: repo, encoding: 'utf8' });
+  return status.split('\0').filter(Boolean).map((entry) => entry.slice(3))
+    .filter((p) => p !== ledgerRel && !p.startsWith(`${ledgerRel}.tmp-`));
 }
 
 export function addTask(ledgerPath, spec) {

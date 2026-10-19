@@ -35,17 +35,22 @@ try {
   assert.match(run('add-task', '--id', 'R1', '--intent', 'other').stderr, /duplicate_task_id:R1/);
   assert.match(run('add-task', '--id', 'R9', '--intent', '  fix ADD!! ').stderr, /duplicate_task_intent:R1/);
   assert.match(run('add-task', '--id', 'bad id', '--intent', 'x').stderr, /task id must be/);
-  g('commit', '-qam', 'tasks');
 
   // begin: only the selector's choice, only on a clean tree.
   assert.match(run('begin', '--task', 'R2', '--executor', 'claude').stderr, /selector_chose:R1/);
   writeFileSync(join(repo, 'scratch.txt'), 'wip');
   assert.match(run('begin', '--task', 'R1', '--executor', 'claude').stderr, /uncommitted_changes:scratch\.txt/);
   rmSync(join(repo, 'scratch.txt'));
+  // A modified tracked file (porcelain " M path", leading space) is reported with its full name.
+  writeFileSync(join(repo, 'calc-test.mjs'), readFileSync(join(repo, 'calc-test.mjs'), 'utf8') + '\n');
+  assert.match(run('begin', '--task', 'R1', '--executor', 'claude').stderr, /uncommitted_changes:calc-test\.mjs$/m);
+  g('checkout', '--', 'calc-test.mjs');
+  // The modified tracked ledger itself (" M ledger.json") does not count as dirty.
+  assert.match(execFileSync('git', ['status', '--porcelain'], { cwd: repo, encoding: 'utf8' }), /^ M ledger\.json$/m, 'precondition: ledger modified by add-task');
   const began = run('begin', '--task', 'R1', '--executor', 'claude');
   assert.equal(began.status, 0, began.stderr);
   assert.equal(out(began).step, 'implement');
-  g('commit', '-qam', 'lease R1');
+  g('commit', '-qam', 'tasks and lease R1');
 
   // verify needs a task commit; then tests the exact commit even after HEAD moves on and breaks the code.
   assert.match(run('verify', '--task', 'R1', '--executor', 'claude', '--cmd', 'node calc-test.mjs').stderr, /no_verifiable_commit/);

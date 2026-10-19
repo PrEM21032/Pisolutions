@@ -177,6 +177,24 @@ console.log(JSON.stringify({ leftovers, recovered: rec.T1.unknowns, exit: run.st
   assert.match(failing.stderr, /T3: .*unverifiable_offline:production_verified/);
   const diskAfter = readFileSync(ledgerPath, 'utf8');
 
+  // Fix-up commits for one task on a single line resolve to the newest; diverging task commits are a conflict.
+  {
+    const line = { ...l, tasks: [...l.tasks, { id: 'T6', intent: 'fixups', branch: 'work', priority: 9, status: 'pending', objective_rev: 1 }] };
+    g('commit', '-q', '--allow-empty', '-m', 'first\n\nMission-Id: M-TEST\nMission-Task: T6');
+    const first = head();
+    g('commit', '-q', '--allow-empty', '-m', 'fixup\n\nMission-Id: M-TEST\nMission-Task: T6');
+    const fixup = head();
+    let r6 = reconcile(line, gitFacts(repo, line), { now: T0 }).T6;
+    assert.equal(r6.commit, fixup);
+    assert.ok(r6.unknowns.includes('task_commits:2') && r6.contradictions.length === 0);
+    g('branch', 'side', first); g('checkout', '-q', 'side');
+    g('commit', '-q', '--allow-empty', '-m', 'diverging\n\nMission-Id: M-TEST\nMission-Task: T6');
+    g('checkout', '-q', 'work'); g('merge', '-q', '--no-ff', '-m', 'merge side', 'side');
+    r6 = reconcile(line, gitFacts(repo, line), { now: T0 }).T6;
+    assert.ok(r6.contradictions.some((c) => c.startsWith('multiple_task_commits:')), JSON.stringify(r6));
+    g('reset', '-q', '--hard', leaseBase); // temp repo only
+  }
+
   // 10. Corrupted checkpoint is detected instead of trusted.
   writeFileSync(ledgerPath, diskAfter.replace('"pending"', '"tested"'));
   assert.throws(() => loadLedger(ledgerPath), /ledger_corrupt/);
@@ -203,4 +221,4 @@ for (const banned of ["'fetch'", "'push'", "'pull'", "'clone'", "'ls-remote'", "
   assert.ok(!gitSrc.includes(banned), `mission-git.mjs must not use ${banned}`);
 }
 
-console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true, cliCheckAndOut: true }));
+console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true, cliCheckAndOut: true, fixupCommitsResolved: true }));

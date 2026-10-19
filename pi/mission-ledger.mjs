@@ -112,7 +112,15 @@ export function reconcile(ledger, facts, { now }) {
       commit = found[0];
       unknowns.push(`recovered_commit_from_trailer:${commit.slice(0, 7)}`);
     } else if (!commit && found.length > 1) {
-      contradictions.push(`multiple_task_commits:${found.map((s) => s.slice(0, 7)).join(',')}`);
+      // Fix-up commits on one line of history are normal: the newest one (descendant of all others) is the task's
+      // commit. Commits that diverge are a conflict.
+      const newest = found.find((c) => found.every((o) => o === c || facts.ancestor(o, c)));
+      if (newest) {
+        commit = newest;
+        unknowns.push(`recovered_commit_from_trailer:${commit.slice(0, 7)}`, `task_commits:${found.length}`);
+      } else {
+        contradictions.push(`multiple_task_commits:${found.map((s) => s.slice(0, 7)).join(',')}`);
+      }
     }
     if (commit) {
       const head = facts.branchHeads?.[task.branch];
