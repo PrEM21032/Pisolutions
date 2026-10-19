@@ -1,4 +1,5 @@
-import { pathToFileURL } from 'node:url';
+import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 // Offline checks that the post-deploy configuration steps would otherwise only reach after
 // `wrangler deploy` has already replaced the production Worker. Messages name variables, never values.
@@ -27,7 +28,17 @@ export function validateDeployConfiguration(env) {
   return errors;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Compare real paths so running through a symlink still validates instead of silently exiting 0.
+function isEntryPoint(argvPath) {
+  if (!argvPath) return false;
+  try {
+    return realpathSync(argvPath) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isEntryPoint(process.argv[1])) {
   const errors = validateDeployConfiguration(process.env);
   if (errors.length) {
     for (const error of errors) console.error(error);
