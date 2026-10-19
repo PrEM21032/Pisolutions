@@ -1,11 +1,12 @@
 import { readFile, mkdir, rm } from 'node:fs/promises';
-import { existsSync, mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, normalize } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { buildPrompt, checkArtifact, classifyItem, validateEvidence } from './continuity-handoff.mjs';
-const builderPath = new URL('./continuity-handoff.mjs', import.meta.url).pathname;
+const builderPath = fileURLToPath(new URL('./continuity-handoff.mjs', import.meta.url));
 
 const now = Date.parse('2026-10-19T12:00:00Z');
 const fresh = '2026-10-19T11:00:00Z';
@@ -40,7 +41,8 @@ for (const [scope, kind] of [['live_deployment', 'live_probe'], ['running_sessio
 // Optional saved-response artifact: hash must match the file; even a match stays ATTESTED only.
 const body = Buffer.from('{"ok":true}');
 const hash = createHash('sha256').update(body).digest('hex');
-const files = { 'handoffs/probe.json': body };
+// checkArtifact passes path.normalize(artifact) to the reader, which uses \\ on Windows.
+const files = { [normalize('handoffs/probe.json')]: body };
 const readArtifact = (p) => { if (!(p in files)) throw new Error('ENOENT'); return files[p]; };
 expect(checkArtifact({ artifact: 'handoffs/probe.json', sha256: hash }, readArtifact) === 'artifact_sha256_matches', 'artifact_match_rejected');
 expect(checkArtifact({ artifact: 'handoffs/probe.json', sha256: '0'.repeat(64) }, readArtifact) === 'artifact_sha256_mismatch', 'artifact_mismatch_accepted');
@@ -91,6 +93,34 @@ try {
   rmSync(sandbox, { recursive: true, force: true });
 }
 expect(!existsSync(sandbox), 'artifact_sandbox_not_cleaned');
+
+// Regression (Codex, Windows; reproduced on Linux for spaces/symlinks on 1cf9229): the entry check compared
+// import.meta.url with `file://${argv[1]}`, so a direct CLI run exited 0 without writing the prompt.
+const cliBox = mkdtempSync(join(tmpdir(), 'pi-cli entry-'));
+try {
+  const evidenceFile = join(cliBox, 'evidence.json');
+  writeFileSync(evidenceFile, JSON.stringify({ goal: 'g', repo: { name: 'r', ref: 'main' }, next_action: { task: 't' }, items: [] }));
+  const runCli = (entry, out) => {
+    execFileSync('node', [entry, '--evidence', evidenceFile, '--now', new Date(now).toISOString(), '--out', out]);
+    return existsSync(out) ? readFileSync(out, 'utf8') : null;
+  };
+  const spaced = join(cliBox, 'dir with space');
+  mkdirSync(spaced);
+  copyFileSync(builderPath, join(spaced, 'continuity-handoff.mjs'));
+  const viaSpace = runCli(join(spaced, 'continuity-handoff.mjs'), join(cliBox, 'space.md'));
+  expect(viaSpace !== null && viaSpace.includes('## VERIFIED DONE'), 'direct_cli_did_not_write_prompt');
+  symlinkSync(builderPath, join(cliBox, 'entry-link.mjs'));
+  const viaLink = runCli(join(cliBox, 'entry-link.mjs'), join(cliBox, 'link.md'));
+  expect(viaLink !== null && viaLink === viaSpace, 'symlinked_cli_did_not_write_prompt');
+  // Importing the module must stay inert: no output, no prompt written.
+  const importer = join(cliBox, 'importer.mjs');
+  writeFileSync(importer, `import ${JSON.stringify(new URL('./continuity-handoff.mjs', import.meta.url).href)};\n`);
+  const imported = execFileSync('node', [importer, '--evidence', evidenceFile, '--out', join(cliBox, 'import.md')], { encoding: 'utf8' });
+  expect(imported === '' && !existsSync(join(cliBox, 'import.md')), 'import_ran_cli');
+} finally {
+  rmSync(cliBox, { recursive: true, force: true });
+}
+expect(!existsSync(cliBox), 'cli_sandbox_not_cleaned');
 
 // The rendered prompt never lists a live/session claim under VERIFIED DONE, and shows the trust limits.
 const probeDoc = { goal: 'g', repo: { name: 'r', ref: 'main' }, next_action: { task: 't' }, items: [
@@ -194,4 +224,4 @@ for (const banned of ['fetch(', "'node:http", "'node:https", "'node:net", "'node
   expect(!src.includes(banned), `provider_free_violation_${banned}`);
 }
 
-console.log(JSON.stringify({ ok: true, liveNeverVerified: true, sessionNeverVerified: true, probesAttestedOnly: true, artifactIntegrityChecked: true, fullShaRequired: true, ciNeedsCompletedSuccess: true, artifactSymlinkEscapeBlocked: true, futureTimestampsRejected: true, linksRequired: true, freshnessEnforced: true, committedPromptCurrent: true, providerFree: true }));
+console.log(JSON.stringify({ ok: true, liveNeverVerified: true, sessionNeverVerified: true, probesAttestedOnly: true, artifactIntegrityChecked: true, fullShaRequired: true, ciNeedsCompletedSuccess: true, artifactSymlinkEscapeBlocked: true, crossPlatformCliEntry: true, futureTimestampsRejected: true, linksRequired: true, freshnessEnforced: true, committedPromptCurrent: true, providerFree: true }));
