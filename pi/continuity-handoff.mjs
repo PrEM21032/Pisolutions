@@ -4,10 +4,10 @@
 // evidence entries supplied. The generator observes nothing itself, so it can never verify
 // live deployment or a running session: supplied probes for those are shown as ATTESTED
 // (unauthenticated, re-probe before relying) under UNPROVEN, never as VERIFIED DONE.
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync, statSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { isAbsolute, normalize } from 'node:path';
+import { isAbsolute, normalize, resolve, sep } from 'node:path';
 
 export const STATUSES = ['verified', 'in_progress', 'unproven', 'blocked'];
 export const EVIDENCE_KINDS = ['commit', 'test_run', 'ci_run', 'pr', 'branch', 'issue', 'doc', 'plan', 'live_probe', 'session_probe'];
@@ -67,16 +67,33 @@ export function ciRunProblems(ev) {
   return problems;
 }
 
+// Reads a regular file only if its real path (after following every symlink) stays inside root,
+// which defaults to the working directory the CLI runs from (the repo root). A lexical check alone
+// is not enough: handoffs/x.json may be a symlink to a file anywhere on disk.
+export function readRepoFile(p, root = process.cwd()) {
+  const realRoot = realpathSync(root);
+  const real = realpathSync(resolve(realRoot, p));
+  if (real !== realRoot && !real.startsWith(realRoot + sep)) {
+    throw Object.assign(new Error('artifact_path_outside_repo'), { code: 'OUTSIDE_REPO' });
+  }
+  if (!statSync(real).isFile()) throw Object.assign(new Error('artifact_not_regular_file'), { code: 'NOT_FILE' });
+  return readFileSync(real);
+}
+
 // Optional offline integrity check: a probe may point at a saved response file inside the
 // repo plus its sha256. A match proves only that the file is unchanged since it was recorded,
 // not that it came from the live system.
-export function checkArtifact(ev, readArtifact = (p) => readFileSync(p)) {
+export function checkArtifact(ev, readArtifact = (p) => readRepoFile(p)) {
   if (!ev.artifact && !ev.sha256) return 'no_artifact';
   if (!ev.artifact || !ev.sha256) return 'artifact_and_sha256_must_be_given_together';
   const p = normalize(ev.artifact);
   if (isAbsolute(p) || p.startsWith('..')) return 'artifact_path_outside_repo';
   let bytes;
-  try { bytes = readArtifact(p); } catch { return 'artifact_missing'; }
+  try {
+    bytes = readArtifact(p);
+  } catch (err) {
+    return err?.code === 'OUTSIDE_REPO' ? 'artifact_path_outside_repo' : 'artifact_missing';
+  }
   return createHash('sha256').update(bytes).digest('hex') === ev.sha256 ? 'artifact_sha256_matches' : 'artifact_sha256_mismatch';
 }
 

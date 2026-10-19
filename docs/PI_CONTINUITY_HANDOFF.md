@@ -57,8 +57,14 @@ UNPROVEN / BLOCKED as **ATTESTED, NOT VERIFIED** only when it carries full prove
 (`url`, `observed_at` within the window, `observed_by`, `method`, `result`); otherwise the missing
 fields are listed. A probe may also name a saved response `artifact` (repo-relative path) and
 its `sha256`; the generator checks the hash locally and drops the attestation on mismatch.
+The path is resolved against the working directory the CLI runs from (run it from the repo root).
+Every symlink is followed to its real path, and the file is read only if that real path stays
+inside that directory and is a regular file. Otherwise the result is `artifact_path_outside_repo` or `artifact_missing`.
 A match proves only that the saved file is unchanged since recording, not that it came from
 the live system. No offline parser can authenticate a probe; re-probe before relying on one.
+
+(Found on `53a7157`: `handoffs/x.json` could be a symlink to a file outside the repo, and its content
+was read and hashed. Covered by a regression that uses only a temporary dummy file.)
 
 (Found by Codex on `7663b38`: a fresh linked `ci_run` was VERIFIED with no completion check, so an
 `action_required` run with zero jobs passed; and future `observed_at` values counted as fresh.
@@ -75,6 +81,8 @@ ref, was classified VERIFIED. Regression tests in `pi/continuity-handoff-test.mj
   with the right shape is still accepted as VERIFIED DONE (the prompt says so in its Trust
   limits section and names the supplier). Gather evidence with real commands.
 - A full commit sha is checked for format only, not that the commit exists.
+- The artifact boundary is the CLI's working directory, not a detected git root. The real path is
+  checked before the read, so a symlink swapped in between those two steps (a race) is not prevented.
 - CI fields (`status`, `conclusion`, `jobs`, `head_sha`) are taken as supplied. The generator does not fetch
   the run, so it cannot tell whether the record was copied from GitHub correctly.
 - It does not fetch GitHub state itself (by design, so it stays provider-free and offline).

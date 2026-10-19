@@ -1,7 +1,11 @@
 import { readFile, mkdir, rm } from 'node:fs/promises';
+import { existsSync, mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { buildPrompt, checkArtifact, classifyItem, validateEvidence } from './continuity-handoff.mjs';
+const builderPath = new URL('./continuity-handoff.mjs', import.meta.url).pathname;
 
 const now = Date.parse('2026-10-19T12:00:00Z');
 const fresh = '2026-10-19T11:00:00Z';
@@ -48,6 +52,45 @@ const tampered = classifyItem({ id: 't', claim: 'c', status: 'verified', scope: 
 expect(!tampered.attested && tampered.reasons.includes('artifact_sha256_mismatch'), 'tampered_artifact_attested');
 const matched = classifyItem({ id: 'm', claim: 'c', status: 'verified', scope: 'live_deployment', evidence: [{ ...fullProbe('live_probe'), artifact: 'handoffs/probe.json', sha256: hash }] }, { now, readArtifact });
 expect(matched.bucket === 'unproven' && matched.attested && matched.reasons.includes('artifact_sha256_matches'), 'matched_artifact_promoted_or_hidden');
+
+// Regression (found on 53a7157): the default reader followed a repo symlink to a file outside the repo.
+// Uses only a throwaway dummy file in a temp dir; the CLI runs with that temp "repo" as its cwd.
+const sandbox = mkdtempSync(join(tmpdir(), 'pi-artifact-'));
+try {
+  const repo = join(sandbox, 'repo');
+  const outside = join(sandbox, 'outside');
+  mkdirSync(join(repo, 'handoffs'), { recursive: true });
+  mkdirSync(outside);
+  const dummy = Buffer.from('DUMMY-NOT-A-SECRET');
+  const dummyHash = createHash('sha256').update(dummy).digest('hex');
+  writeFileSync(join(outside, 'dummy.txt'), dummy);
+  writeFileSync(join(repo, 'handoffs', 'ok.json'), body);
+  symlinkSync(join(outside, 'dummy.txt'), join(repo, 'handoffs', 'escape.json'));
+  symlinkSync(outside, join(repo, 'linkdir'));
+  symlinkSync(join(repo, 'handoffs', 'ok.json'), join(repo, 'handoffs', 'inside-link.json'));
+  const probe = (artifact, sha256) => ({ ...fullProbe('live_probe'), artifact, sha256 });
+  const evidence = { goal: 'g', repo: { name: 'r', ref: 'main' }, next_action: { task: 't' }, items: [
+    { id: 'escape-file', claim: 'c', status: 'verified', scope: 'live_deployment', evidence: [probe('handoffs/escape.json', dummyHash)] },
+    { id: 'escape-dir', claim: 'c', status: 'verified', scope: 'live_deployment', evidence: [probe('linkdir/dummy.txt', dummyHash)] },
+    { id: 'ordinary', claim: 'c', status: 'verified', scope: 'live_deployment', evidence: [probe('handoffs/ok.json', hash)] },
+    { id: 'inside-link', claim: 'c', status: 'verified', scope: 'live_deployment', evidence: [probe('handoffs/inside-link.json', hash)] },
+    { id: 'directory', claim: 'c', status: 'verified', scope: 'live_deployment', evidence: [probe('handoffs', hash)] }
+  ] };
+  writeFileSync(join(repo, 'evidence.json'), JSON.stringify(evidence));
+  execFileSync('node', [builderPath, '--evidence', 'evidence.json', '--now', new Date(now).toISOString(), '--out', 'p.md'], { cwd: repo });
+  const out = await readFile(join(repo, 'p.md'), 'utf8');
+  const line = (id) => out.split('\n').find((l) => l.startsWith(`- **${id}**`)) || '';
+  for (const id of ['escape-file', 'escape-dir']) {
+    expect(line(id).includes('artifact_path_outside_repo') && !line(id).includes('ATTESTED, NOT VERIFIED'), `${id}_symlink_escape_read`);
+  }
+  expect(line('ordinary').includes('artifact_sha256_matches') && line('ordinary').includes('ATTESTED, NOT VERIFIED'), 'ordinary_repo_artifact_broken');
+  expect(line('inside-link').includes('artifact_sha256_matches'), 'in_repo_symlink_rejected');
+  expect(line('directory').includes('artifact_missing'), 'directory_artifact_accepted');
+  expect(!out.includes('DUMMY-NOT-A-SECRET'), 'artifact_content_leaked');
+} finally {
+  rmSync(sandbox, { recursive: true, force: true });
+}
+expect(!existsSync(sandbox), 'artifact_sandbox_not_cleaned');
 
 // The rendered prompt never lists a live/session claim under VERIFIED DONE, and shows the trust limits.
 const probeDoc = { goal: 'g', repo: { name: 'r', ref: 'main' }, next_action: { task: 't' }, items: [
@@ -147,8 +190,8 @@ await rm(dir, { recursive: true, force: true });
 
 // Provider-free: the builder must not open network connections or spawn processes.
 const src = await readFile('pi/continuity-handoff.mjs', 'utf8');
-for (const banned of ['fetch(', "'node:http", "'node:https", "'node:net", 'child_process', 'process.env']) {
+for (const banned of ['fetch(', "'node:http", "'node:https", "'node:net", "'node:tls", "'node:dns", "'node:dgram", 'child_process', 'process.env', 'WebSocket']) {
   expect(!src.includes(banned), `provider_free_violation_${banned}`);
 }
 
-console.log(JSON.stringify({ ok: true, liveNeverVerified: true, sessionNeverVerified: true, probesAttestedOnly: true, artifactIntegrityChecked: true, fullShaRequired: true, ciNeedsCompletedSuccess: true, futureTimestampsRejected: true, linksRequired: true, freshnessEnforced: true, committedPromptCurrent: true, providerFree: true }));
+console.log(JSON.stringify({ ok: true, liveNeverVerified: true, sessionNeverVerified: true, probesAttestedOnly: true, artifactIntegrityChecked: true, fullShaRequired: true, ciNeedsCompletedSuccess: true, artifactSymlinkEscapeBlocked: true, futureTimestampsRejected: true, linksRequired: true, freshnessEnforced: true, committedPromptCurrent: true, providerFree: true }));

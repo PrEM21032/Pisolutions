@@ -88,3 +88,38 @@ Scope: `pi/continuity-handoff.mjs`, its test, its doc and these handoff files. T
 
 ## Limitations
 - CI fields are taken as supplied. A hand-copied record with the right fields still counts; the prompt says so.
+
+---
+
+# Cycle 4 — 2026-10-19 — artifact symlink escape
+
+Scope: the builder, its test and doc, and these handoff files. This is a fast-forward commit on top of `53a7157`
+(the #218 head at 14:55:04Z).
+
+## Reproduced on 53a7157 (dummy file only)
+- In a scratch "repo", `handoffs/probe.json` was a symlink to `outside/dummy.txt` (content `DUMMY-NOT-A-SECRET`).
+  `checkArtifact({artifact:'handoffs/probe.json', sha256:<dummy hash>})` returned `artifact_sha256_matches`,
+  which means the file outside the repo was read.
+- Lexical escapes (`../x`, `handoffs/../../x`) were already rejected.
+- The scratch repro directory was deleted.
+
+## Fix
+- The new `readRepoFile(p, root = cwd)` takes the real paths of the root and of the target. It throws
+  `OUTSIDE_REPO` unless the target is inside the root, and `NOT_FILE` unless it is a regular file.
+  `checkArtifact` maps these to `artifact_path_outside_repo` and `artifact_missing`.
+
+## Regression (in the test file; temp dir created and removed in `finally`, removal asserted)
+- The CLI runs with a temp repo as cwd. Results:
+  - a file symlink out of the repo gives `artifact_path_outside_repo`, with no attestation;
+  - a directory symlink out of the repo gives the same;
+  - an ordinary artifact matches and is ATTESTED;
+  - an in-repo symlink matches;
+  - a directory gives `artifact_missing`;
+  - the dummy content never appears in the prompt.
+- It fails on 53a7157's module with `escape-file_symlink_escape_read`. No `pi-artifact-*` temp dirs remained.
+- The offline check now also bans `node:tls`, `node:dns`, `node:dgram` and `WebSocket` in the builder source.
+
+## Limitations
+- The boundary is the CLI's cwd, not a detected git root.
+- The real path is checked before the read, so a race that swaps in a symlink between the two is not prevented.
+- All tests are local only; no CI was observed for this commit.

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-19T14:42:00Z",
+  "generated_at": "2026-10-19T14:56:29Z",
   "author": "Claude Code session (cloud container), fork PrEM21032/Pisolutions9",
   "goal": "Advance the PI Continuity Engine with one reversible, provider-free step per session, reporting only what fresh evidence proves.",
   "repo": {
@@ -19,7 +19,7 @@
           "kind": "commit",
           "ref": "13c0c943cf75ddbf61fc568971426610e61e1985",
           "url": "https://github.com/pisolutions9/Pisolutions9/commit/13c0c943cf75ddbf61fc568971426610e61e1985",
-          "observed_at": "2026-10-19T14:40:11Z",
+          "observed_at": "2026-10-19T14:55:04Z",
           "observed_by": "git ls-remote"
         }
       ]
@@ -41,7 +41,7 @@
     },
     {
       "id": "continuity-handoff-builder-tests",
-      "claim": "Handoff builder test passes locally incl. regressions: ci_run needs completed/success/jobs>=1/full head_sha; future observed_at rejected; live/session never VERIFIED; full-sha commits; artifact sha256 check",
+      "claim": "Handoff builder test passes locally incl. regressions: artifact symlink escape blocked (file and directory links) while ordinary and in-repo-symlink artifacts still match; ci_run completed/success; future observed_at rejected; live/session never VERIFIED",
       "status": "verified",
       "scope": "test",
       "evidence": [
@@ -49,7 +49,7 @@
           "kind": "test_run",
           "ref": "node pi/continuity-handoff-test.mjs",
           "exit_code": 0,
-          "observed_at": "2026-10-19T14:42:00Z",
+          "observed_at": "2026-10-19T14:56:29Z",
           "observed_by": "claude-code session (this container)"
         }
       ]
@@ -91,7 +91,7 @@
     },
     {
       "id": "continuity-handoff-builder",
-      "claim": "Continuity handoff builder on fork branch claude/practical-johnson-hy0vob (draft PR #218, not merged). Cycle 3 adds the CI-completion and future-timestamp fix on top of 7663b38 (fast-forward, no history rewrite).",
+      "claim": "Continuity handoff builder on fork branch claude/practical-johnson-hy0vob (draft PR #218, not merged). Cycle 4 adds the artifact symlink-escape fix on top of 53a7157 (fast-forward).",
       "status": "in_progress",
       "evidence": [
         {
@@ -102,9 +102,9 @@
         },
         {
           "kind": "pr",
-          "ref": "#218@7663b38 (head before this cycle's push)",
+          "ref": "#218@53a7157 (head before this cycle's push)",
           "url": "https://github.com/pisolutions9/Pisolutions9/pull/218",
-          "observed_at": "2026-10-19T14:40:11Z",
+          "observed_at": "2026-10-19T14:55:04Z",
           "observed_by": "git ls-remote refs/pull/218/head"
         }
       ]
@@ -135,6 +135,21 @@
           "ref": "7663b388480cac6c4e6a875d6b222b4f0ad946e4",
           "url": "https://github.com/PrEM21032/Pisolutions9/commit/7663b388480cac6c4e6a875d6b222b4f0ad946e4",
           "observed_at": "2026-10-19T14:40:11Z",
+          "observed_by": "claude-code session (this container)"
+        }
+      ]
+    },
+    {
+      "id": "artifact-symlink-escape",
+      "claim": "Defect in 53a7157: checkArtifact's lexical check let handoffs/<name> be a symlink to a file outside the repo; the default reader read and hashed it (artifact_sha256_matches). Reproduced with a temporary dummy file only; the new regression fails on 53a7157 with escape-file_symlink_escape_read",
+      "status": "verified",
+      "scope": "source",
+      "evidence": [
+        {
+          "kind": "commit",
+          "ref": "53a715737d47426887bbea076a733e08a12fa2c7",
+          "url": "https://github.com/PrEM21032/Pisolutions9/commit/53a715737d47426887bbea076a733e08a12fa2c7",
+          "observed_at": "2026-10-19T14:55:04Z",
           "observed_by": "claude-code session (this container)"
         }
       ]
@@ -172,7 +187,7 @@
     },
     {
       "id": "pr-218-ci",
-      "claim": "CI on #218: Codex reported PR Core / PR Gate / V1.02 Gate green on 6d8ee2f; no CI observed in this session for 7663b38 or this cycle's commit",
+      "claim": "CI on #218: Codex reported PR Core / PR Gate / V1.02 Gate green on 6d8ee2f; no CI observed in this session for 7663b38, 53a7157 or this cycle's commit",
       "status": "unproven",
       "evidence": [
         {
@@ -204,7 +219,7 @@
     }
   ],
   "next_action": {
-    "task": "With upstream API read access, record CI for #218 on its new head as ci_run entries (status, conclusion, jobs, head_sha, url, observed_at) and let the builder classify them. Then reply on Codex's #218 comment (with owner approval) pointing to this cycle's commit and the regression names.",
+    "task": "With upstream API read access, record CI for #218 on its new head as ci_run entries (status, conclusion, jobs, head_sha, url, observed_at) and let the builder classify them. With owner approval, reply on #218 summarising cycles 3-4 (CI completion, future timestamps, artifact symlink escape) with commits and regression names.",
     "acceptance": [
       "#218 head sha re-checked; each check run recorded with all ci_run fields, or marked BLOCKED",
       "Builder classifies an action_required/zero-job run as UNPROVEN and a completed/success run as VERIFIED on real records",
@@ -222,8 +237,8 @@
     "If an agent is not dispatched, say so; never describe a halted session as running"
   ],
   "rollback": [
-    "Cycle 3 changes only pi/continuity-handoff.mjs, pi/continuity-handoff-test.mjs, docs/PI_CONTINUITY_HANDOFF.md and handoffs/2026-10-19-continuity-handoff.*",
-    "Revert with: git revert <cycle 3 commit> on claude/practical-johnson-hy0vob (returns to 7663b38); nothing deployed or configured"
+    "Cycle 4 changes only pi/continuity-handoff.mjs, pi/continuity-handoff-test.mjs, docs/PI_CONTINUITY_HANDOFF.md and handoffs/2026-10-19-continuity-handoff.*",
+    "Revert with: git revert <cycle 4 commit> on claude/practical-johnson-hy0vob (returns to 53a7157); nothing deployed or configured"
   ],
   "next_inspect": [
     "git ls-remote https://github.com/pisolutions9/Pisolutions9 main refs/pull/218/head refs/pull/217/head \u2014 compare with shas above",
