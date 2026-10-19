@@ -2,6 +2,7 @@ name: PI Owner History Daily
 
 on:
   push:
+    branches: [main]
     paths:
       - 'pi/update-owner-history.mjs'
       - '.github/workflows/pi-owner-history-daily.yml'
