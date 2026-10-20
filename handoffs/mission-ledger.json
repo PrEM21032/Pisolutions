@@ -1,5 +1,5 @@
 {
-  "sha256": "2ead5e5321b1fb942fb35be00958815b74d90681c999d0d53b643b324d566001",
+  "sha256": "3770c6d7bd7b65b3d0e38e56aa92bde3b884f0bc490c6573e2103add8e6c44c3",
   "ledger": {
     "mission_id": "PI-CONTINUITY-2026-10",
     "objective": "Make PI engineering work interruption-tolerant: never lose verified mission state, never confuse claims with evidence, resume safely after interruption (owner directive V2, 2026-10-19).",
@@ -45,7 +45,41 @@
               "observed_at": "2026-10-19T19:56:34Z"
             }
           ],
-          "note": "Codex verified the same change on fix branch c444549, not on 1ce9b4b itself; no review is recorded against 1ce9b4b."
+          "note": "Codex verified the same change on fix branch c444549, not on 1ce9b4b itself; no review is recorded against 1ce9b4b.",
+          "supplied": [
+            {
+              "kind": "review",
+              "supplied_by": "owner relay of Codex (not observed: canonical API/web 403 from this session)",
+              "summary": "Codex COMMENT-only review (not an approval) of exact head 1ce9b4b; six focused probes passed locally; full Windows suite inconclusive (symlink EPERM)",
+              "url": "https://github.com/pisolutions9/Pisolutions9/pull/218#pullrequestreview-5579666526",
+              "relayed_at": "2026-10-20T01:26:57.379Z",
+              "provenance": "supplied"
+            },
+            {
+              "kind": "ci_run",
+              "supplied_by": "owner relay of Codex (not observed: canonical API/web 403 from this session)",
+              "summary": "PI V1.02 PR Core run 39315186459 on 1ce9b4b: completed/action_required, 0 jobs (held, not passing)",
+              "url": "https://github.com/pisolutions9/Pisolutions9/actions/runs/39315186459",
+              "relayed_at": "2026-10-20T01:26:57.432Z",
+              "provenance": "supplied"
+            },
+            {
+              "kind": "ci_run",
+              "supplied_by": "owner relay of Codex (not observed: canonical API/web 403 from this session)",
+              "summary": "PI V1.02 PR Gate run 39315186523 on 1ce9b4b: completed/action_required, 0 jobs (held, not passing)",
+              "url": "https://github.com/pisolutions9/Pisolutions9/actions/runs/39315186523",
+              "relayed_at": "2026-10-20T01:26:57.484Z",
+              "provenance": "supplied"
+            },
+            {
+              "kind": "ci_run",
+              "supplied_by": "owner relay of Codex (not observed: canonical API/web 403 from this session)",
+              "summary": "PI V1.02 Gate run 39315186399 on 1ce9b4b: completed/action_required, 0 jobs (held, not passing)",
+              "url": "https://github.com/pisolutions9/Pisolutions9/actions/runs/39315186399",
+              "relayed_at": "2026-10-20T01:26:57.538Z",
+              "provenance": "supplied"
+            }
+          ]
         }
       },
       {
@@ -337,6 +371,43 @@
             }
           ]
         }
+      },
+      {
+        "id": "C13",
+        "intent": "Review evidence promotes only an observed APPROVED verdict; supplied relays (reviews, CI runs) are recorded with provenance and never raise a level",
+        "branch": "claude/continuity-mission-ledger",
+        "target": "tested",
+        "priority": 13,
+        "depends_on": [
+          "C12"
+        ],
+        "requires": [
+          "code",
+          "local_test"
+        ],
+        "status": "tested",
+        "objective_rev": 1,
+        "lease": {
+          "executor": "claude",
+          "base_sha": "4f73f776d886a6082f476cc161a0f96eade1dc10",
+          "acquired_at": "2026-10-20T01:24:33.611Z",
+          "expires_at": "2026-10-20T02:24:33.611Z"
+        },
+        "lease_history": [],
+        "evidence": {
+          "commit": "251f369c27a054db8f444d300190e7e5cf2ca2f4",
+          "implemented_by": "claude",
+          "tests": [
+            {
+              "cmd": "npm run -s test:continuity >/dev/null; a=$?; npm test >/dev/null 2>&1; b=$?; npm run -s test:v1.02 >/dev/null 2>&1; c=$?; npm run -s test:security >/dev/null 2>&1; d=$?; echo \"continuity=$a full=$b v1.02=$c security=$d\"; [ $a$b$c$d = 0000 ]",
+              "exit_code": 0,
+              "commit": "251f369c27a054db8f444d300190e7e5cf2ca2f4",
+              "observed_at": "2026-10-20T01:25:57.293Z",
+              "in_worktree": true,
+              "recorded_by": "mission-run verify"
+            }
+          ]
+        }
       }
     ],
     "blockers": [
@@ -351,6 +422,6 @@
       "node pi/mission-git.mjs prompt --ledger handoffs/mission-ledger.json",
       "Before changing a task: acquire its lease and re-run reconcile; never edit evidence by hand to raise a level"
     ],
-    "seq": 24
+    "seq": 31
   }
 }
