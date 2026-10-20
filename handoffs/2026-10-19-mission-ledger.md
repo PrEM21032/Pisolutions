@@ -187,3 +187,47 @@ All runs are local Linux in temporary worktrees. No CI ran (fork branch, no PR).
 
 ## Rollback
 Run `git revert 0c5c6b0` plus the ledger checkpoint commits, or delete the branch.
+
+---
+
+# Run 5 — 2026-10-20 01:24–01:28Z — C13 supplied evidence; C3 reverified (owner window until 02:09Z)
+
+## Fresh check (01:24:05Z)
+- The branch was at `4f73f77`, equal to the remote, with a clean tree. Ledger seq 24, `check` 0. #218 is `1ce9b4b`.
+- **Could not observe the Codex review or the CI runs myself:** REST API 403 for
+  `pulls/218/reviews/5579666526` and for `actions/runs/39315186459|39315186523|39315186399`; the web page returned
+  403; the GitHub tool is scoped to the fork only. Everything below about them is SUPPLIED by the owner's relay.
+
+## C13 — only an observed APPROVED review promotes; relayed evidence is "supplied"
+- **Found on 4f73f77:** in a scratch copy, recording the relayed COMMENT-only review as `review` on C1 gave
+  `independently_verified`, DONE. That would have been a false promotion.
+- **Transition:** add-task (seq 25), then begin (seq 26), then commit `251f369c27a054db8f444d300190e7e5cf2ca2f4`
+  (Mission-Task: C13), then verify at that commit. Output: `continuity=0 full=0 v1.02=0 security=0` (01:26:47Z); seq 27.
+- **Change:**
+  - A review counts only with verdict APPROVED and provenance `observed`. Otherwise it is kept with
+    `review_not_approval:<v>` or `review_not_observed:<p>`.
+  - New `mission-run note`: SUPPLIED evidence with `supplied_by` and `relayed_at`. It is printed under the task and
+    never raises a level.
+- **Regressions:** both new test sections fail on `4f73f77` and pass on `251f369`.
+
+## Recorded on C1 as SUPPLIED (seq 28–31)
+- Codex review https://github.com/pisolutions9/Pisolutions9/pull/218#pullrequestreview-5579666526: COMMENT only, not
+  an approval. Six probes passed; the Windows full suite hit symlink EPERM.
+- PR Core 39315186459, PR Gate 39315186523 and V1.02 Gate 39315186399 on `1ce9b4b`: completed/action_required with
+  0 jobs. That is held, not passing.
+- **C1 stays `tested` and not done.** C4 stays blocked: it needs CI runs observed directly.
+
+## Legacy reverify
+- C3 at `c969913` with all four suites: `continuity=0 full=0 v1.02=0 security=0` (01:27:54Z). Seq 33; now
+  tool-recorded.
+- Still HAND-WRITTEN: C1, C2 and C6.
+
+## Local vs CI
+All runs above are local Linux, in temporary worktrees. No CI ran on this branch. #218's canonical CI is held
+(action_required, 0 jobs), according to the supplied evidence.
+
+## Stop
+`next` returns no task. C1 needs an observed approval, C4 observed CI, C5 the owner's decision, and C7 is forbidden.
+
+## Rollback
+Run `git revert 251f369` plus the ledger checkpoint commits, or delete the branch.
