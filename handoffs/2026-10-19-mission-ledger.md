@@ -115,3 +115,34 @@ been started.
 - No scheduler or automatic resumption.
 - No real executor adapter for Codex.
 - Lease base equal to the task commit reports a `base_moved` note. This is cosmetic.
+
+---
+
+# Run 3 — 2026-10-20 01:11–01:14Z — C11 (owner window until 02:09Z)
+
+## Fresh check (01:11:02Z)
+- The branch was at `310d281`, equal to the remote, with a clean tree.
+- Canonical #218 is `1ce9b4b`, #217 is `9ec0def`, main is `13c0c94`; all unchanged.
+- Ledger seq 13: `check` passed. `next` returned C11 `implement`, with the same four blockers as before.
+
+## C11 — tool-recorded vs hand-written test evidence
+- **Transition:** `begin` (seq 14), then commit `968d44148d86bd722e9c262630e7d3101fa82860` (Mission-Task: C11), then
+  `verify` in a worktree at that commit, running all four suites. Exit 0 at 01:13:03Z; seq 15.
+- **Change:**
+  - `verify` stamps `recorded_by: 'mission-run verify'` on its records, next to `in_worktree: true`.
+  - reconcile reports `test_provenance` as `tool_recorded` only when every passing record carries both markers.
+    Otherwise it is `hand_written`, with the unknown `hand_written_test_evidence`.
+  - The prompt shows `(tests: tool-recorded)` or `(tests: HAND-WRITTEN)` and says that neither label is
+    authentication.
+- **Regressions:** both new test sections fail on `310d281`'s modules and pass on `968d441`.
+- **Real ledger now:** C11 is tool-recorded. C1–C6 are hand-written, which is accurate: they were written with ad-hoc
+  scripts. C8–C10 are hand-written because they were recorded before the marker existed; queued as C12, not
+  executed.
+- **Local vs CI:** all runs are local Linux. No CI ran (fork branch, no PR).
+
+## Stop
+`next` again returns no task. C1 needs a reviewer, C4 upstream access, C5 the owner's decision, and C7 is forbidden.
+C12 is queued (seq 16) as the next executable task.
+
+## Rollback
+Run `git revert 968d441` (code) and the ledger checkpoint commits, or delete the branch. Nothing else was touched.
