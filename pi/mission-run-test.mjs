@@ -127,6 +127,55 @@ try {
   assert.equal(ledger.tasks.find((t) => t.id === 'R2').evidence.supplied[0].provenance, 'supplied');
   assert.match(continuationPrompt(ledger, reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }), { task: null, skipped: [] }), /SUPPLIED by owner relay \(relayed .*, not observed by this engine\): ci_run PR Core completed\/action_required, 0 jobs/);
   g('commit', '-qam', 'note on R2');
+  // retest: a tested-but-unfinished task (awaiting independent review) gets tool-recorded tests at its exact commit,
+  // stays tested/not done, and its short lease is released so the reviewer is not blocked.
+  assert.equal(run('add-task', '--id', 'R4', '--intent', 'Feature awaiting review', '--branch', 'work', '--priority', '0', '--target', 'independently_verified').status, 0);
+  writeFileSync(join(repo, 'review-me.mjs'), 'export const x = 1;\n');
+  writeFileSync(join(repo, 'review-me-test.mjs'), "import { x } from './review-me.mjs';\nif (x !== 1) process.exit(1);\nconsole.log('review-me ok');\n");
+  g('add', 'review-me.mjs', 'review-me-test.mjs'); g('commit', '-qam', 'Feature R4\n\nMission-Id: M-RUN\nMission-Task: R4');
+  const r4Commit = g('rev-parse', 'HEAD');
+  const b4 = run('begin', '--task', 'R4', '--executor', 'claude');
+  assert.equal(b4.status, 0, b4.stderr);
+  const v4 = run('verify', '--task', 'R4', '--executor', 'claude', '--cmd', 'node review-me-test.mjs');
+  assert.equal(v4.status, 0, v4.stderr + v4.stdout);
+  ({ ledger } = loadLedger(ledgerPath));
+  // Make R4's record hand-written (as C1's is) and drop claude's lease, as after a finished session.
+  saveLedger(ledgerPath, { ...ledger, tasks: ledger.tasks.map((t) => (t.id === 'R4' ? { ...t, lease: null, evidence: { ...t.evidence, tests: t.evidence.tests.map(({ recorded_by, in_worktree, ...rest }) => rest) } } : t)) }, { expectSeq: ledger.seq });
+  g('commit', '-qam', 'R4 tested by hand');
+  ({ ledger } = loadLedger(ledgerPath));
+  let r4 = reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }).R4;
+  assert.deepEqual([r4.earned, r4.done, r4.test_provenance], ['tested', false, 'hand_written'], 'precondition');
+  assert.match(run('retest', '--task', 'R1', '--executor', 'claude', '--cmd', 'true').stderr, /retest_not_for_done_tasks:R1 \(use reverify\)/);
+  assert.match(run('retest', '--task', 'R2', '--executor', 'claude', '--cmd', 'true').stderr, /retest_only_tested_unfinished:R2:pending/);
+  saveLedger(ledgerPath, { ...ledger, tasks: ledger.tasks.map((t) => (t.id === 'R4' ? { ...t, lease: { executor: 'codex', base_sha: r4Commit, acquired_at: new Date().toISOString(), expires_at: new Date(Date.now() + 600_000).toISOString() } } : t)) }, { expectSeq: ledger.seq });
+  assert.match(run('retest', '--task', 'R4', '--executor', 'claude', '--cmd', 'node review-me-test.mjs').stderr, /lease_held:R4:codex/);
+  ({ ledger } = loadLedger(ledgerPath));
+  saveLedger(ledgerPath, { ...ledger, tasks: ledger.tasks.map((t) => (t.id === 'R4' ? { ...t, lease: null } : t)) }, { expectSeq: ledger.seq });
+  g('commit', '-qam', 'codex lease gone');
+  g('commit', '-q', '--allow-empty', '-m', 'HEAD moves on');
+  const rt = run('retest', '--task', 'R4', '--executor', 'claude', '--cmd', 'node review-me-test.mjs');
+  assert.equal(rt.status, 0, rt.stderr);
+  assert.equal(out(rt).commit, r4Commit, 'retest tests the exact task commit, not HEAD');
+  assert.equal(out(rt).lease_released, true);
+  ({ ledger } = loadLedger(ledgerPath));
+  const t4 = ledger.tasks.find((t) => t.id === 'R4');
+  r4 = reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }).R4;
+  assert.deepEqual([r4.earned, r4.done, r4.test_provenance, t4.status], ['tested', false, 'tool_recorded', 'tested'], 'never above tested');
+  assert.equal(t4.lease, null);
+  assert.equal(t4.lease_history.at(-1).ended, 'released');
+  assert.deepEqual(selectNext(ledger, reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }), { executor: 'codex', now: Date.now() }).task, 'R4', 'reviewer is not blocked by the retest lease');
+  g('commit', '-qam', 'retested R4');
+  // A genuine failure is recorded, demotes R4 visibly, still releases the lease, and sends R4 back into the loop.
+  const rtBad = run('retest', '--task', 'R4', '--executor', 'claude', '--cmd', 'exit 5');
+  assert.equal(rtBad.status, 1);
+  ({ ledger } = loadLedger(ledgerPath));
+  r4 = reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }).R4;
+  assert.equal(r4.earned, 'implemented');
+  assert.ok(r4.contradictions.includes('failing_test_on_commit') && r4.contradictions.some((c) => c.startsWith('claimed_above_evidence:tested>')));
+  assert.equal(ledger.tasks.find((t) => t.id === 'R4').lease, null);
+  assert.match(run('retest', '--task', 'R4', '--executor', 'claude', '--cmd', 'true').stderr, /retest_only_tested_unfinished:R4:implemented/);
+  g('commit', '-qam', 'R4 failed retest');
+
   // A failing re-run is recorded and visibly demotes the done task.
   const bad = run('reverify', '--task', 'R1', '--executor', 'claude', '--cmd', 'exit 4');
   assert.equal(bad.status, 1);
@@ -143,4 +192,4 @@ const src = readFileSync(RUN, 'utf8');
 for (const banned of ["'fetch'", "'push'", "'pull'", "'ls-remote'", 'wrangler', 'fetch(', 'process.env']) {
   assert.ok(!src.includes(banned), `mission-run.mjs must not use ${banned}`);
 }
-console.log(JSON.stringify({ ok: true, duplicateTasksRefused: true, onlySelectedTaskBegins: true, dirtyTreeRefused: true, exactCommitTested: true, leaseEnforced: true, failingRunRecorded: true, worktreeCleaned: true, toolRecordedLabelled: true, reverifyDoneTasks: true, suppliedNotesNeverPromote: true }));
+console.log(JSON.stringify({ ok: true, duplicateTasksRefused: true, onlySelectedTaskBegins: true, dirtyTreeRefused: true, exactCommitTested: true, leaseEnforced: true, failingRunRecorded: true, worktreeCleaned: true, toolRecordedLabelled: true, reverifyDoneTasks: true, suppliedNotesNeverPromote: true, retestTestedUnfinished: true }));
