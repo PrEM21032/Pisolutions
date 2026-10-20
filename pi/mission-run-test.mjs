@@ -87,6 +87,40 @@ try {
   assert.deepEqual(rec.R1.contradictions, []);
   assert.equal(selectNext(ledger, rec, { executor: 'claude', now: Date.now() }).task, 'R2', 'loop advances to the next task');
   assert.ok(!readFileSync(ledgerPath, 'utf8').includes('"in_worktree": false'));
+  g('commit', '-qam', 'record R1 verify');
+
+  // reverify: a done task with legacy (hand-written) records is re-run at the same commit and becomes tool-recorded.
+  ({ ledger } = loadLedger(ledgerPath));
+  const legacy = { ...ledger, tasks: ledger.tasks.map((t) => (t.id === 'R1' ? { ...t, evidence: { ...t.evidence, tests: t.evidence.tests.map(({ recorded_by, ...rest }) => rest) } } : t)) };
+  saveLedger(ledgerPath, legacy, { expectSeq: ledger.seq });
+  g('commit', '-qam', 'legacy R1 record');
+  ({ ledger } = loadLedger(ledgerPath));
+  assert.equal(reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }).R1.test_provenance, 'hand_written', 'precondition: legacy record');
+  assert.match(run('reverify', '--task', 'R2', '--executor', 'claude', '--cmd', 'true').stderr, /reverify_only_done_tasks:R2/);
+  const codexLease = { ...ledger, tasks: ledger.tasks.map((t) => (t.id === 'R1' ? { ...t, lease: { executor: 'codex', base_sha: fixCommit, acquired_at: new Date().toISOString(), expires_at: new Date(Date.now() + 600_000).toISOString() } } : t)) };
+  saveLedger(ledgerPath, codexLease, { expectSeq: ledger.seq });
+  assert.match(run('reverify', '--task', 'R1', '--executor', 'claude', '--cmd', 'node calc-test.mjs').stderr, /lease_held:R1:codex/);
+  ({ ledger } = loadLedger(ledgerPath));
+  saveLedger(ledgerPath, { ...ledger, tasks: ledger.tasks.map((t) => (t.id === 'R1' ? { ...t, lease: { ...t.lease, expires_at: new Date(Date.now() - 1000).toISOString() } } : t)) }, { expectSeq: ledger.seq });
+  g('commit', '-qam', 'codex lease expired');
+  const re = run('reverify', '--task', 'R1', '--executor', 'claude', '--cmd', 'node calc-test.mjs');
+  assert.equal(re.status, 0, re.stderr);
+  assert.equal(out(re).reverified, true);
+  assert.equal(out(re).commit, fixCommit, 'reverify tests the same exact commit, not HEAD');
+  assert.equal(g('worktree', 'list').split('\n').length, 1);
+  ({ ledger } = loadLedger(ledgerPath));
+  let r1 = reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }).R1;
+  assert.equal(r1.test_provenance, 'tool_recorded');
+  assert.equal(r1.earned, 'tested');
+  assert.equal(ledger.tasks.find((t) => t.id === 'R1').lease_history.at(-1).executor, 'codex', 'expired codex lease recorded on takeover');
+  g('commit', '-qam', 'reverified R1');
+  // A failing re-run is recorded and visibly demotes the done task.
+  const bad = run('reverify', '--task', 'R1', '--executor', 'claude', '--cmd', 'exit 4');
+  assert.equal(bad.status, 1);
+  ({ ledger } = loadLedger(ledgerPath));
+  r1 = reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }).R1;
+  assert.equal(r1.done, false);
+  assert.ok(r1.contradictions.includes('failing_test_on_commit'));
 } finally {
   rmSync(box, { recursive: true, force: true });
 }
@@ -96,4 +130,4 @@ const src = readFileSync(RUN, 'utf8');
 for (const banned of ["'fetch'", "'push'", "'pull'", "'ls-remote'", 'wrangler', 'fetch(', 'process.env']) {
   assert.ok(!src.includes(banned), `mission-run.mjs must not use ${banned}`);
 }
-console.log(JSON.stringify({ ok: true, duplicateTasksRefused: true, onlySelectedTaskBegins: true, dirtyTreeRefused: true, exactCommitTested: true, leaseEnforced: true, failingRunRecorded: true, worktreeCleaned: true, toolRecordedLabelled: true }));
+console.log(JSON.stringify({ ok: true, duplicateTasksRefused: true, onlySelectedTaskBegins: true, dirtyTreeRefused: true, exactCommitTested: true, leaseEnforced: true, failingRunRecorded: true, worktreeCleaned: true, toolRecordedLabelled: true, reverifyDoneTasks: true }));

@@ -3,6 +3,7 @@
 //   add-task  --id C9 --intent "..." [--branch b] [--priority n] [--depends a,b] [--requires code,local_test] [--target tested]
 //   begin     --task C9 --executor claude [--ttl 60]      # task must be the selector's choice; tree must be clean
 //   verify    --task C9 --executor claude --cmd "<test>"  # runs <test> in a temp worktree at the task's exact commit
+//   reverify  --task C8 --executor claude --cmd "<test>"  # already-done task: fresh lease, same exact-commit run
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -75,6 +76,20 @@ export function verify(ledgerPath, repo, taskId, executor, cmd, { now = Date.now
   return { seq: saved.seq, commit: r.commit, exit_code: exit, worktree_removed: !existsSync(tree), tail: (run.stdout + run.stderr).trim().split('\n').slice(-3) };
 }
 
+// Re-run the tests of an already-done task at the same commit (e.g. to replace hand-written or legacy records with
+// tool-recorded ones). Only done tasks: unfinished work must go through the selector via begin/verify. Takes its own
+// lease, so a foreign active lease is refused. A failing re-run is recorded and demotes the task visibly.
+export function reverify(ledgerPath, repo, taskId, executor, cmd, { now = Date.now(), ttlMinutes = 60 } = {}) {
+  const dirty = dirtyPaths(repo, ledgerPath);
+  if (dirty.length) fail('DIRTY', `uncommitted_changes:${dirty.join(',')}`);
+  const { ledger } = loadLedger(ledgerPath);
+  const r = reconcile(ledger, gitFacts(repo, ledger), { now })[taskId] || fail('UNKNOWN', `unknown_task:${taskId}`);
+  if (!r.done) fail('NOT_DONE', `reverify_only_done_tasks:${taskId}:${r.earned}`);
+  // The lease base is the task's own commit: re-verification builds nothing new on top of HEAD.
+  saveLedger(ledgerPath, acquireLease(ledger, taskId, executor, { now, ttlMinutes, baseSha: r.commit }), { expectSeq: ledger.seq });
+  return { reverified: true, ...verify(ledgerPath, repo, taskId, executor, cmd, { now }) };
+}
+
 async function main(argv) {
   const [cmd, ...rest] = argv;
   const args = Object.fromEntries(rest.reduce((acc, a, i) => (a.startsWith('--') ? [...acc, [a.slice(2), rest[i + 1]]] : acc), []));
@@ -85,9 +100,10 @@ async function main(argv) {
   if (cmd === 'add-task') out = { seq: addTask(ledgerPath, { id: args.id, intent: args.intent, branch: args.branch, priority: args.priority, depends_on: list(args.depends), requires: list(args.requires), target: args.target }).seq };
   else if (cmd === 'begin') out = begin(ledgerPath, repo, args.task, args.executor || 'claude', { ttlMinutes: Number(args.ttl || 60), now: args.now ? Date.parse(args.now) : Date.now() });
   else if (cmd === 'verify') out = verify(ledgerPath, repo, args.task, args.executor || 'claude', args.cmd, { now: args.now ? Date.parse(args.now) : Date.now() });
-  else { console.error('usage: node pi/mission-run.mjs <add-task|begin|verify> [--ledger handoffs/mission-ledger.json] ...'); process.exit(2); }
+  else if (cmd === 'reverify') out = reverify(ledgerPath, repo, args.task, args.executor || 'claude', args.cmd, { now: args.now ? Date.parse(args.now) : Date.now() });
+  else { console.error('usage: node pi/mission-run.mjs <add-task|begin|verify|reverify> [--ledger handoffs/mission-ledger.json] ...'); process.exit(2); }
   console.log(JSON.stringify(out));
-  if (cmd === 'verify' && out.exit_code !== 0) process.exit(1);
+  if (['verify', 'reverify'].includes(cmd) && out.exit_code !== 0) process.exit(1);
 }
 
 function isEntryPoint(argvPath) {
