@@ -4,7 +4,7 @@
 // only). It never deploys, merges, reads secrets or calls a provider, and it never upgrades a task past
 // what the evidence and the repository show.
 import { closeSync, existsSync, fsyncSync, openSync, readFileSync, readdirSync, renameSync, writeSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { basename, dirname } from 'node:path';
 
 // Ordered evidence levels. They are never interchangeable: each needs its own proof.
@@ -88,7 +88,9 @@ export function acquireLease(ledger, taskId, executor, { now, ttlMinutes = 60, b
   }
   const history = [...(task.lease_history || [])];
   if (held && held.executor !== executor) history.push({ ...held, ended: 'expired_takeover', ended_at: isoNow(now), by: executor });
-  const lease = { executor, base_sha: baseSha, acquired_at: isoNow(now), expires_at: isoNow(now + ttlMinutes * 60_000) };
+  // token identifies this particular acquisition, so a caller can later release exactly the lease it took even if the
+  // same executor has since re-acquired the task from another session.
+  const lease = { executor, base_sha: baseSha, acquired_at: isoNow(now), expires_at: isoNow(now + ttlMinutes * 60_000), token: randomUUID() };
   return withTask(ledger, taskId, { lease, lease_history: history });
 }
 

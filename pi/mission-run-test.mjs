@@ -165,6 +165,25 @@ try {
   assert.equal(t4.lease_history.at(-1).ended, 'released');
   assert.deepEqual(selectNext(ledger, reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }), { executor: 'codex', now: Date.now() }).task, 'R4', 'reviewer is not blocked by the retest lease');
   g('commit', '-qam', 'retested R4');
+
+  // Regression (C15, found on da53c2d): a second same-executor session acquires a newer lease while a retest is still
+  // running its tests (SIMULATED by the test command itself). The stale retest must not clear that newer lease.
+  const racer = join(box, 'racer.mjs');
+  writeFileSync(racer, `import { loadLedger, saveLedger, acquireLease } from ${JSON.stringify(new URL('./mission-ledger.mjs', import.meta.url).href)};
+const { ledger } = loadLedger(${JSON.stringify(ledgerPath)});
+const now = Date.now() + 5000;
+const l = acquireLease(ledger, 'R4', 'claude', { now, ttlMinutes: 30, baseSha: ${JSON.stringify(r4Commit)} });
+saveLedger(${JSON.stringify(ledgerPath)}, l, { expectSeq: ledger.seq });
+console.log(l.tasks.find((t) => t.id === 'R4').lease.acquired_at);`);
+  const raced = run('retest', '--task', 'R4', '--executor', 'claude', '--cmd', `node ${JSON.stringify(racer)}`);
+  ({ ledger } = loadLedger(ledgerPath));
+  const raceLease = ledger.tasks.find((t) => t.id === 'R4').lease;
+  assert.ok(raceLease, `newer same-executor lease was cleared by the stale retest (exit ${raced.status}: ${raced.stderr.trim()})`);
+  assert.ok(Date.parse(raceLease.acquired_at) > Date.now() - 60_000 && raceLease.acquired_at !== ledger.tasks.find((t) => t.id === 'R4').lease_history.at(-1)?.acquired_at, 'surviving lease is the newer one');
+  assert.notEqual(raced.status, 0, 'the stale retest does not report success after losing its lease');
+  assert.match(raced.stderr, /stale_checkpoint|lease_superseded/);
+  assert.equal(reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }).R4.earned, 'tested', 'R4 evidence unchanged by the stale retest');
+  g('commit', '-qam', 'race observed');
   // A genuine failure is recorded, demotes R4 visibly, still releases the lease, and sends R4 back into the loop.
   const rtBad = run('retest', '--task', 'R4', '--executor', 'claude', '--cmd', 'exit 5');
   assert.equal(rtBad.status, 1);

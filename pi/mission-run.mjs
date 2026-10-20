@@ -117,17 +117,25 @@ export function retest(ledgerPath, repo, taskId, executor, cmd, { now = Date.now
   if (r.done) fail('USE_REVERIFY', `retest_not_for_done_tasks:${taskId} (use reverify)`);
   if (r.earned !== 'tested') fail('NOT_TESTED', `retest_only_tested_unfinished:${taskId}:${r.earned} (use begin/verify)`);
   if (r.contradictions.length) fail('CONTRADICTED', `retest_refused:${r.contradictions.join(';')}`);
-  saveLedger(ledgerPath, acquireLease(ledger, taskId, executor, { now, ttlMinutes, baseSha: r.commit }), { expectSeq: ledger.seq });
+  const acquired = saveLedger(ledgerPath, acquireLease(ledger, taskId, executor, { now, ttlMinutes, baseSha: r.commit }), { expectSeq: ledger.seq });
+  const token = acquired.tasks.find((t) => t.id === taskId).lease.token;
+  let released = false;
+  let result;
   try {
-    return { retested: true, ...verify(ledgerPath, repo, taskId, executor, cmd, { now }), lease_released: true };
+    result = verify(ledgerPath, repo, taskId, executor, cmd, { now });
   } finally {
+    // Release only the lease this call acquired. If another session (even the same executor) has since taken a newer
+    // lease, leave it alone: clearing it would let two sessions believe they own the task.
     const { ledger: after } = loadLedger(ledgerPath);
     const task = after.tasks.find((t) => t.id === taskId);
-    if (task.lease?.executor === executor) {
-      const released = { ...task, lease: null, lease_history: [...(task.lease_history || []), { ...task.lease, ended: 'released', ended_at: new Date(now).toISOString() }] };
-      saveLedger(ledgerPath, { ...after, tasks: after.tasks.map((t) => (t.id === taskId ? released : t)) }, { expectSeq: after.seq });
+    if (task.lease?.token === token) {
+      const freed = { ...task, lease: null, lease_history: [...(task.lease_history || []), { ...task.lease, ended: 'released', ended_at: new Date(now).toISOString() }] };
+      saveLedger(ledgerPath, { ...after, tasks: after.tasks.map((t) => (t.id === taskId ? freed : t)) }, { expectSeq: after.seq });
+      released = true;
     }
   }
+  if (!released) fail('LEASE_SUPERSEDED', `lease_superseded:${taskId}: a newer lease was taken during retest; it was left in place`);
+  return { retested: true, ...result, lease_released: true };
 }
 
 async function main(argv) {
