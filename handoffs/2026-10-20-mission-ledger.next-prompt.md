@@ -1,4 +1,4 @@
-# PI mission PI-CONTINUITY-2026-10 — continuation (seq 43)
+# PI mission PI-CONTINUITY-2026-10 — continuation (seq 46)
 
 > Built offline from the mission ledger and local git. NOT DISPATCHED. Levels are earned from evidence;
 > deployed / production_verified can never be earned offline. "tool-recorded" tests were written by
@@ -26,6 +26,7 @@ Repository: https://github.com/pisolutions9/Pisolutions9 (canonical); work publi
 - C12 [tested -> tested, done] (tests: tool-recorded) verify --reverify for already-done tasks: re-run tests at the same commit under a fresh lease so legacy records (C8-C10) carry the tool-recorded marker @ 0c5c6b0ddfdae1e4be932985e10de47ebee3b4cd
 - C13 [tested -> tested, done] (tests: tool-recorded) Review evidence promotes only an observed APPROVED verdict; supplied relays (reviews, CI runs) are recorded with provenance and never raise a level @ 251f369c27a054db8f444d300190e7e5cf2ca2f4
 - C14 [tested -> tested, done] (tests: tool-recorded) retest: re-run tests of a tested-but-unfinished task at its exact commit under a short lease that is released afterwards; never above tested @ 6fc249823b0a6df7040b125020cc4bd69611973a
+- C15 [tested -> tested, done] (tests: tool-recorded) retest releases only the lease it acquired (lease token), never a newer same-executor lease @ 1c7ae87ea7542307bd21025662e57c7c67dd79d6
 
 ## Next safe action
 - none eligible for this executor

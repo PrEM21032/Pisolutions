@@ -1,5 +1,5 @@
 {
-  "sha256": "625ac78cdc9dbcd53021907ca25e96a1e5c03b03c5ff05fa76cdeb9d2c29f074",
+  "sha256": "28a61a100168ee599791bdedb640e87ad6f217c7d7d41f6399ce4fe32ac433db",
   "ledger": {
     "mission_id": "PI-CONTINUITY-2026-10",
     "objective": "Make PI engineering work interruption-tolerant: never lose verified mission state, never confuse claims with evidence, resume safely after interruption (owner directive V2, 2026-10-19).",
@@ -478,6 +478,43 @@
             }
           ]
         }
+      },
+      {
+        "id": "C15",
+        "intent": "retest releases only the lease it acquired (lease token), never a newer same-executor lease",
+        "branch": "claude/continuity-mission-ledger",
+        "target": "tested",
+        "priority": 15,
+        "depends_on": [
+          "C14"
+        ],
+        "requires": [
+          "code",
+          "local_test"
+        ],
+        "status": "tested",
+        "objective_rev": 1,
+        "lease": {
+          "executor": "claude",
+          "base_sha": "da53c2d389556543b50c610b6786cd21908146a2",
+          "acquired_at": "2026-10-20T06:32:29.769Z",
+          "expires_at": "2026-10-20T07:32:29.769Z"
+        },
+        "lease_history": [],
+        "evidence": {
+          "commit": "1c7ae87ea7542307bd21025662e57c7c67dd79d6",
+          "implemented_by": "claude",
+          "tests": [
+            {
+              "cmd": "npm run -s test:continuity >/dev/null; a=$?; npm test >/dev/null 2>&1; b=$?; npm run -s test:v1.02 >/dev/null 2>&1; c=$?; npm run -s test:security >/dev/null 2>&1; d=$?; echo \"continuity=$a full=$b v1.02=$c security=$d\"; [ $a$b$c$d = 0000 ]",
+              "exit_code": 0,
+              "commit": "1c7ae87ea7542307bd21025662e57c7c67dd79d6",
+              "observed_at": "2026-10-20T06:33:51.302Z",
+              "in_worktree": true,
+              "recorded_by": "mission-run verify"
+            }
+          ]
+        }
       }
     ],
     "blockers": [
@@ -492,6 +529,6 @@
       "node pi/mission-git.mjs prompt --ledger handoffs/mission-ledger.json",
       "Before changing a task: acquire its lease and re-run reconcile; never edit evidence by hand to raise a level"
     ],
-    "seq": 43
+    "seq": 46
   }
 }

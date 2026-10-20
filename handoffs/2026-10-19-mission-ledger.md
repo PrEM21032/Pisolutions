@@ -350,3 +350,38 @@ evidence.
 ## Rollback
 - Run `git revert 6fc2498` for the code, plus this run's ledger checkpoints; or delete the branch.
 - To undo only C1's re-test, revert the final ledger checkpoint commit (back to seq 40).
+
+---
+
+# Run 9 — 2026-10-20 06:32–06:35Z — C15 retest lease-ownership race (owner window until 07:22Z)
+
+## Fresh check (06:32:16Z)
+- The remote and local head were `da53c2d`, with a clean tree. Ledger seq 43, `check` 0. #218 is `1ce9b4b`.
+
+## Race: CONFIRMED on da53c2d
+- `acquireLease` lets the same executor re-acquire its own active lease. `retest`'s `finally` released any lease held
+  by that executor.
+- **Reproduction** (in `pi/mission-run-test.mjs`): during a `retest` of R4, its test command, simulating a second
+  same-executor session, acquires a newer lease (disk seq 23).
+  - The stale retest's evidence write is refused (`stale_checkpoint: disk seq 23, writer expected 22`); good.
+  - **But its cleanup cleared the newer lease.** Assertion message: "newer same-executor lease was cleared by the
+    stale retest".
+
+## Fix (`1c7ae87ea7542307bd21025662e57c7c67dd79d6`, Mission-Task: C15)
+- Every lease carries a random `token`.
+- `retest` releases only the lease whose token it acquired. If superseded, it releases nothing and fails with
+  `lease_superseded`.
+- Unchanged: begin/verify/reverify guards, the 30-minute retest lease, and the never-above-tested rule.
+- The regression fails with the `da53c2d` modules and passes on `1c7ae87`.
+- Verified at that commit: `continuity=0 full=0 v1.02=0 security=0` (06:34:45Z); seq 46.
+
+## Unchanged
+- C1 is `tested`, not done, tool-recorded.
+- Supplied COMMENT-only review and #218 CI (held, action_required, 0 jobs) are non-promoting and supplied; canonical
+  #218 CI has NOT passed.
+
+## Local vs CI
+All local Linux, in a temporary worktree. No CI ran on this branch.
+
+## Rollback
+Run `git revert 1c7ae87` plus this run's ledger checkpoint, or delete the branch.
