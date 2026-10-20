@@ -15,6 +15,8 @@ export const OFFLINE_CEILING = 'independently_verified';
 // Action categories this engine refuses to perform or schedule, whatever the ledger says.
 export const FORBIDDEN_ACTIONS = ['deploy', 'merge_protected', 'secret_write', 'billing', 'paid_call', 'hardware', 'force_push', 'approve_actions', 'owner_auth_bypass'];
 const FULL_SHA = /^[0-9a-f]{40}$/;
+// Marker written by `mission-run verify` on the test records it produces.
+export const TOOL_RECORDER = 'mission-run verify';
 const isoNow = (now) => new Date(now).toISOString();
 
 export function authorize(action) {
@@ -140,11 +142,18 @@ export function reconcile(ledger, facts, { now }) {
       }
     }
     const tests = ev.tests || [];
+    let testProvenance = null;
     if (rank(earned) >= rank('implemented') && tests.length) {
       const onCommit = tests.filter((t) => t.commit === commit);
       if (!onCommit.length) contradictions.push('tests_not_tied_to_commit');
       else if (onCommit.some((t) => t.exit_code !== 0)) contradictions.push('failing_test_on_commit');
-      else earned = 'tested';
+      else {
+        earned = 'tested';
+        // Tool-recorded = written by `mission-run verify` (ran in a worktree at the commit). Anything else was
+        // typed into the ledger. This is a provenance label, not authentication: the fields can be copied.
+        testProvenance = onCommit.every((t) => t.in_worktree === true && t.recorded_by === TOOL_RECORDER) ? 'tool_recorded' : 'hand_written';
+        if (testProvenance === 'hand_written') unknowns.push('hand_written_test_evidence');
+      }
     }
     const review = ev.review;
     if (review) {
@@ -168,6 +177,7 @@ export function reconcile(ledger, facts, { now }) {
       claimed: task.status,
       earned,
       commit,
+      test_provenance: testProvenance,
       done: doneNow,
       stale_intent: stale,
       lease: task.lease ? { ...task.lease, active: leaseActive(task.lease, now) } : null,
@@ -214,7 +224,8 @@ export function continuationPrompt(ledger, rec, next) {
     `# PI mission ${ledger.mission_id} — continuation (seq ${ledger.seq})`,
     '',
     '> Built offline from the mission ledger and local git. NOT DISPATCHED. Levels are earned from evidence;',
-    '> deployed / production_verified can never be earned offline.',
+    '> deployed / production_verified can never be earned offline. "tool-recorded" tests were written by',
+    '> `mission-run verify` in a worktree at the commit; HAND-WRITTEN ones were typed in. Neither label is authentication.',
     '',
     `Objective (rev ${ledger.objective_rev}): ${ledger.objective}`,
     `Repository: ${ledger.repo} @ base ${ledger.base_sha}`,
@@ -224,7 +235,8 @@ export function continuationPrompt(ledger, rec, next) {
   for (const t of ledger.tasks) {
     const r = rec[t.id];
     const notes = [...r.contradictions.map((c) => `CONTRADICTION ${c}`), ...r.unknowns].join('; ');
-    lines.push(`- ${t.id} [${r.claimed} -> ${r.earned}${r.done ? ', done' : ''}] ${t.intent}${r.commit ? ` @ ${r.commit}` : ''}${notes ? ` — ${notes}` : ''}`);
+    const prov = r.test_provenance === 'tool_recorded' ? ' (tests: tool-recorded)' : r.test_provenance === 'hand_written' ? ' (tests: HAND-WRITTEN)' : '';
+    lines.push(`- ${t.id} [${r.claimed} -> ${r.earned}${r.done ? ', done' : ''}]${prov} ${t.intent}${r.commit ? ` @ ${r.commit}` : ''}${notes ? ` — ${notes}` : ''}`);
   }
   lines.push('', '## Next safe action');
   lines.push(next.task ? `- ${next.task}: ${next.step}${next.commit ? ` (commit ${next.commit})` : ''}` : '- none eligible for this executor');

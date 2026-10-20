@@ -96,6 +96,13 @@ console.log(JSON.stringify({ leftovers, recovered: rec.T1.unknowns, exit: run.st
   let { l, rec } = state(T0 + 60_000);
   assert.equal(rec.T1.earned, 'tested');
   assert.equal(rec.T1.commit, t1Commit);
+  // B typed its test record into the ledger, so it is labelled hand-written, also in the prompt.
+  assert.equal(rec.T1.test_provenance, 'hand_written');
+  assert.ok(rec.T1.unknowns.includes('hand_written_test_evidence'));
+  assert.match(continuationPrompt(l, rec, selectNext(l, rec, { executor: 'claude', now: T0 })), /T1 \[tested -> tested\] \(tests: HAND-WRITTEN\)/);
+  // Copying only one of the two tool markers is still hand-written.
+  const halfCopied = recordEvidence(l, 'T1', { tests: [{ cmd: 'x', exit_code: 0, commit: t1Commit, observed_at: new Date(T0).toISOString(), in_worktree: true }] });
+  assert.equal(reconcile(halfCopied, gitFacts(repo, halfCopied), { now: T0 }).T1.test_provenance, 'hand_written');
 
   // 3. A stale writer holding the pre-B checkpoint is refused; disk is unchanged.
   const disk = readFileSync(ledgerPath, 'utf8');
@@ -231,4 +238,4 @@ for (const banned of ["'fetch'", "'push'", "'pull'", "'clone'", "'ls-remote'", "
   assert.ok(!gitSrc.includes(banned), `mission-git.mjs must not use ${banned}`);
 }
 
-console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true, cliCheckAndOut: true, fixupCommitsResolved: true, uncommittedWorkUnderLeaseReported: true, abandonedLeaseVisible: true }));
+console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true, cliCheckAndOut: true, fixupCommitsResolved: true, uncommittedWorkUnderLeaseReported: true, abandonedLeaseVisible: true, handWrittenTestsLabelled: true }));

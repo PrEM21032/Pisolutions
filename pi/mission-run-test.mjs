@@ -81,6 +81,9 @@ try {
   ({ ledger } = loadLedger(ledgerPath));
   const rec = reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() });
   assert.equal(rec.R1.earned, 'tested');
+  assert.equal(rec.R1.test_provenance, 'tool_recorded', 'verify marks its own records');
+  assert.ok(!rec.R1.unknowns.includes('hand_written_test_evidence'));
+  assert.equal(ledger.tasks.find((t) => t.id === 'R1').evidence.tests.at(-1).recorded_by, 'mission-run verify');
   assert.deepEqual(rec.R1.contradictions, []);
   assert.equal(selectNext(ledger, rec, { executor: 'claude', now: Date.now() }).task, 'R2', 'loop advances to the next task');
   assert.ok(!readFileSync(ledgerPath, 'utf8').includes('"in_worktree": false'));
@@ -93,4 +96,4 @@ const src = readFileSync(RUN, 'utf8');
 for (const banned of ["'fetch'", "'push'", "'pull'", "'ls-remote'", 'wrangler', 'fetch(', 'process.env']) {
   assert.ok(!src.includes(banned), `mission-run.mjs must not use ${banned}`);
 }
-console.log(JSON.stringify({ ok: true, duplicateTasksRefused: true, onlySelectedTaskBegins: true, dirtyTreeRefused: true, exactCommitTested: true, leaseEnforced: true, failingRunRecorded: true, worktreeCleaned: true }));
+console.log(JSON.stringify({ ok: true, duplicateTasksRefused: true, onlySelectedTaskBegins: true, dirtyTreeRefused: true, exactCommitTested: true, leaseEnforced: true, failingRunRecorded: true, worktreeCleaned: true, toolRecordedLabelled: true }));

@@ -8,7 +8,7 @@ import { existsSync, mkdtempSync, realpathSync, rmSync, symlinkSync } from 'node
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { acquireLease, leaseActive, loadLedger, reconcile, recordEvidence, saveLedger, selectNext, setStatus } from './mission-ledger.mjs';
+import { TOOL_RECORDER, acquireLease, leaseActive, loadLedger, reconcile, recordEvidence, saveLedger, selectNext, setStatus } from './mission-ledger.mjs';
 import { dirtyPaths, gitFacts } from './mission-git.mjs';
 
 export { dirtyPaths };
@@ -66,7 +66,7 @@ export function verify(ledgerPath, repo, taskId, executor, cmd, { now = Date.now
   const exit = run.status ?? 1;
   let l = recordEvidence(ledger, taskId, {
     commit: r.commit, implemented_by: task.evidence?.implemented_by || executor,
-    tests: [...(task.evidence?.tests || []).filter((t) => t.commit !== r.commit), { cmd, exit_code: exit, commit: r.commit, observed_at: new Date(now).toISOString(), in_worktree: true }]
+    tests: [...(task.evidence?.tests || []).filter((t) => t.commit !== r.commit), { cmd, exit_code: exit, commit: r.commit, observed_at: new Date(now).toISOString(), in_worktree: true, recorded_by: TOOL_RECORDER }]
   });
   // A passing run on the exact commit earns 'tested'; it never lowers a higher recorded level. The latest run per
   // commit replaces earlier ones, so a failing re-run is visible (reconcile flags failing_test_on_commit).
