@@ -1,5 +1,5 @@
 {
-  "sha256": "69e80dc06a766ae00e19590a1fb342a480bdeaf852a5b65749269a5b5e8d02a2",
+  "sha256": "23a789b057118d91de31bcb97c2f12dcd759d4de962ac4a9b11f062167585bcf",
   "ledger": {
     "mission_id": "PI-CONTINUITY-2026-10",
     "objective": "Make PI engineering work interruption-tolerant: never lose verified mission state, never confuse claims with evidence, resume safely after interruption (owner directive V2, 2026-10-19).",
@@ -99,13 +99,22 @@
           "implemented_by": "claude",
           "tests": [
             {
-              "cmd": "bash -e replay of PR Core steps; npm run test:security; npm test",
+              "cmd": "npm test >/dev/null 2>&1; b=$?; npm run -s test:v1.02 >/dev/null 2>&1; c=$?; npm run -s test:security >/dev/null 2>&1; d=$?; echo \"full=$b v1.02=$c security=$d (test:continuity absent at this commit, not run)\"; [ $b$c$d = 000 ]",
               "exit_code": 0,
               "commit": "4a504e9807e986a0e9dc02e6d1744591f9035052",
-              "observed_at": "2026-10-19T19:19:00Z"
+              "observed_at": "2026-10-20T01:36:11.534Z",
+              "in_worktree": true,
+              "recorded_by": "mission-run verify"
             }
           ]
-        }
+        },
+        "lease": {
+          "executor": "claude",
+          "base_sha": "4a504e9807e986a0e9dc02e6d1744591f9035052",
+          "acquired_at": "2026-10-20T01:36:11.534Z",
+          "expires_at": "2026-10-20T02:36:11.534Z"
+        },
+        "lease_history": []
       },
       {
         "id": "C3",
@@ -433,6 +442,6 @@
       "node pi/mission-git.mjs prompt --ledger handoffs/mission-ledger.json",
       "Before changing a task: acquire its lease and re-run reconcile; never edit evidence by hand to raise a level"
     ],
-    "seq": 35
+    "seq": 37
   }
 }

@@ -266,3 +266,38 @@ evidence.
 
 ## Rollback
 Revert the run 6 ledger checkpoint commit, which returns the ledger to seq 33. No code changed in this run.
+
+---
+
+# Run 7 — 2026-10-20 01:35–01:37Z — explicit C2 reverify with the suites present at its commit
+
+## Fresh check (01:35:59Z)
+- The remote and local head were `c3152dd`, with a clean tree. Ledger seq 35, `check` 0. #218 is `1ce9b4b`.
+- `package.json` at `4a504e9`: `test`, `test:v1.02` and `test:security` present; `test:continuity` ABSENT.
+- `4a504e9` is on `claude/pr217-parity-pr-core` (head `c3a8d04`).
+- **reverify semantics:**
+  - done tasks only, with a lease based on the task commit;
+  - `verify` runs in a worktree at that commit;
+  - the new record replaces the earlier record for the same commit;
+  - a failure gives `failing_test_on_commit`, so the task is no longer done.
+
+## Result
+- **Command (recorded verbatim in the ledger):** `npm test`, `npm run test:v1.02` and `npm run test:security`, each
+  with its own exit code. `test:continuity` was not requested and is not claimed.
+- **Output:** `full=0 v1.02=0 security=0 (test:continuity absent at this commit, not run)`, exit 0 at 01:36:55Z;
+  seq 37.
+- **C2:** tested, done, tool-recorded. Its earlier hand-written record (19:19Z) is replaced by the tool record for
+  the same commit. `base_moved` is the known cosmetic note for reverify leases.
+
+## Unchanged
+- C1: `tested`, not done, hand-written.
+- Supplied COMMENT-only review on C1.
+- #218 CI held (action_required, 0 jobs), supplied.
+- Fork draft PR #2 is review-only.
+- C1 is now the only task with hand-written test evidence.
+
+## Local vs CI
+Local Linux, in a temporary worktree at `4a504e9`. No CI ran.
+
+## Rollback
+Revert this run's ledger checkpoint commit, which returns the ledger to seq 35. No code changed.

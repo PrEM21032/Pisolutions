@@ -1,4 +1,4 @@
-# PI mission PI-CONTINUITY-2026-10 — continuation (seq 35)
+# PI mission PI-CONTINUITY-2026-10 — continuation (seq 37)
 
 > Built offline from the mission ledger and local git. NOT DISPATCHED. Levels are earned from evidence;
 > deployed / production_verified can never be earned offline. "tool-recorded" tests were written by
@@ -14,7 +14,7 @@ Repository: https://github.com/pisolutions9/Pisolutions9 (canonical); work publi
   - SUPPLIED by owner relay of Codex (not observed: canonical API/web 403 from this session) (relayed 2026-10-20T01:26:57.432Z, not observed by this engine): ci_run PI V1.02 PR Core run 39315186459 on 1ce9b4b: completed/action_required, 0 jobs (held, not passing) — https://github.com/pisolutions9/Pisolutions9/actions/runs/39315186459
   - SUPPLIED by owner relay of Codex (not observed: canonical API/web 403 from this session) (relayed 2026-10-20T01:26:57.484Z, not observed by this engine): ci_run PI V1.02 PR Gate run 39315186523 on 1ce9b4b: completed/action_required, 0 jobs (held, not passing) — https://github.com/pisolutions9/Pisolutions9/actions/runs/39315186523
   - SUPPLIED by owner relay of Codex (not observed: canonical API/web 403 from this session) (relayed 2026-10-20T01:26:57.538Z, not observed by this engine): ci_run PI V1.02 Gate run 39315186399 on 1ce9b4b: completed/action_required, 0 jobs (held, not passing) — https://github.com/pisolutions9/Pisolutions9/actions/runs/39315186399
-- C2 [tested -> tested, done] (tests: HAND-WRITTEN) #217 follow-ups: F4 symlink guard, F5 parity test, PR Core parity step (fork draft PR #2) @ 4a504e9807e986a0e9dc02e6d1744591f9035052 — hand_written_test_evidence
+- C2 [tested -> tested, done] (tests: tool-recorded) #217 follow-ups: F4 symlink guard, F5 parity test, PR Core parity step (fork draft PR #2) @ 4a504e9807e986a0e9dc02e6d1744591f9035052 — base_moved:4a504e9->parent_e026f56
 - C3 [tested -> tested, done] (tests: tool-recorded) Mission ledger engine: checkpoints, leases, reconciler, selector, recovery test @ c969913ee2e09f829c3599b77087f9785d48b179 — base_moved:c969913->parent_1ce9b4b
 - C4 [pending -> pending] Record #218 CI check runs on its head as ci_run evidence with subject_sha
 - C5 [pending -> pending] Decide fork draft PR #2 (#217 follow-ups): review-only, CI-run PR to fork main, or adoption into #217
