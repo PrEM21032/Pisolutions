@@ -1,5 +1,5 @@
 {
-  "sha256": "aa22154509e5d1a6e212d85feb080508f9d917c7cdcb29194cdad0053caca9de",
+  "sha256": "625ac78cdc9dbcd53021907ca25e96a1e5c03b03c5ff05fa76cdeb9d2c29f074",
   "ledger": {
     "mission_id": "PI-CONTINUITY-2026-10",
     "objective": "Make PI engineering work interruption-tolerant: never lose verified mission state, never confuse claims with evidence, resume safely after interruption (owner directive V2, 2026-10-19).",
@@ -39,10 +39,12 @@
           "implemented_by": "claude",
           "tests": [
             {
-              "cmd": "npm run test:continuity && npm test && npm run test:v1.02 && npm run test:security",
+              "cmd": "npm run -s test:continuity >/dev/null; a=$?; npm test >/dev/null 2>&1; b=$?; npm run -s test:v1.02 >/dev/null 2>&1; c=$?; npm run -s test:security >/dev/null 2>&1; d=$?; echo \"continuity=$a full=$b v1.02=$c security=$d\"; [ $a$b$c$d = 0000 ]",
               "exit_code": 0,
               "commit": "1ce9b4b96aedf1791ed255395fb9d68d1c9776c1",
-              "observed_at": "2026-10-19T19:56:34Z"
+              "observed_at": "2026-10-20T01:43:08.280Z",
+              "in_worktree": true,
+              "recorded_by": "mission-run verify"
             }
           ],
           "note": "Codex verified the same change on fix branch c444549, not on 1ce9b4b itself; no review is recorded against 1ce9b4b.",
@@ -80,7 +82,18 @@
               "provenance": "supplied"
             }
           ]
-        }
+        },
+        "lease": null,
+        "lease_history": [
+          {
+            "executor": "claude",
+            "base_sha": "1ce9b4b96aedf1791ed255395fb9d68d1c9776c1",
+            "acquired_at": "2026-10-20T01:43:08.280Z",
+            "expires_at": "2026-10-20T02:13:08.280Z",
+            "ended": "released",
+            "ended_at": "2026-10-20T01:43:08.280Z"
+          }
+        ]
       },
       {
         "id": "C2",
@@ -479,6 +492,6 @@
       "node pi/mission-git.mjs prompt --ledger handoffs/mission-ledger.json",
       "Before changing a task: acquire its lease and re-run reconcile; never edit evidence by hand to raise a level"
     ],
-    "seq": 40
+    "seq": 43
   }
 }

@@ -1,4 +1,4 @@
-# PI mission PI-CONTINUITY-2026-10 — continuation (seq 37)
+# PI mission PI-CONTINUITY-2026-10 — continuation (seq 43)
 
 > Built offline from the mission ledger and local git. NOT DISPATCHED. Levels are earned from evidence;
 > deployed / production_verified can never be earned offline. "tool-recorded" tests were written by
@@ -9,7 +9,7 @@ Repository: https://github.com/pisolutions9/Pisolutions9 (canonical); work publi
 
 ## Tasks (claimed -> earned)
 - C7 [pending -> pending] Production verification of the PI Worker (live)
-- C1 [tested -> tested] (tests: HAND-WRITTEN) Offline continuity handoff builder, draft #218 (CI tied to subject_sha) @ 1ce9b4b96aedf1791ed255395fb9d68d1c9776c1 — hand_written_test_evidence
+- C1 [tested -> tested] (tests: tool-recorded) Offline continuity handoff builder, draft #218 (CI tied to subject_sha) @ 1ce9b4b96aedf1791ed255395fb9d68d1c9776c1
   - SUPPLIED by owner relay of Codex (not observed: canonical API/web 403 from this session) (relayed 2026-10-20T01:26:57.379Z, not observed by this engine): review Codex COMMENT-only review (not an approval) of exact head 1ce9b4b; six focused probes passed locally; full Windows suite inconclusive (symlink EPERM) — https://github.com/pisolutions9/Pisolutions9/pull/218#pullrequestreview-5579666526
   - SUPPLIED by owner relay of Codex (not observed: canonical API/web 403 from this session) (relayed 2026-10-20T01:26:57.432Z, not observed by this engine): ci_run PI V1.02 PR Core run 39315186459 on 1ce9b4b: completed/action_required, 0 jobs (held, not passing) — https://github.com/pisolutions9/Pisolutions9/actions/runs/39315186459
   - SUPPLIED by owner relay of Codex (not observed: canonical API/web 403 from this session) (relayed 2026-10-20T01:26:57.484Z, not observed by this engine): ci_run PI V1.02 PR Gate run 39315186523 on 1ce9b4b: completed/action_required, 0 jobs (held, not passing) — https://github.com/pisolutions9/Pisolutions9/actions/runs/39315186523
@@ -25,6 +25,7 @@ Repository: https://github.com/pisolutions9/Pisolutions9 (canonical); work publi
 - C11 [tested -> tested, done] (tests: tool-recorded) Distinguish test evidence recorded by mission-run verify (in_worktree) from hand-written test records in reconcile and the continuation prompt @ 968d44148d86bd722e9c262630e7d3101fa82860
 - C12 [tested -> tested, done] (tests: tool-recorded) verify --reverify for already-done tasks: re-run tests at the same commit under a fresh lease so legacy records (C8-C10) carry the tool-recorded marker @ 0c5c6b0ddfdae1e4be932985e10de47ebee3b4cd
 - C13 [tested -> tested, done] (tests: tool-recorded) Review evidence promotes only an observed APPROVED verdict; supplied relays (reviews, CI runs) are recorded with provenance and never raise a level @ 251f369c27a054db8f444d300190e7e5cf2ca2f4
+- C14 [tested -> tested, done] (tests: tool-recorded) retest: re-run tests of a tested-but-unfinished task at its exact commit under a short lease that is released afterwards; never above tested @ 6fc249823b0a6df7040b125020cc4bd69611973a
 
 ## Next safe action
 - none eligible for this executor

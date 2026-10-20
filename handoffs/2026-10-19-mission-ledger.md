@@ -301,3 +301,52 @@ Local Linux, in a temporary worktree at `4a504e9`. No CI ran.
 
 ## Rollback
 Revert this run's ledger checkpoint commit, which returns the ledger to seq 35. No code changed.
+
+---
+
+# Run 8 — 2026-10-20 01:39–01:44Z — C14 `retest`; C1 re-tested at its exact commit
+
+## Fresh check (01:39:44Z)
+- The remote and local head were `e9fa35a`, with a clean tree. Ledger seq 37, `check` 0.
+- #218 is `1ce9b4b`, equal to the fork's `claude/practical-johnson-hy0vob`.
+- C1: `tested`, not done, hand-written, no lease. A reviewer executor was routed to C1 `independent_review`.
+- All four suites are present at `1ce9b4b`.
+
+## Design (guards kept)
+- `verify` still needs the selector's `begin`; `reverify` still accepts only done tasks.
+- The new narrow `mission-run retest` accepts only tasks whose evidence earns exactly `tested` and that are not done:
+  - done tasks are refused and pointed to reverify;
+  - lower levels are refused and pointed to begin/verify;
+  - contradictions are refused.
+- It takes a short lease (30 min) based on the task commit. A foreign active lease is refused.
+- It runs the normal exact-commit worktree `verify` and never raises the level above `tested`.
+- It **always releases the lease** in a `finally`, so the reviewer is not blocked.
+- A failing run is recorded, demotes the task (`failing_test_on_commit`, `claimed_above_evidence`), and returns it to
+  the normal begin/verify loop.
+
+## C14
+- **Transition:** add-task (seq 38), then begin (seq 39), then commit `6fc249823b0a6df7040b125020cc4bd69611973a`
+  (Mission-Task: C14), then verify at that commit. Output: `continuity=0 full=0 v1.02=0 security=0` (01:42:54Z);
+  seq 40.
+- **Regression:** fails on `e9fa35a` (no `retest` command); passes on `6fc2498`.
+- **Fixture issue found while writing it:** the first fixture really failed at the task commit because of an earlier
+  breakage commit. The tool reported it correctly; I gave the fixture its own test.
+
+## C1 re-tested
+- **Command:** `mission-run retest --task C1` at `1ce9b4b`. Output: `continuity=0 full=0 v1.02=0 security=0`, exit 0
+  at 01:43:52Z; seq 43.
+- **C1 now:**
+  - `tested`, not done, **tool-recorded**, status unchanged (`tested`);
+  - lease released (history: `ended: released`);
+  - 4 SUPPLIED notes intact (COMMENT-only review; PR Core / PR Gate / V1.02 Gate held with action_required and 0 jobs);
+  - no `review` field;
+  - a reviewer is still routed to C1 `independent_review`.
+- Every task with test evidence is now tool-recorded.
+
+## Local vs CI
+All local Linux, in temporary worktrees. No CI ran on this branch. #218 CI is held, according to the supplied
+evidence.
+
+## Rollback
+- Run `git revert 6fc2498` for the code, plus this run's ledger checkpoints; or delete the branch.
+- To undo only C1's re-test, revert the final ledger checkpoint commit (back to seq 40).
