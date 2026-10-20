@@ -7,7 +7,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadLedger, reconcile, saveLedger, selectNext } from './mission-ledger.mjs';
+import { continuationPrompt, loadLedger, reconcile, saveLedger, selectNext } from './mission-ledger.mjs';
 import { gitFacts } from './mission-git.mjs';
 
 const RUN = fileURLToPath(new URL('./mission-run.mjs', import.meta.url));
@@ -114,6 +114,19 @@ try {
   assert.equal(r1.earned, 'tested');
   assert.equal(ledger.tasks.find((t) => t.id === 'R1').lease_history.at(-1).executor, 'codex', 'expired codex lease recorded on takeover');
   g('commit', '-qam', 'reverified R1');
+  // note: supplied evidence is stored with provenance, shown in the prompt, and never raises a level.
+  ({ ledger } = loadLedger(ledgerPath));
+  const before = reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }).R2;
+  assert.equal(run('note', '--task', 'R2', '--kind', 'ci_run', '--by', 'owner relay', '--summary', 'PR Core completed/action_required, 0 jobs', '--url', 'https://github.com/x/y/actions/runs/1').status, 0);
+  assert.match(run('note', '--task', 'R2', '--kind', 'ci_run', '--by', 'owner relay', '--summary', 'PR Core completed/action_required, 0 jobs', '--url', 'https://github.com/x/y/actions/runs/1').stderr, /duplicate_note/);
+  assert.match(run('note', '--task', 'R2', '--kind', 'review', '--by', 'x', '--summary', 'y', '--url', 'http://insecure').stderr, /url must be https/);
+  assert.match(run('note', '--task', 'R2', '--kind', 'approval', '--by', 'x', '--summary', 'y').stderr, /kind must be/);
+  ({ ledger } = loadLedger(ledgerPath));
+  const after = reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }).R2;
+  assert.equal(after.earned, before.earned, 'supplied note does not change the level');
+  assert.equal(ledger.tasks.find((t) => t.id === 'R2').evidence.supplied[0].provenance, 'supplied');
+  assert.match(continuationPrompt(ledger, reconcile(ledger, gitFacts(repo, ledger), { now: Date.now() }), { task: null, skipped: [] }), /SUPPLIED by owner relay \(relayed .*, not observed by this engine\): ci_run PR Core completed\/action_required, 0 jobs/);
+  g('commit', '-qam', 'note on R2');
   // A failing re-run is recorded and visibly demotes the done task.
   const bad = run('reverify', '--task', 'R1', '--executor', 'claude', '--cmd', 'exit 4');
   assert.equal(bad.status, 1);
@@ -130,4 +143,4 @@ const src = readFileSync(RUN, 'utf8');
 for (const banned of ["'fetch'", "'push'", "'pull'", "'ls-remote'", 'wrangler', 'fetch(', 'process.env']) {
   assert.ok(!src.includes(banned), `mission-run.mjs must not use ${banned}`);
 }
-console.log(JSON.stringify({ ok: true, duplicateTasksRefused: true, onlySelectedTaskBegins: true, dirtyTreeRefused: true, exactCommitTested: true, leaseEnforced: true, failingRunRecorded: true, worktreeCleaned: true, toolRecordedLabelled: true, reverifyDoneTasks: true }));
+console.log(JSON.stringify({ ok: true, duplicateTasksRefused: true, onlySelectedTaskBegins: true, dirtyTreeRefused: true, exactCommitTested: true, leaseEnforced: true, failingRunRecorded: true, worktreeCleaned: true, toolRecordedLabelled: true, reverifyDoneTasks: true, suppliedNotesNeverPromote: true }));

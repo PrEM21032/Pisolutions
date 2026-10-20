@@ -4,6 +4,8 @@
 //   begin     --task C9 --executor claude [--ttl 60]      # task must be the selector's choice; tree must be clean
 //   verify    --task C9 --executor claude --cmd "<test>"  # runs <test> in a temp worktree at the task's exact commit
 //   reverify  --task C8 --executor claude --cmd "<test>"  # already-done task: fresh lease, same exact-commit run
+//   note      --task C1 --kind review|ci_run --by "<who relayed it>" --summary "..." [--url https://...]
+//             # records SUPPLIED external evidence with provenance; it is shown in prompts and never raises a level
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -76,6 +78,18 @@ export function verify(ledgerPath, repo, taskId, executor, cmd, { now = Date.now
   return { seq: saved.seq, commit: r.commit, exit_code: exit, worktree_removed: !existsSync(tree), tail: (run.stdout + run.stderr).trim().split('\n').slice(-3) };
 }
 
+export function note(ledgerPath, taskId, { kind, by, summary, url, now = Date.now() }) {
+  if (!['review', 'ci_run', 'other'].includes(kind)) fail('BAD_KIND', 'kind must be review, ci_run or other');
+  if (!by || !summary) fail('BAD_NOTE', 'note needs --by and --summary');
+  if (url && !/^https:\/\//.test(url)) fail('BAD_NOTE', 'url must be https');
+  const { ledger } = loadLedger(ledgerPath);
+  const task = ledger.tasks.find((t) => t.id === taskId) || fail('UNKNOWN', `unknown_task:${taskId}`);
+  const entry = { kind, supplied_by: by, summary, ...(url ? { url } : {}), relayed_at: new Date(now).toISOString(), provenance: 'supplied' };
+  const supplied = [...(task.evidence?.supplied || [])];
+  if (supplied.some((x) => x.kind === kind && x.summary === summary && x.url === entry.url)) fail('DUPLICATE', 'duplicate_note');
+  return saveLedger(ledgerPath, recordEvidence(ledger, taskId, { supplied: [...supplied, entry] }), { expectSeq: ledger.seq });
+}
+
 // Re-run the tests of an already-done task at the same commit (e.g. to replace hand-written or legacy records with
 // tool-recorded ones). Only done tasks: unfinished work must go through the selector via begin/verify. Takes its own
 // lease, so a foreign active lease is refused. A failing re-run is recorded and demotes the task visibly.
@@ -100,8 +114,9 @@ async function main(argv) {
   if (cmd === 'add-task') out = { seq: addTask(ledgerPath, { id: args.id, intent: args.intent, branch: args.branch, priority: args.priority, depends_on: list(args.depends), requires: list(args.requires), target: args.target }).seq };
   else if (cmd === 'begin') out = begin(ledgerPath, repo, args.task, args.executor || 'claude', { ttlMinutes: Number(args.ttl || 60), now: args.now ? Date.parse(args.now) : Date.now() });
   else if (cmd === 'verify') out = verify(ledgerPath, repo, args.task, args.executor || 'claude', args.cmd, { now: args.now ? Date.parse(args.now) : Date.now() });
+  else if (cmd === 'note') out = { seq: note(ledgerPath, args.task, { kind: args.kind, by: args.by, summary: args.summary, url: args.url }).seq };
   else if (cmd === 'reverify') out = reverify(ledgerPath, repo, args.task, args.executor || 'claude', args.cmd, { now: args.now ? Date.parse(args.now) : Date.now() });
-  else { console.error('usage: node pi/mission-run.mjs <add-task|begin|verify|reverify> [--ledger handoffs/mission-ledger.json] ...'); process.exit(2); }
+  else { console.error('usage: node pi/mission-run.mjs <add-task|begin|verify|reverify|note> [--ledger handoffs/mission-ledger.json] ...'); process.exit(2); }
   console.log(JSON.stringify(out));
   if (['verify', 'reverify'].includes(cmd) && out.exit_code !== 0) process.exit(1);
 }

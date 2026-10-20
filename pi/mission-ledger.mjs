@@ -162,6 +162,10 @@ export function reconcile(ledger, facts, { now }) {
       else if (review.commit !== commit) contradictions.push('review_not_on_commit');
       else if (!review.by || review.by === implementer || review.by === ev.implemented_by) contradictions.push('review_not_independent');
       else if (!review.ref) unknowns.push('review_without_reference');
+      // Only an APPROVED verdict that this executor observed itself can promote. A comment-only review, or one
+      // relayed by someone else, is kept as evidence but never raises the level.
+      else if (String(review.verdict || '').toUpperCase() !== 'APPROVED') unknowns.push(`review_not_approval:${review.verdict || 'missing'}`);
+      else if (review.provenance !== 'observed') unknowns.push(`review_not_observed:${review.provenance || 'missing'}`);
       else earned = 'independently_verified';
     }
     if (rank(task.status) > rank(OFFLINE_CEILING)) contradictions.push(`unverifiable_offline:${task.status}`);
@@ -235,8 +239,10 @@ export function continuationPrompt(ledger, rec, next) {
   for (const t of ledger.tasks) {
     const r = rec[t.id];
     const notes = [...r.contradictions.map((c) => `CONTRADICTION ${c}`), ...r.unknowns].join('; ');
+    // Relayed observations (never used for levels) are printed under the task with who supplied them.
+    const supplied = (t.evidence?.supplied || []).map((x) => `  - SUPPLIED by ${x.supplied_by} (relayed ${x.relayed_at}, not observed by this engine): ${x.kind} ${x.summary}${x.url ? ` — ${x.url}` : ''}`);
     const prov = r.test_provenance === 'tool_recorded' ? ' (tests: tool-recorded)' : r.test_provenance === 'hand_written' ? ' (tests: HAND-WRITTEN)' : '';
-    lines.push(`- ${t.id} [${r.claimed} -> ${r.earned}${r.done ? ', done' : ''}]${prov} ${t.intent}${r.commit ? ` @ ${r.commit}` : ''}${notes ? ` — ${notes}` : ''}`);
+    lines.push(`- ${t.id} [${r.claimed} -> ${r.earned}${r.done ? ', done' : ''}]${prov} ${t.intent}${r.commit ? ` @ ${r.commit}` : ''}${notes ? ` — ${notes}` : ''}`, ...supplied);
   }
   lines.push('', '## Next safe action');
   lines.push(next.task ? `- ${next.task}: ${next.step}${next.commit ? ` (commit ${next.commit})` : ''}` : '- none eligible for this executor');

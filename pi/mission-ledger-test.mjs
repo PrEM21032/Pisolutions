@@ -114,11 +114,26 @@ console.log(JSON.stringify({ leftovers, recovered: rec.T1.unknowns, exit: run.st
   assert.equal(next.task, 'T5', 'with T1 awaiting review and T2 blocked behind it, the next eligible task is T5');
   assert.ok(next.skipped.some((s) => s.id === 'T1' && s.reason === 'needs_independent_reviewer'));
   assert.ok(next.skipped.some((s) => s.id === 'T2' && s.reason === 'depends_on:T1'));
-  const selfReview = reconcile(recordEvidence(l, 'T1', { review: { by: 'claude', commit: t1Commit, ref: 'self' } }), gitFacts(repo, l), { now: T0 });
+  const selfReview = reconcile(recordEvidence(l, 'T1', { review: { by: 'claude', commit: t1Commit, ref: 'self', verdict: 'APPROVED', provenance: 'observed' } }), gitFacts(repo, l), { now: T0 });
   assert.ok(selfReview.T1.contradictions.includes('review_not_independent'));
   assert.equal(selectNext(l, rec, { executor: 'codex-sim', now: T0 + 2 * 3_600_000 }).step, 'independent_review');
   // SIMULATED reviewer: records a review tied to the exact commit.
-  saveLedger(ledgerPath, setStatus(recordEvidence(l, 'T1', { review: { by: 'codex-sim', commit: t1Commit, ref: 'review-note-1 (simulated reviewer)' } }), 'T1', 'independently_verified'), { expectSeq: l.seq });
+  // Regression (found on 4f73f77): a comment-only or relayed review promoted the task. Only an APPROVED verdict the
+  // engine's executor observed itself counts; anything else stays evidence.
+  const reviewed = (review) => reconcile(recordEvidence(l, 'T1', { review: { by: 'codex-sim', commit: t1Commit, ref: 'https://example.invalid/review/1', ...review } }), gitFacts(repo, l), { now: T0 }).T1;
+  for (const [name, review, reason] of [
+    ['comment_only', { verdict: 'COMMENT', provenance: 'observed' }, 'review_not_approval:COMMENT'],
+    ['changes_requested', { verdict: 'CHANGES_REQUESTED', provenance: 'observed' }, 'review_not_approval:CHANGES_REQUESTED'],
+    ['no_verdict', { provenance: 'observed' }, 'review_not_approval:missing'],
+    ['relayed_approval', { verdict: 'APPROVED', provenance: 'supplied' }, 'review_not_observed:supplied'],
+    ['no_provenance', { verdict: 'APPROVED' }, 'review_not_observed:missing']
+  ]) {
+    const rv = reviewed(review);
+    assert.equal(rv.earned, 'tested', `review_${name}_promoted`);
+    assert.ok(rv.unknowns.includes(reason), `review_${name}_reason_hidden:${rv.unknowns}`);
+  }
+  // SIMULATED reviewer with an observed approval tied to the exact commit.
+  saveLedger(ledgerPath, setStatus(recordEvidence(l, 'T1', { review: { by: 'codex-sim', commit: t1Commit, ref: 'review-note-1 (simulated reviewer)', verdict: 'APPROVED', provenance: 'observed' } }), 'T1', 'independently_verified'), { expectSeq: l.seq });
   ({ l, rec } = state());
   assert.equal(rec.T1.earned, 'independently_verified');
   assert.ok(rec.T1.done);
@@ -238,4 +253,4 @@ for (const banned of ["'fetch'", "'push'", "'pull'", "'clone'", "'ls-remote'", "
   assert.ok(!gitSrc.includes(banned), `mission-git.mjs must not use ${banned}`);
 }
 
-console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true, cliCheckAndOut: true, fixupCommitsResolved: true, uncommittedWorkUnderLeaseReported: true, abandonedLeaseVisible: true, handWrittenTestsLabelled: true }));
+console.log(JSON.stringify({ ok: true, crashRecoveredFromGit: true, noDuplicateWork: true, staleWriterRefused: true, independentReviewRequired: true, forbiddenActionsBlocked: true, leaseConflictAndTakeover: true, staleBaseDetected: true, falseCompletionFlagged: true, staleIntentSkipped: true, corruptCheckpointDetected: true, cliCheckAndOut: true, fixupCommitsResolved: true, uncommittedWorkUnderLeaseReported: true, abandonedLeaseVisible: true, handWrittenTestsLabelled: true, onlyObservedApprovalPromotes: true }));
