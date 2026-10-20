@@ -1,4 +1,4 @@
-# PI mission PI-CONTINUITY-2026-10 — continuation (seq 33)
+# PI mission PI-CONTINUITY-2026-10 — continuation (seq 35)
 
 > Built offline from the mission ledger and local git. NOT DISPATCHED. Levels are earned from evidence;
 > deployed / production_verified can never be earned offline. "tool-recorded" tests were written by
@@ -18,7 +18,7 @@ Repository: https://github.com/pisolutions9/Pisolutions9 (canonical); work publi
 - C3 [tested -> tested, done] (tests: tool-recorded) Mission ledger engine: checkpoints, leases, reconciler, selector, recovery test @ c969913ee2e09f829c3599b77087f9785d48b179 — base_moved:c969913->parent_1ce9b4b
 - C4 [pending -> pending] Record #218 CI check runs on its head as ci_run evidence with subject_sha
 - C5 [pending -> pending] Decide fork draft PR #2 (#217 follow-ups): review-only, CI-run PR to fork main, or adoption into #217
-- C6 [tested -> tested, done] (tests: HAND-WRITTEN) Ledger CLI: `check` command (non-zero exit on contradictions) and --out for the continuation prompt @ 7ed61b4e72147bc0b9866dd7035c2ee9b36ccd60 — hand_written_test_evidence
+- C6 [tested -> tested, done] (tests: tool-recorded) Ledger CLI: `check` command (non-zero exit on contradictions) and --out for the continuation prompt @ 7ed61b4e72147bc0b9866dd7035c2ee9b36ccd60 — base_moved:7ed61b4->parent_fb0e1bb
 - C8 [tested -> tested, done] (tests: tool-recorded) Durable executor CLI: add-task, begin, verify (tests in worktree at exact commit) @ ecf7dcea3653de824f86cbaa80674723541531df — base_moved:ecf7dce->parent_6f67917
 - C9 [tested -> tested, done] (tests: tool-recorded) check reports uncommitted work in the checkout while a lease is active (unsaved work at risk after interruption) @ fc84ad60c19328f95c934c316ea3974060f3f10b — base_moved:fc84ad6->parent_575eb24
 - C10 [tested -> tested, done] (tests: tool-recorded) reconcile flags expired leases on unfinished tasks so abandoned work is visible in next/prompt @ 7a6432d3fcd87a739371e7d11bfe06cbbaa9aed9 — base_moved:7a6432d->parent_ab86b2b

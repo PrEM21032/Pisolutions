@@ -1,5 +1,5 @@
 {
-  "sha256": "f10334281dc0a057240596353f9046cd09fdcc9df38dfa0c76d943072249b512",
+  "sha256": "69e80dc06a766ae00e19590a1fb342a480bdeaf852a5b65749269a5b5e8d02a2",
   "ledger": {
     "mission_id": "PI-CONTINUITY-2026-10",
     "objective": "Make PI engineering work interruption-tolerant: never lose verified mission state, never confuse claims with evidence, resume safely after interruption (owner directive V2, 2026-10-19).",
@@ -178,9 +178,9 @@
         "objective_rev": 1,
         "lease": {
           "executor": "claude",
-          "base_sha": "fb0e1bbb633f6adfbb0463758f9acdd06599f5be",
-          "acquired_at": "2026-10-19T20:35:16.799Z",
-          "expires_at": "2026-10-19T21:35:16.799Z"
+          "base_sha": "7ed61b4e72147bc0b9866dd7035c2ee9b36ccd60",
+          "acquired_at": "2026-10-20T01:33:59.636Z",
+          "expires_at": "2026-10-20T02:33:59.636Z"
         },
         "lease_history": [],
         "evidence": {
@@ -188,10 +188,12 @@
           "implemented_by": "claude",
           "tests": [
             {
-              "cmd": "npm run test:continuity && npm test && npm run test:v1.02 && npm run test:security",
+              "cmd": "npm run -s test:continuity >/dev/null; a=$?; npm test >/dev/null 2>&1; b=$?; npm run -s test:v1.02 >/dev/null 2>&1; c=$?; npm run -s test:security >/dev/null 2>&1; d=$?; echo \"continuity=$a full=$b v1.02=$c security=$d\"; [ $a$b$c$d = 0000 ]",
               "exit_code": 0,
               "commit": "7ed61b4e72147bc0b9866dd7035c2ee9b36ccd60",
-              "observed_at": "2026-10-19T20:36:40Z"
+              "observed_at": "2026-10-20T01:33:59.636Z",
+              "in_worktree": true,
+              "recorded_by": "mission-run verify"
             }
           ]
         }
@@ -431,6 +433,6 @@
       "node pi/mission-git.mjs prompt --ledger handoffs/mission-ledger.json",
       "Before changing a task: acquire its lease and re-run reconcile; never edit evidence by hand to raise a level"
     ],
-    "seq": 33
+    "seq": 35
   }
 }

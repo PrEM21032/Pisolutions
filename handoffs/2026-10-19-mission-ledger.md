@@ -231,3 +231,38 @@ All runs above are local Linux, in temporary worktrees. No CI ran on this branch
 
 ## Rollback
 Run `git revert 251f369` plus the ledger checkpoint commits, or delete the branch.
+
+---
+
+# Run 6 — 2026-10-20 01:33–01:35Z — reverify legacy C6; C2 ineligible (owner window until 02:09Z)
+
+## Fresh check (01:33:47Z)
+- The remote and local head were `3f1bc0a`, with a clean tree. Ledger seq 33, `check` 0; the regenerated prompt
+  equaled the committed one.
+- #218 is `1ce9b4b`. C1 is `tested` and not done; its supplied COMMENT-only review and held CI (action_required,
+  0 jobs) are unchanged.
+- Codex's C13 probes (COMMENT and supplied APPROVED stay tested; observed independent APPROVED advances; self-review
+  stays tested) are relayed by the owner and not observed here. Codex's Windows full-suite attempt was inconclusive.
+
+## Eligibility pre-check (git show of package.json at each original commit)
+- C6 `7ed61b4`: all four suites present.
+- **C2 `4a504e9`: `test:continuity` is ABSENT.** That commit is on #217's history (#217 is based on `9ec0def`), which
+  never had the continuity work.
+
+## Results
+- **C6:** `mission-run reverify` at `7ed61b4`. Output: `continuity=0 full=0 v1.02=0 security=0`, exit 0 at
+  01:34:45Z; seq 35. It is now tool-recorded. The `base_moved` note is cosmetic: the reverify lease is based on the
+  task commit itself.
+- **C2: NOT re-verified.** The four-suite command cannot pass at `4a504e9` because one script does not exist there.
+  A failing reverify would record a failure and demote C2 for a reason unrelated to its code, so I stopped instead of
+  forcing it. C2 stays `tested` (HAND-WRITTEN), with its original record: local suites at `4a504e9`, 19:19Z.
+- **Options for the owner/next session (not done):**
+  - re-verify C2 with the three suites that exist at that commit, which is a different, explicit command; or
+  - leave C2 hand-written.
+
+## Local vs CI
+All local Linux, in a temporary worktree. No CI ran on this branch. #218 CI is held, according to the supplied
+evidence.
+
+## Rollback
+Revert the run 6 ledger checkpoint commit, which returns the ledger to seq 33. No code changed in this run.
