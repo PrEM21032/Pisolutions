@@ -146,3 +146,44 @@ C12 is queued (seq 16) as the next executable task.
 
 ## Rollback
 Run `git revert 968d441` (code) and the ledger checkpoint commits, or delete the branch. Nothing else was touched.
+
+---
+
+# Run 4 — 2026-10-20 01:15–01:20Z — C12 reverify (owner window until 02:09Z)
+
+## Fresh check (01:15:01Z)
+- The remote branch was at `60d5725`, equal to local, with a clean tree. Ledger seq 16, `check` 0.
+- The committed prompt was identical to a regenerated one.
+- #218 is `1ce9b4b`, #217 is `9ec0def`; blockers unchanged. `next` returned C12.
+
+## C12 — `mission-run reverify` for already-done tasks
+- **Transition:** `begin` (seq 17), then commit `0c5c6b0ddfdae1e4be932985e10de47ebee3b4cd` (Mission-Task: C12), then
+  `verify` in a worktree at that commit. Output: `continuity=0 full=0 v1.02=0 security=0`, exit 0 at 01:17:09Z; seq 18.
+- **Change:**
+  - Only tasks that are already done are accepted. Unfinished work still goes through the selector.
+  - It takes a fresh lease whose base is the task's own commit. A foreign active lease is refused; an expired one is
+    taken over and recorded.
+  - It then runs the normal `verify`: same exact-commit worktree, same tool marker.
+  - A failing re-run is recorded and demotes the task visibly.
+- **Bug found by the regression before commit:** the lease base was first taken from HEAD, which reconcile correctly
+  flagged as `stale_base`. Fixed by basing it on the task's commit.
+- **Regression:** the new test section fails on `60d5725`'s `mission-run.mjs` and passes on `0c5c6b0`.
+
+## Legacy records re-verified with the new flow (each at its own commit, all four suites)
+| Task | Commit | Result | Seq |
+|---|---|---|---|
+| C8 | `ecf7dce` | continuity=0 full=0 v1.02=0 security=0 (01:18:10Z) | 20 |
+| C9 | `fc84ad6` | continuity=0 full=0 v1.02=0 security=0 (01:18:57Z) | 22 |
+| C10 | `7a6432d` | continuity=0 full=0 v1.02=0 security=0 (01:19:46Z) | 24 |
+
+C8–C12 now show `tool-recorded`. C1, C2, C3 and C6 still show HAND-WRITTEN. They can be re-verified the same way
+(C1 is not "done", so it needs its review first); this is an optional operator action, not a ledger task.
+
+## Local vs CI
+All runs are local Linux in temporary worktrees. No CI ran (fork branch, no PR).
+
+## Stop
+`next` returns no task. C1 needs a reviewer, C4 upstream access, C5 the owner's decision, and C7 is forbidden.
+
+## Rollback
+Run `git revert 0c5c6b0` plus the ledger checkpoint commits, or delete the branch.

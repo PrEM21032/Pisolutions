@@ -1,5 +1,5 @@
 {
-  "sha256": "588f8a2313b9fc35fb5f4c4e43859089ad7e272bf9c38e7208ab8aa43a8aa9a5",
+  "sha256": "2ead5e5321b1fb942fb35be00958815b74d90681c999d0d53b643b324d566001",
   "ledger": {
     "mission_id": "PI-CONTINUITY-2026-10",
     "objective": "Make PI engineering work interruption-tolerant: never lose verified mission state, never confuse claims with evidence, resume safely after interruption (owner directive V2, 2026-10-19).",
@@ -171,8 +171,8 @@
         "lease": {
           "executor": "claude",
           "base_sha": "ecf7dcea3653de824f86cbaa80674723541531df",
-          "acquired_at": "2026-10-19T21:04:15.060Z",
-          "expires_at": "2026-10-19T22:04:15.060Z"
+          "acquired_at": "2026-10-20T01:17:22.263Z",
+          "expires_at": "2026-10-20T02:17:22.263Z"
         },
         "lease_history": [],
         "evidence": {
@@ -180,11 +180,12 @@
           "implemented_by": "claude",
           "tests": [
             {
-              "cmd": "npm run -s test:continuity >/dev/null && npm test >/dev/null 2>&1 && npm run -s test:v1.02 >/dev/null 2>&1 && npm run -s test:security >/dev/null 2>&1 && echo ALL_SUITES_PASS",
+              "cmd": "npm run -s test:continuity >/dev/null; a=$?; npm test >/dev/null 2>&1; b=$?; npm run -s test:v1.02 >/dev/null 2>&1; c=$?; npm run -s test:security >/dev/null 2>&1; d=$?; echo \"continuity=$a full=$b v1.02=$c security=$d\"; [ $a$b$c$d = 0000 ]",
               "exit_code": 0,
               "commit": "ecf7dcea3653de824f86cbaa80674723541531df",
-              "observed_at": "2026-10-19T21:04:15.229Z",
-              "in_worktree": true
+              "observed_at": "2026-10-20T01:17:22.263Z",
+              "in_worktree": true,
+              "recorded_by": "mission-run verify"
             }
           ]
         }
@@ -206,9 +207,9 @@
         "objective_rev": 1,
         "lease": {
           "executor": "claude",
-          "base_sha": "575eb24cefcff59a0c7e759473f13c90dcf41707",
-          "acquired_at": "2026-10-19T21:05:22.616Z",
-          "expires_at": "2026-10-19T22:05:22.616Z"
+          "base_sha": "fc84ad60c19328f95c934c316ea3974060f3f10b",
+          "acquired_at": "2026-10-20T01:18:10.119Z",
+          "expires_at": "2026-10-20T02:18:10.119Z"
         },
         "lease_history": [],
         "evidence": {
@@ -216,11 +217,12 @@
           "implemented_by": "claude",
           "tests": [
             {
-              "cmd": "npm run -s test:continuity >/dev/null && npm test >/dev/null 2>&1 && npm run -s test:v1.02 >/dev/null 2>&1 && npm run -s test:security >/dev/null 2>&1 && echo ALL_SUITES_PASS",
+              "cmd": "npm run -s test:continuity >/dev/null; a=$?; npm test >/dev/null 2>&1; b=$?; npm run -s test:v1.02 >/dev/null 2>&1; c=$?; npm run -s test:security >/dev/null 2>&1; d=$?; echo \"continuity=$a full=$b v1.02=$c security=$d\"; [ $a$b$c$d = 0000 ]",
               "exit_code": 0,
               "commit": "fc84ad60c19328f95c934c316ea3974060f3f10b",
-              "observed_at": "2026-10-19T21:05:54.572Z",
-              "in_worktree": true
+              "observed_at": "2026-10-20T01:18:10.119Z",
+              "in_worktree": true,
+              "recorded_by": "mission-run verify"
             }
           ]
         }
@@ -242,9 +244,9 @@
         "objective_rev": 1,
         "lease": {
           "executor": "claude",
-          "base_sha": "ab86b2b8d621333a684adabb24a7e2945cc11360",
-          "acquired_at": "2026-10-19T21:06:54.700Z",
-          "expires_at": "2026-10-19T22:06:54.700Z"
+          "base_sha": "7a6432d3fcd87a739371e7d11bfe06cbbaa9aed9",
+          "acquired_at": "2026-10-20T01:18:58.016Z",
+          "expires_at": "2026-10-20T02:18:58.016Z"
         },
         "lease_history": [],
         "evidence": {
@@ -252,11 +254,12 @@
           "implemented_by": "claude",
           "tests": [
             {
-              "cmd": "npm run -s test:continuity >/dev/null && npm test >/dev/null 2>&1 && npm run -s test:v1.02 >/dev/null 2>&1 && npm run -s test:security >/dev/null 2>&1 && echo ALL_SUITES_PASS",
+              "cmd": "npm run -s test:continuity >/dev/null; a=$?; npm test >/dev/null 2>&1; b=$?; npm run -s test:v1.02 >/dev/null 2>&1; c=$?; npm run -s test:security >/dev/null 2>&1; d=$?; echo \"continuity=$a full=$b v1.02=$c security=$d\"; [ $a$b$c$d = 0000 ]",
               "exit_code": 0,
               "commit": "7a6432d3fcd87a739371e7d11bfe06cbbaa9aed9",
-              "observed_at": "2026-10-19T21:07:18.307Z",
-              "in_worktree": true
+              "observed_at": "2026-10-20T01:18:58.016Z",
+              "in_worktree": true,
+              "recorded_by": "mission-run verify"
             }
           ]
         }
@@ -348,6 +351,6 @@
       "node pi/mission-git.mjs prompt --ledger handoffs/mission-ledger.json",
       "Before changing a task: acquire its lease and re-run reconcile; never edit evidence by hand to raise a level"
     ],
-    "seq": 18
+    "seq": 24
   }
 }
