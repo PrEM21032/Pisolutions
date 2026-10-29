@@ -33,3 +33,10 @@ Credentials, paid activation, legal commitments, financial transfers, protected 
 - V1.02 release regression scans the repository for high-confidence committed production secret patterns.
 - V1.02 CI fails on high-severity production dependency vulnerabilities reported by npm audit.
 - Test-only placeholder credentials must remain obviously non-production and must never reuse real provider values.
+
+## Investment Lab boundary
+
+- `pi/investment-lab/` is read-only inspection plus local paper simulation. It contains no order, funding, transfer, margin or automated-trading path.
+- Only the permission gateway holds the MCP client. Tools are deny-by-default and write/credential tools are blocked by name and annotation. Agents receive opaque account references, never real identifiers or tokens.
+- Broker OAuth tokens are supplied by the owner at runtime (`ROBINHOOD_MCP_ACCESS_TOKEN`), are never committed, stored, logged or returned, and are scrubbed if echoed by a server.
+- Any future execution capability requires explicit owner approval and a reviewed code change; see `PI_INVESTMENT_LAB.md`.
