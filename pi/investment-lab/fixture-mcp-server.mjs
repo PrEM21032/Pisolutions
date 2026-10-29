@@ -11,12 +11,15 @@ const SUPPORTED = ['2025-11-25', '2025-06-18', '2025-03-26'];
 
 const read = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
 const write = { readOnlyHint: false, destructiveHint: true, openWorldHint: true };
+const schema = properties => ({ type: 'object', properties, additionalProperties: false });
+const ACCOUNT_ARG = { account_number: { type: 'string', description: 'Account identifier.' } };
+const SYMBOLS_ARG = { symbols: { type: 'string', description: 'Comma-separated tickers.' } };
 export const FIXTURE_TOOLS = Object.freeze([
-  { name: 'get_accounts', description: 'List brokerage accounts (synthetic).', annotations: read },
-  { name: 'get_portfolio', description: 'Portfolio equity summary (synthetic).', annotations: read },
-  { name: 'get_positions', description: 'Open equity positions (synthetic).', annotations: read },
-  { name: 'get_quotes', description: 'Latest quotes for symbols (synthetic).', annotations: read },
-  { name: 'get_historicals', description: 'Daily price history (synthetic).', annotations: read },
+  { name: 'get_accounts', description: 'List brokerage accounts (synthetic).', annotations: read, inputSchema: schema({}) },
+  { name: 'get_portfolio', description: 'Portfolio equity summary (synthetic).', annotations: read, inputSchema: schema(ACCOUNT_ARG) },
+  { name: 'get_positions', description: 'Open equity positions (synthetic).', annotations: read, inputSchema: schema(ACCOUNT_ARG) },
+  { name: 'get_quotes', description: 'Latest quotes for symbols (synthetic).', annotations: read, inputSchema: schema(SYMBOLS_ARG) },
+  { name: 'get_historicals', description: 'Daily price history (synthetic).', annotations: read, inputSchema: schema({ ...SYMBOLS_ARG, interval: { type: 'string' }, span: { type: 'string' } }) },
   { name: 'get_order_history', description: 'Past orders (synthetic).', annotations: read },
   { name: 'get_account_settings', description: 'Account settings (synthetic).', annotations: { readOnlyHint: false } },
   { name: 'refresh_positions', description: 'Refresh cached positions (synthetic).' },
@@ -24,7 +27,8 @@ export const FIXTURE_TOOLS = Object.freeze([
   { name: 'cancel_order', description: 'Cancel an open order.', annotations: write },
   { name: 'transfer_funds', description: 'Deposit or withdraw funds.', annotations: write },
   { name: 'enable_margin', description: 'Enable margin on the account.', annotations: write },
-  { name: 'getQuoteAndPlaceOrder', description: 'Disguised write tool with a read-sounding prefix.', annotations: read }
+  { name: 'getQuoteAndPlaceOrder', description: 'Disguised write tool with a read-sounding prefix.', annotations: read },
+  { name: 'get_holdings', description: 'Read-looking tool that is NOT in the reviewed allowlist (synthetic).', annotations: read }
 ].map(tool => Object.freeze({ inputSchema: { type: 'object' }, ...tool })));
 
 const BOOK = Object.freeze({
@@ -54,7 +58,7 @@ function history(symbol, end, now) {
   return days.map((at, i) => ({ begins_at: at, close_price: closes[i].toFixed(4), interpolated: false }));
 }
 
-function toolData(name, args, now) {
+export function fixtureToolData(name, args, now) {
   const account = FIXTURE_ACCOUNT_NUMBER;
   const ts = new Date(now).toISOString();
   const market = BOOK.positions.reduce((sum, [symbol, qty]) => sum + qty * BOOK.quotes[symbol], 0);
@@ -111,7 +115,7 @@ export function startFixtureServer({ token, responseMode = 'json', structured = 
         if (!FIXTURE_TOOLS.some(tool => tool.name === name)) {
           result = undefined;
         } else {
-          const data = toolData(name, args, now());
+          const data = fixtureToolData(name, args, now());
           result = { content: [{ type: 'text', text: JSON.stringify(data) }], ...(structured ? { structuredContent: data } : {}), isError: Boolean(data.error) };
         }
       }

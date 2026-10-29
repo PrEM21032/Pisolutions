@@ -8,7 +8,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createMcpClient } from './mcp-client.mjs';
-import { createPermissionGateway } from './permission-gateway.mjs';
+import { createPermissionGateway, fingerprintTool } from './permission-gateway.mjs';
 import { startFixtureServer } from './fixture-mcp-server.mjs';
 
 const dir = process.env.MCP_SDK_DIR;
@@ -44,9 +44,15 @@ async function sdkServer(enableJsonResponse) {
 for (const json of [true, false]) {
   const server = await sdkServer(json);
   try {
-    const gateway = createPermissionGateway({ client: createMcpClient({ endpoint: server.url }) });
+    // Protocol harness only: pin whatever the SDK server serves so a read call can be exercised.
+    // Real authorization comes from a human-reviewed entry in reviewed-allowlist.mjs, never from listing.
+    const lister = createMcpClient({ endpoint: server.url });
+    await lister.initialize();
+    const served = (await lister.listTools()).find(tool => tool.name === 'get_quotes');
+    const reviewedAllowlist = [{ capability: 'quotes', name: 'get_quotes', fingerprint: fingerprintTool(served), args: {} }];
+    const gateway = createPermissionGateway({ client: createMcpClient({ endpoint: server.url }), reviewedAllowlist });
     const discovery = await gateway.connect();
-    const quotes = await gateway.inspect('quotes', { symbols: 'AAPL' });
+    const quotes = await gateway.inspect('quotes', {});
     results[`piClientVsSdkServer_${json ? 'json' : 'sse'}`] = {
       protocolVersion: discovery.protocolVersion,
       server: discovery.server.name,

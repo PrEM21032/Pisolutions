@@ -1,7 +1,9 @@
 {
-  "ok": true,
-  "missionId": "lab_demo_1793281493333",
+  "schema": "pi.investment-lab.run.v2",
+  "missionId": "lab_demo_1793317440202",
   "provenance": "synthetic-fixture",
+  "ok": true,
+  "stoppedAt": null,
   "executionStatus": {
     "mode": "read_only_inspection_plus_simulation",
     "liveOrders": "not_built",
@@ -16,36 +18,37 @@
       "version": "0.1.0"
     },
     "protocolVersion": "2025-11-25",
-    "endpointHost": "127.0.0.1:41179",
+    "endpointHost": "127.0.0.1:43533",
+    "reviewedEntries": 5,
     "tools": [
       {
         "name": "get_accounts",
         "decision": "allow",
-        "reason": "inferred_read_tool",
+        "reason": "reviewed_exact_match",
         "capability": "accounts"
       },
       {
         "name": "get_portfolio",
         "decision": "allow",
-        "reason": "inferred_read_tool",
+        "reason": "reviewed_exact_match",
         "capability": "portfolio"
       },
       {
         "name": "get_positions",
         "decision": "allow",
-        "reason": "inferred_read_tool",
+        "reason": "reviewed_exact_match",
         "capability": "positions"
       },
       {
         "name": "get_quotes",
         "decision": "allow",
-        "reason": "inferred_read_tool",
+        "reason": "reviewed_exact_match",
         "capability": "quotes"
       },
       {
         "name": "get_historicals",
         "decision": "allow",
-        "reason": "inferred_read_tool",
+        "reason": "reviewed_exact_match",
         "capability": "historicals"
       },
       {
@@ -63,7 +66,7 @@
       {
         "name": "refresh_positions",
         "decision": "deny",
-        "reason": "no_read_intent",
+        "reason": "not_in_reviewed_allowlist",
         "capability": null
       },
       {
@@ -95,6 +98,12 @@
         "decision": "deny",
         "reason": "deny_token:place",
         "capability": null
+      },
+      {
+        "name": "get_holdings",
+        "decision": "deny",
+        "reason": "not_in_reviewed_allowlist",
+        "capability": null
       }
     ],
     "routes": {
@@ -106,1490 +115,16 @@
     }
   },
   "research": {
-    "result": "Inspected 1 account(s); 4 position(s); 5 quote(s); 5 price series.",
-    "evidence": [
-      {
-        "source": "tool:get_accounts",
-        "claim": "{\"results\":[{\"account_number\":\"acct_ref_1\",\"url\":\"https://fixture.invalid/accounts/acct_ref_1/\",\"type\":\"margin\",\"cash\":\"3000.00\",\"buying_power\":\"6000.00\",\"margin_limit\":\"6000.00\",\"email\":\"[REDACTED]\",\"synthetic\":true}]}",
-        "observedAt": "2026-10-29T13:44:53.381Z",
-        "confidence": "probable",
-        "limitations": [
-          "source-reported by MCP server; not independently audited"
-        ]
-      },
-      {
-        "source": "tool:get_portfolio",
-        "claim": "{\"account\":\"acct_ref_2\",\"equity\":\"56000.00\",\"market_value\":\"53000.00\",\"synthetic\":true}",
-        "observedAt": "2026-10-29T13:44:53.385Z",
-        "confidence": "probable",
-        "limitations": [
-          "source-reported by MCP server; not independently audited"
-        ]
-      },
-      {
-        "source": "tool:get_positions",
-        "claim": "{\"results\":[{\"symbol\":\"AAPL\",\"quantity\":\"40.0000\",\"average_buy_price\":\"150.0000\",\"account_number\":\"acct_ref_1\"},{\"symbol\":\"MSFT\",\"quantity\":\"25.0000\",\"average_buy_price\":\"300.0000\",\"account_number\":\"acct_ref_1\"},{\"symbol\":\"VTI\",\"quantity\":\"60.0000\",\"average_buy_price\":\"220.0000\",\"account_number\":\"acct_ref_1\"},{\"symbol\":\"NVDA\",\"quantity\":\"120.0000\",\"average_buy_price\":\"40.0000\",\"account_number\":\"acct_ref_1\"}]}",
-        "observedAt": "2026-10-29T13:44:53.389Z",
-        "confidence": "probable",
-        "limitations": [
-          "source-reported by MCP server; not independently audited"
-        ]
-      },
-      {
-        "source": "tool:get_quotes",
-        "claim": "{\"results\":[{\"symbol\":\"AAPL\",\"last_trade_price\":\"230.0000\",\"bid_price\":\"229.9800\",\"ask_price\":\"230.0200\",\"updated_at\":\"2026-10-29T13:44:53.391Z\"},{\"symbol\":\"MSFT\",\"last_trade_price\":\"420.0000\",\"bid_price\":\"419.9800\",\"ask_price\":\"420.0200\",\"updated_at\":\"2026-10-29T13:44:53.391Z\"},{\"symbol\":\"VTI\",\"last_trade_price\":\"285.0000\",\"bid_price\":\"284.9800\",\"ask_price\":\"285.0200\",\"updated_at\":\"2026-10-29T13:44:53.391Z\"},{\"symbol\":\"NVDA\",\"last_trade_price\":\"135.0000\",\"bid_price\":\"134.9800\",\"ask_price\":\"135.0200\",\"updated_at\":\"2026-10-29T13:44:53.391Z\"},{\"symbol\":\"SCHD\",\"last_trade_price\":\"28.0000\",\"bid_price\":\"27.9800\",\"ask_price\":\"28.0200\",\"updated_at\":\"2026-10-29T13:44:53.391Z\"}]}",
-        "observedAt": "2026-10-29T13:44:53.393Z",
-        "confidence": "probable",
-        "limitations": [
-          "source-reported by MCP server; not independently audited"
-        ]
-      },
-      {
-        "source": "tool:get_historicals",
-        "claim": "{\"results\":[{\"symbol\":\"AAPL\",\"interval\":\"day\",\"historicals\":[{\"begins_at\":\"2026-08-03T00:00:00.000Z\",\"close_price\":\"260.5428\",\"interpolated\":false},{\"begins_at\":\"2026-08-04T00:00:00.000Z\",\"close_price\":\"264.5635\",\"interpolated\":false},{\"begins_at\":\"2026-08-05T00:00:00.000Z\",\"close_price\":\"268.6580\",\"interpolated\":false},{\"begins_at\":\"2026-08-06T00:00:00.000Z\",\"close_price\":\"266.4535\",\"interpolated\":false},{\"begins_at\":\"2026-08-07T00:00:00.000Z\",\"close_price\":\"261.5856\",\"interpolated\":false},{\"begins_at\":\"2026-08-10T00:00:00.000Z\",\"close_price\":\"265.6193\",\"interpolated\":false},{\"begins_at\":\"2026-08-11T00:00:00.000Z\",\"close_price\":\"267.0582\",\"interpolated\":false},{\"begins_at\":\"2026-08-12T00:00:00.000Z\",\"close_price\":\"268.7213\",\"interpolated\":false},{\"begins_at\":\"2026-08-13T00:00:00.000Z\",\"close_price\":\"263.9342\",\"interpolated\":false},{\"begins_at\":\"2026-08-14T00:00:00.000Z\",\"close_price\":\"261.7936\",\"interpolated\":false},{\"begins_at\":\"2026-08-17T00:00:00.000Z\",\"close_price\":\"264.8995\",\"interpolated\":false},{\"begins_at\":\"2026-08-18T00:00:00.000Z\",\"close_price\":\"263.9066\",\"interpolated\":false},{\"begins_at\":\"2026-08-19T00:00:00.000Z\",\"close_price\":\"268.5104\",\"interpolated\":false},{\"begins_at\":\"2026-08-20T00:00:00.000Z\",\"close_price\":\"272.6149\",\"interpolated\":false},{\"begins_at\":\"2026-08-21T00:00:00.000Z\",\"close_price\":\"273.9924\",\"interpolated\":false},{\"begins_at\":\"2026-08-24T00:00:00.000Z\",\"close_price\":\"272.5626\",\"interpolated\":false},{\"begins_at\":\"2026-08-25T00:00:00.000Z\",\"close_price\":\"277.8544\",\"interpolated\":false},{\"begins_at\":\"2026-08-26T00:00:00.000Z\",\"close_price\":\"276.8658\",\"interpolated\":false},{\"begins_at\":\"2026-08-27T00:00:00.000Z\",\"close_price\":\"272.6011\",\"interpolated\":false},{\"begins_at\":\"2026-08-28T00:00:00.000Z\",\"close_price\":\"276.8846\",\"interpolated\":false},{\"begins_at\":\"2026-08-31T00:00:00.000Z\",\"close_price\":\"274.6302\",\"interpolated\":false},{\"begins_at\":\"2026-09-01T00:00:00.000Z\",\"close_price\":\"271.2696\",\"interpolated\":false},{\"begins_at\":\"2026-09-02T00:00:00.000Z\",\"close_price\":\"265.9023\",\"interpolated\":false},{\"begins_at\":\"2026-09-03T00:00:00.000Z\",\"close_price\":\"261.9300\",\"interpolated\":false},{\"begins_at\":\"2026-09-04T00:00:00.000Z\",\"close_price\":\"265.7690\",\"interpolated\":false},{\"begins_at\":\"2026-09-07T00:00:00.000Z\",\"close_price\":\"266.8018\",\"interpolated\":false},{\"begins_at\":\"2026-09-08T00:00:00.000Z\",\"close_price\":\"262.2631\",\"interpolated\":false},{\"begins_at\":\"2026-09-09T00:00:00.000Z\",\"close_price\":\"264.7116\",\"interpolated\":false},{\"begins_at\":\"2026-09-10T00:00:00.000Z\",\"close_price\":\"264.0332\",\"interpolated\":false},{\"begins_at\":\"2026-09-11T00:00:00.000Z\",\"close_price\":\"263.4532\",\"interpolated\":false},{\"begins_at\":\"2026-09-14T00:00:00.000Z\",\"close_price\":\"264.2920\",\"interpolated\":false},{\"begins_at\":\"2026-09-15T00:00:00.000Z\",\"close_price\":\"262.9747\",\"interpolated\":false},{\"begins_at\":\"2026-09-16T00:00:00.000Z\",\"close_price\":\"260.6289\",\"interpolated\":false},{\"begins_at\":\"2026-09-17T00:00:00.000Z\",\"close_price\":\"257.6458\",\"interpolated\":false},{\"begins_at\":\"2026-09-18T00:00:00.000Z\",\"close_price\":\"253.3663\",\"interpolated\":false},{\"begins_at\":\"2026-09-21T00:00:00.000Z\",\"close_price\":\"254.7981\",\"interpolated\":false},{\"begins_at\":\"2026-09-22T00:00:00.000Z\",\"close_price\":\"250.8653\",\"interpolated\":false},{\"begins_at\":\"2026-09-23T00:00:00.000Z\",\"close_price\":\"249.2946\",\"interpolated\":false},{\"begins_at\":\"2026-09-24T00:00:00.000Z\",\"close_price\":\"245.2305\",\"interpolated\":false},{\"begins_at\":\"2026-09-25T00:00:00.000Z\",\"close_price\":\"243.3569\",\"interpolated\":false},{\"begins_at\":\"2026-09-28T00:00:00.000Z\",\"close_price\":\"246.8761\",\"interpolated\":false},{\"begins_at\":\"2026-09-29T00:00:00.000Z\",\"close_price\":\"243.7471\",\"interpolated\":false},{\"begins_at\":\"2026-09-30T00:00:00.000Z\",\"close_price\":\"241.4742\",\"interpolated\":false},{\"begins_at\":\"2026-10-01T00:00:00.000Z\",\"close_price\":\"237.4092\",\"interpolated\":false},{\"begins_at\":\"2026-10-02T00:00:00.000Z\",\"close_price\":\"241.8384\",\"interpolated\":false},{\"begins_at\":\"2026-10-05T00:00:00.000Z\",\"close_price\":\"239.7602\",\"interpolated\":false},{\"begins_at\":\"2026-10-06T00:00:00.000Z\",\"close_price\":\"236.0199\",\"interpolated\":false},{\"begins_at\":\"2026-10-07T00:00:00.000Z\",\"close_price\":\"232.7500\",\"interpolated\":false},{\"begins_at\":\"2026-10-08T00:00:00.000Z\",\"close_price\":\"231.8879\",\"interpolated\":false},{\"begins_at\":\"2026-10-09T00:00:00.000Z\",\"close_price\":\"228.5521\",\"interpolated\":false},{\"begins_at\":\"2026-10-12T00:00:00.000Z\",\"close_price\":\"226.8716\",\"interpolated\":false},{\"begins_at\":\"2026-10-13T00:00:00.000Z\",\"close_price\":\"225.4711\",\"interpolated\":false},{\"begins_at\":\"2026-10-14T00:00:00.000Z\",\"close_price\":\"227.7942\",\"interpolated\":false},{\"begins_at\":\"2026-10-15T00:00:00.000Z\",\"close_price\":\"228.1021\",\"interpolated\":false},{\"begins_at\":\"2026-10-16T00:00:00.000Z\",\"close_price\":\"226.4869\",\"interpolated\":false},{\"begins_at\":\"2026-10-19T00:00:00.000Z\",\"close_price\":\"226.9576\",\"interpolated\":false},{\"begins_at\":\"2026-10-20T00:00:00.000Z\",\"close_price\":\"229.4132\",\"interpolated\":false},{\"begins_at\":\"2026-10-21T00:00:00.000Z\",\"close_price\":\"226.0499\",\"interpolated\":false},{\"begins_at\":\"2026-10-22T00:00:00.000Z\",\"close_price\":\"227.4560\",\"interpolated\":false},{\"begins_at\":\"2026-10-23T00:00:00.000Z\",\"close_price\":\"229.8841\",\"interpolated\":false},{\"begins_at\":\"2026-10-26T00:00:00.000Z\",\"close_price\":\"229.3739\",\"interpolated\":false},{\"begins_at\":\"2026-10-27T00:00:00.000Z\",\"close_price\":\"233.6294\",\"interpolated\":false},{\"begins_at\":\"2026-10-28T00:00:00.000Z\",\"close_price\":\"230.0000\",\"interpolated\":false}]},{\"symbol\":\"MSFT\",\"interval\":\"day\",\"historicals\":[{\"begins_at\":\"2026-08-03T00:00:00.000Z\",\"close_price\":\"384.9395\",\"interpolated\":false},{\"begins_at\":\"2026-08-04T00:00:00.000Z\",\"close_price\":\"382.7050\",\"interpolated\":false},{\"begins_at\":\"2026-08-05T00:00:00.000Z\",\"close_price\":\"389.1178\",\"interpolated\":false},{\"begins_at\":\"2026-08-06T00:00:00.000Z\",\"close_price\":\"388.7889\",\"interpolated\":false},{\"begins_at\":\"2026-08-07T00:00:00.000Z\",\"close_price\":\"391.2065\",\"interpolated\":false},{\"begins_at\":\"2026-08-10T00:00:00.000Z\",\"close_price\":\"393.2422\",\"interpolated\":false},{\"begins_at\":\"2026-08-11T00:00:00.000Z\",\"close_price\":\"398.4867\",\"interpolated\":false},{\"begins_at\":\"2026-08-12T00:00:00.000Z\",\"close_price\":\"405.6523\",\"interpolated\":false},{\"begins_at\":\"2026-08-13T00:00:00.000Z\",\"close_price\":\"409.9507\",\"interpolated\":false},{\"begins_at\":\"2026-08-14T00:00:00.000Z\",\"close_price\":\"402.9255\",\"interpolated\":false},{\"begins_at\":\"2026-08-17T00:00:00.000Z\",\"close_price\":\"404.6285\",\"interpolated\":false},{\"begins_at\":\"2026-08-18T00:00:00.000Z\",\"close_price\":\"402.1428\",\"interpolated\":false},{\"begins_at\":\"2026-08-19T00:00:00.000Z\",\"close_price\":\"406.0801\",\"interpolated\":false},{\"begins_at\":\"2026-08-20T00:00:00.000Z\",\"close_price\":\"400.5488\",\"interpolated\":false},{\"begins_at\":\"2026-08-21T00:00:00.000Z\",\"close_price\":\"396.2071\",\"interpolated\":false},{\"begins_at\":\"2026-08-24T00:00:00.000Z\",\"close_price\":\"395.2185\",\"interpolated\":false},{\"begins_at\":\"2026-08-25T00:00:00.000Z\",\"close_price\":\"393.5679\",\"interpolated\":false},{\"begins_at\":\"2026-08-26T00:00:00.000Z\",\"close_price\":\"397.4464\",\"interpolated\":false},{\"begins_at\":\"2026-08-27T00:00:00.000Z\",\"close_price\":\"394.5413\",\"interpolated\":false},{\"begins_at\":\"2026-08-28T00:00:00.000Z\",\"close_price\":\"396.6141\",\"interpolated\":false},{\"begins_at\":\"2026-08-31T00:00:00.000Z\",\"close_price\":\"389.9795\",\"interpolated\":false},{\"begins_at\":\"2026-09-01T00:00:00.000Z\",\"close_price\":\"395.2843\",\"interpolated\":false},{\"begins_at\":\"2026-09-02T00:00:00.000Z\",\"close_price\":\"389.0221\",\"interpolated\":false},{\"begins_at\":\"2026-09-03T00:00:00.000Z\",\"close_price\":\"388.0876\",\"interpolated\":false},{\"begins_at\":\"2026-09-04T00:00:00.000Z\",\"close_price\":\"394.3715\",\"interpolated\":false},{\"begins_at\":\"2026-09-07T00:00:00.000Z\",\"close_price\":\"395.1177\",\"interpolated\":false},{\"begins_at\":\"2026-09-08T00:00:00.000Z\",\"close_price\":\"400.5106\",\"interpolated\":false},{\"begins_at\":\"2026-09-09T00:00:00.000Z\",\"close_price\":\"395.4388\",\"interpolated\":false},{\"begins_at\":\"2026-09-10T00:00:00.000Z\",\"close_price\":\"398.2632\",\"interpolated\":false},{\"begins_at\":\"2026-09-11T00:00:00.000Z\",\"close_price\":\"397.5581\",\"interpolated\":false},{\"begins_at\":\"2026-09-14T00:00:00.000Z\",\"close_price\":\"391.8399\",\"interpolated\":false},{\"begins_at\":\"2026-09-15T00:00:00.000Z\",\"close_price\":\"396.8682\",\"interpolated\":false},{\"begins_at\":\"2026-09-16T00:00:00.000Z\",\"close_price\":\"392.4111\",\"interpolated\":false},{\"begins_at\":\"2026-09-17T00:00:00.000Z\",\"close_price\":\"398.8843\",\"interpolated\":false},{\"begins_at\":\"2026-09-18T00:00:00.000Z\",\"close_price\":\"404.7992\",\"interpolated\":false},{\"begins_at\":\"2026-09-21T00:00:00.000Z\",\"close_price\":\"398.1476\",\"interpolated\":false},{\"begins_at\":\"2026-09-22T00:00:00.000Z\",\"close_price\":\"402.8218\",\"interpolated\":false},{\"begins_at\":\"2026-09-23T00:00:00.000Z\",\"close_price\":\"394.9612\",\"interpolated\":false},{\"begins_at\":\"2026-09-24T00:00:00.000Z\",\"close_price\":\"397.0416\",\"interpolated\":false},{\"begins_at\":\"2026-09-25T00:00:00.000Z\",\"close_price\":\"393.6297\",\"interpolated\":false},{\"begins_at\":\"2026-09-28T00:00:00.000Z\",\"close_price\":\"399.0595\",\"interpolated\":false},{\"begins_at\":\"2026-09-29T00:00:00.000Z\",\"close_price\":\"395.9901\",\"interpolated\":false},{\"begins_at\":\"2026-09-30T00:00:00.000Z\",\"close_price\":\"403.7236\",\"interpolated\":false},{\"begins_at\":\"2026-10-01T00:00:00.000Z\",\"close_price\":\"402.0285\",\"interpolated\":false},{\"begins_at\":\"2026-10-02T00:00:00.000Z\",\"close_price\":\"398.3223\",\"interpolated\":false},{\"begins_at\":\"2026-10-05T00:00:00.000Z\",\"close_price\":\"398.3289\",\"interpolated\":false},{\"begins_at\":\"2026-10-06T00:00:00.000Z\",\"close_price\":\"404.1800\",\"interpolated\":false},{\"begins_at\":\"2026-10-07T00:00:00.000Z\",\"close_price\":\"402.4391\",\"interpolated\":false},{\"begins_at\":\"2026-10-08T00:00:00.000Z\",\"close_price\":\"408.3361\",\"interpolated\":false},{\"begins_at\":\"2026-10-09T00:00:00.000Z\",\"close_price\":\"409.7947\",\"interpolated\":false},{\"begins_at\":\"2026-10-12T00:00:00.000Z\",\"close_price\":\"417.0762\",\"interpolated\":false},{\"begins_at\":\"2026-10-13T00:00:00.000Z\",\"close_price\":\"423.8756\",\"interpolated\":false},{\"begins_at\":\"2026-10-14T00:00:00.000Z\",\"close_price\":\"427.9242\",\"interpolated\":false},{\"begins_at\":\"2026-10-15T00:00:00.000Z\",\"close_price\":\"424.7745\",\"interpolated\":false},{\"begins_at\":\"2026-10-16T00:00:00.000Z\",\"close_price\":\"430.0485\",\"interpolated\":false},{\"begins_at\":\"2026-10-19T00:00:00.000Z\",\"close_price\":\"431.9156\",\"interpolated\":false},{\"begins_at\":\"2026-10-20T00:00:00.000Z\",\"close_price\":\"437.0472\",\"interpolated\":false},{\"begins_at\":\"2026-10-21T00:00:00.000Z\",\"close_price\":\"443.5262\",\"interpolated\":false},{\"begins_at\":\"2026-10-22T00:00:00.000Z\",\"close_price\":\"439.4959\",\"interpolated\":false},{\"begins_at\":\"2026-10-23T00:00:00.000Z\",\"close_price\":\"430.8083\",\"interpolated\":false},{\"begins_at\":\"2026-10-26T00:00:00.000Z\",\"close_price\":\"432.6084\",\"interpolated\":false},{\"begins_at\":\"2026-10-27T00:00:00.000Z\",\"close_price\":\"426.2329\",\"interpolated\":false},{\"begins_at\":\"2026-10-28T00:00:00.000Z\",\"close_price\":\"420.0000\",\"interpolated\":false}]},{\"symbol\":\"VTI\",\"interval\":\"day\",\"historicals\":[{\"begins_at\":\"2026-08-03T00:00:00.000Z\",\"close_price\":\"320.9299\",\"interpolated\":false},{\"begins_at\":\"2026-08-04T00:00:00.000Z\",\"close_price\":\"320.7631\",\"interpolated\":false},{\"begins_at\":\"2026-08-05T00:00:00.000Z\",\"close_price\":\"316.8411\",\"interpolated\":false},{\"begins_at\":\"2026-08-06T00:00:00.000Z\",\"close_price\":\"314.2807\",\"interpolated\":false},{\"begins_at\":\"2026-08-07T00:00:00.000Z\",\"close_price\":\"310.0179\",\"interpolated\":false},{\"begins_at\":\"2026-08-10T00:00:00.000Z\",\"close_price\":\"315.4873\",\"interpolated\":false},{\"begins_at\":\"2026-08-11T00:00:00.000Z\",\"close_price\":\"320.3966\",\"interpolated\":false},{\"begins_at\":\"2026-08-12T00:00:00.000Z\",\"close_price\":\"318.4722\",\"interpolated\":false},{\"begins_at\":\"2026-08-13T00:00:00.000Z\",\"close_price\":\"318.9424\",\"interpolated\":false},{\"begins_at\":\"2026-08-14T00:00:00.000Z\",\"close_price\":\"317.6197\",\"interpolated\":false},{\"begins_at\":\"2026-08-17T00:00:00.000Z\",\"close_price\":\"319.0937\",\"interpolated\":false},{\"begins_at\":\"2026-08-18T00:00:00.000Z\",\"close_price\":\"320.9084\",\"interpolated\":false},{\"begins_at\":\"2026-08-19T00:00:00.000Z\",\"close_price\":\"315.2740\",\"interpolated\":false},{\"begins_at\":\"2026-08-20T00:00:00.000Z\",\"close_price\":\"309.1759\",\"interpolated\":false},{\"begins_at\":\"2026-08-21T00:00:00.000Z\",\"close_price\":\"304.0831\",\"interpolated\":false},{\"begins_at\":\"2026-08-24T00:00:00.000Z\",\"close_price\":\"301.1460\",\"interpolated\":false},{\"begins_at\":\"2026-08-25T00:00:00.000Z\",\"close_price\":\"302.4081\",\"interpolated\":false},{\"begins_at\":\"2026-08-26T00:00:00.000Z\",\"close_price\":\"297.3133\",\"interpolated\":false},{\"begins_at\":\"2026-08-27T00:00:00.000Z\",\"close_price\":\"295.4259\",\"interpolated\":false},{\"begins_at\":\"2026-08-28T00:00:00.000Z\",\"close_price\":\"289.9165\",\"interpolated\":false},{\"begins_at\":\"2026-08-31T00:00:00.000Z\",\"close_price\":\"288.1374\",\"interpolated\":false},{\"begins_at\":\"2026-09-01T00:00:00.000Z\",\"close_price\":\"287.2605\",\"interpolated\":false},{\"begins_at\":\"2026-09-02T00:00:00.000Z\",\"close_price\":\"292.8198\",\"interpolated\":false},{\"begins_at\":\"2026-09-03T00:00:00.000Z\",\"close_price\":\"296.0759\",\"interpolated\":false},{\"begins_at\":\"2026-09-04T00:00:00.000Z\",\"close_price\":\"296.1559\",\"interpolated\":false},{\"begins_at\":\"2026-09-07T00:00:00.000Z\",\"close_price\":\"300.5886\",\"interpolated\":false},{\"begins_at\":\"2026-09-08T00:00:00.000Z\",\"close_price\":\"297.1747\",\"interpolated\":false},{\"begins_at\":\"2026-09-09T00:00:00.000Z\",\"close_price\":\"295.0888\",\"interpolated\":false},{\"begins_at\":\"2026-09-10T00:00:00.000Z\",\"close_price\":\"299.4280\",\"interpolated\":false},{\"begins_at\":\"2026-09-11T00:00:00.000Z\",\"close_price\":\"299.3838\",\"interpolated\":false},{\"begins_at\":\"2026-09-14T00:00:00.000Z\",\"close_price\":\"300.4054\",\"interpolated\":false},{\"begins_at\":\"2026-09-15T00:00:00.000Z\",\"close_price\":\"297.5854\",\"interpolated\":false},{\"begins_at\":\"2026-09-16T00:00:00.000Z\",\"close_price\":\"295.9078\",\"interpolated\":false},{\"begins_at\":\"2026-09-17T00:00:00.000Z\",\"close_price\":\"300.2359\",\"interpolated\":false},{\"begins_at\":\"2026-09-18T00:00:00.000Z\",\"close_price\":\"297.9477\",\"interpolated\":false},{\"begins_at\":\"2026-09-21T00:00:00.000Z\",\"close_price\":\"299.8618\",\"interpolated\":false},{\"begins_at\":\"2026-09-22T00:00:00.000Z\",\"close_price\":\"299.1727\",\"interpolated\":false},{\"begins_at\":\"2026-09-23T00:00:00.000Z\",\"close_price\":\"299.2557\",\"interpolated\":false},{\"begins_at\":\"2026-09-24T00:00:00.000Z\",\"close_price\":\"299.8658\",\"interpolated\":false},{\"begins_at\":\"2026-09-25T00:00:00.000Z\",\"close_price\":\"295.6124\",\"interpolated\":false},{\"begins_at\":\"2026-09-28T00:00:00.000Z\",\"close_price\":\"290.7581\",\"interpolated\":false},{\"begins_at\":\"2026-09-29T00:00:00.000Z\",\"close_price\":\"287.9801\",\"interpolated\":false},{\"begins_at\":\"2026-09-30T00:00:00.000Z\",\"close_price\":\"283.7037\",\"interpolated\":false},{\"begins_at\":\"2026-10-01T00:00:00.000Z\",\"close_price\":\"279.3069\",\"interpolated\":false},{\"begins_at\":\"2026-10-02T00:00:00.000Z\",\"close_price\":\"279.9230\",\"interpolated\":false},{\"begins_at\":\"2026-10-05T00:00:00.000Z\",\"close_price\":\"277.0814\",\"interpolated\":false},{\"begins_at\":\"2026-10-06T00:00:00.000Z\",\"close_price\":\"275.9024\",\"interpolated\":false},{\"begins_at\":\"2026-10-07T00:00:00.000Z\",\"close_price\":\"281.1571\",\"interpolated\":false},{\"begins_at\":\"2026-10-08T00:00:00.000Z\",\"close_price\":\"279.6407\",\"interpolated\":false},{\"begins_at\":\"2026-10-09T00:00:00.000Z\",\"close_price\":\"280.9513\",\"interpolated\":false},{\"begins_at\":\"2026-10-12T00:00:00.000Z\",\"close_price\":\"279.4519\",\"interpolated\":false},{\"begins_at\":\"2026-10-13T00:00:00.000Z\",\"close_price\":\"281.2361\",\"interpolated\":false},{\"begins_at\":\"2026-10-14T00:00:00.000Z\",\"close_price\":\"276.1895\",\"interpolated\":false},{\"begins_at\":\"2026-10-15T00:00:00.000Z\",\"close_price\":\"274.8689\",\"interpolated\":false},{\"begins_at\":\"2026-10-16T00:00:00.000Z\",\"close_price\":\"272.6472\",\"interpolated\":false},{\"begins_at\":\"2026-10-19T00:00:00.000Z\",\"close_price\":\"276.2888\",\"interpolated\":false},{\"begins_at\":\"2026-10-20T00:00:00.000Z\",\"close_price\":\"277.6485\",\"interpolated\":false},{\"begins_at\":\"2026-10-21T00:00:00.000Z\",\"close_price\":\"281.6550\",\"interpolated\":false},{\"begins_at\":\"2026-10-22T00:00:00.000Z\",\"close_price\":\"278.9359\",\"interpolated\":false},{\"begins_at\":\"2026-10-23T00:00:00.000Z\",\"close_price\":\"278.9597\",\"interpolated\":false},{\"begins_at\":\"2026-10-26T00:00:00.000Z\",\"close_price\":\"283.6311\",\"interpolated\":false},{\"begins_at\":\"2026-10-27T00:00:00.000Z\",\"close_price\":\"285.2802\",\"interpolated\":false},{\"begins_at\":\"2026-10-28T00:00:00.000Z\",\"close_price\":\"285.0000\",\"interpolated\":false}]},{\"symbol\":\"NVDA\",\"interval\":\"day\",\"historicals\":[{\"begins_at\":\"2026-08-03T00:00:00.000Z\",\"close_price\":\"132.7032\",\"interpolated\":false},{\"begins_at\":\"2026-08-04T00:00:00.000Z\",\"close_price\":\"133.5674\",\"interpolated\":false},{\"begins_at\":\"2026-08-05T00:00:00.000Z\",\"close_price\":\"134.1680\",\"interpolated\":false},{\"begins_at\":\"2026-08-06T00:00:00.000Z\",\"close_price\":\"136.6227\",\"interpolated\":false},{\"begins_at\":\"2026-08-07T00:00:00.000Z\",\"close_price\":\"138.2152\",\"interpolated\":false},{\"begins_at\":\"2026-08-10T00:00:00.000Z\",\"close_price\":\"139.7163\",\"interpolated\":false},{\"begins_at\":\"2026-08-11T00:00:00.000Z\",\"close_price\":\"140.3953\",\"interpolated\":false},{\"begins_at\":\"2026-08-12T00:00:00.000Z\",\"close_price\":\"138.2721\",\"interpolated\":false},{\"begins_at\":\"2026-08-13T00:00:00.000Z\",\"close_price\":\"137.2574\",\"interpolated\":false},{\"begins_at\":\"2026-08-14T00:00:00.000Z\",\"close_price\":\"137.1839\",\"interpolated\":false},{\"begins_at\":\"2026-08-17T00:00:00.000Z\",\"close_price\":\"139.3157\",\"interpolated\":false},{\"begins_at\":\"2026-08-18T00:00:00.000Z\",\"close_price\":\"138.9206\",\"interpolated\":false},{\"begins_at\":\"2026-08-19T00:00:00.000Z\",\"close_price\":\"139.3765\",\"interpolated\":false},{\"begins_at\":\"2026-08-20T00:00:00.000Z\",\"close_price\":\"140.7710\",\"interpolated\":false},{\"begins_at\":\"2026-08-21T00:00:00.000Z\",\"close_price\":\"138.4203\",\"interpolated\":false},{\"begins_at\":\"2026-08-24T00:00:00.000Z\",\"close_price\":\"140.5358\",\"interpolated\":false},{\"begins_at\":\"2026-08-25T00:00:00.000Z\",\"close_price\":\"138.5854\",\"interpolated\":false},{\"begins_at\":\"2026-08-26T00:00:00.000Z\",\"close_price\":\"136.7621\",\"interpolated\":false},{\"begins_at\":\"2026-08-27T00:00:00.000Z\",\"close_price\":\"134.4399\",\"interpolated\":false},{\"begins_at\":\"2026-08-28T00:00:00.000Z\",\"close_price\":\"134.3069\",\"interpolated\":false},{\"begins_at\":\"2026-08-31T00:00:00.000Z\",\"close_price\":\"135.2576\",\"interpolated\":false},{\"begins_at\":\"2026-09-01T00:00:00.000Z\",\"close_price\":\"133.2070\",\"interpolated\":false},{\"begins_at\":\"2026-09-02T00:00:00.000Z\",\"close_price\":\"135.8702\",\"interpolated\":false},{\"begins_at\":\"2026-09-03T00:00:00.000Z\",\"close_price\":\"136.7694\",\"interpolated\":false},{\"begins_at\":\"2026-09-04T00:00:00.000Z\",\"close_price\":\"135.3840\",\"interpolated\":false},{\"begins_at\":\"2026-09-07T00:00:00.000Z\",\"close_price\":\"135.3624\",\"interpolated\":false},{\"begins_at\":\"2026-09-08T00:00:00.000Z\",\"close_price\":\"136.4697\",\"interpolated\":false},{\"begins_at\":\"2026-09-09T00:00:00.000Z\",\"close_price\":\"136.2660\",\"interpolated\":false},{\"begins_at\":\"2026-09-10T00:00:00.000Z\",\"close_price\":\"134.7364\",\"interpolated\":false},{\"begins_at\":\"2026-09-11T00:00:00.000Z\",\"close_price\":\"134.8022\",\"interpolated\":false},{\"begins_at\":\"2026-09-14T00:00:00.000Z\",\"close_price\":\"137.0163\",\"interpolated\":false},{\"begins_at\":\"2026-09-15T00:00:00.000Z\",\"close_price\":\"138.2286\",\"interpolated\":false},{\"begins_at\":\"2026-09-16T00:00:00.000Z\",\"close_price\":\"138.0040\",\"interpolated\":false},{\"begins_at\":\"2026-09-17T00:00:00.000Z\",\"close_price\":\"135.5869\",\"interpolated\":false},{\"begins_at\":\"2026-09-18T00:00:00.000Z\",\"close_price\":\"135.4682\",\"interpolated\":false},{\"begins_at\":\"2026-09-21T00:00:00.000Z\",\"close_price\":\"134.0959\",\"interpolated\":false},{\"begins_at\":\"2026-09-22T00:00:00.000Z\",\"close_price\":\"132.0090\",\"interpolated\":false},{\"begins_at\":\"2026-09-23T00:00:00.000Z\",\"close_price\":\"132.0054\",\"interpolated\":false},{\"begins_at\":\"2026-09-24T00:00:00.000Z\",\"close_price\":\"133.1063\",\"interpolated\":false},{\"begins_at\":\"2026-09-25T00:00:00.000Z\",\"close_price\":\"134.2993\",\"interpolated\":false},{\"begins_at\":\"2026-09-28T00:00:00.000Z\",\"close_price\":\"133.0192\",\"interpolated\":false},{\"begins_at\":\"2026-09-29T00:00:00.000Z\",\"close_price\":\"135.5025\",\"interpolated\":false},{\"begins_at\":\"2026-09-30T00:00:00.000Z\",\"close_price\":\"135.6348\",\"interpolated\":false},{\"begins_at\":\"2026-10-01T00:00:00.000Z\",\"close_price\":\"136.3975\",\"interpolated\":false},{\"begins_at\":\"2026-10-02T00:00:00.000Z\",\"close_price\":\"134.9098\",\"interpolated\":false},{\"begins_at\":\"2026-10-05T00:00:00.000Z\",\"close_price\":\"134.6405\",\"interpolated\":false},{\"begins_at\":\"2026-10-06T00:00:00.000Z\",\"close_price\":\"137.0274\",\"interpolated\":false},{\"begins_at\":\"2026-10-07T00:00:00.000Z\",\"close_price\":\"137.9625\",\"interpolated\":false},{\"begins_at\":\"2026-10-08T00:00:00.000Z\",\"close_price\":\"136.4740\",\"interpolated\":false},{\"begins_at\":\"2026-10-09T00:00:00.000Z\",\"close_price\":\"135.6961\",\"interpolated\":false},{\"begins_at\":\"2026-10-12T00:00:00.000Z\",\"close_price\":\"134.2607\",\"interpolated\":false},{\"begins_at\":\"2026-10-13T00:00:00.000Z\",\"close_price\":\"132.7472\",\"interpolated\":false},{\"begins_at\":\"2026-10-14T00:00:00.000Z\",\"close_price\":\"133.8763\",\"interpolated\":false},{\"begins_at\":\"2026-10-15T00:00:00.000Z\",\"close_price\":\"132.3808\",\"interpolated\":false},{\"begins_at\":\"2026-10-16T00:00:00.000Z\",\"close_price\":\"133.2251\",\"interpolated\":false},{\"begins_at\":\"2026-10-19T00:00:00.000Z\",\"close_price\":\"130.9722\",\"interpolated\":false},{\"begins_at\":\"2026-10-20T00:00:00.000Z\",\"close_price\":\"131.6006\",\"interpolated\":false},{\"begins_at\":\"2026-10-21T00:00:00.000Z\",\"close_price\":\"133.0326\",\"interpolated\":false},{\"begins_at\":\"2026-10-22T00:00:00.000Z\",\"close_price\":\"133.8531\",\"interpolated\":false},{\"begins_at\":\"2026-10-23T00:00:00.000Z\",\"close_price\":\"133.3247\",\"interpolated\":false},{\"begins_at\":\"2026-10-26T00:00:00.000Z\",\"close_price\":\"132.3266\",\"interpolated\":false},{\"begins_at\":\"2026-10-27T00:00:00.000Z\",\"close_price\":\"133.0686\",\"interpolated\":false},{\"begins_at\":\"2026-10-28T00:00:00.000Z\",\"close_price\":\"135.0000\",\"interpolated\":false}]},{\"symbol\":\"SCHD\",\"interval\":\"day\",\"historicals\":[{\"begins_at\":\"2026-08-03T00:00:00.000Z\",\"close_price\":\"26.9127\",\"interpolated\":false},{\"begins_at\":\"2026-08-04T00:00:00.000Z\",\"close_price\":\"27.2387\",\"interpolated\":false},{\"begins_at\":\"2026-08-05T00:00:00.000Z\",\"close_price\":\"26.9164\",\"interpolated\":false},{\"begins_at\":\"2026-08-06T00:00:00.000Z\",\"close_price\":\"26.9652\",\"interpolated\":false},{\"begins_at\":\"2026-08-07T00:00:00.000Z\",\"close_price\":\"27.4056\",\"interpolated\":false},{\"begins_at\":\"2026-08-10T00:00:00.000Z\",\"close_price\":\"27.4591\",\"interpolated\":false},{\"begins_at\":\"2026-08-11T00:00:00.000Z\",\"close_price\":\"27.1087\",\"interpolated\":false},{\"begins_at\":\"2026-08-12T00:00:00.000Z\",\"close_price\":\"27.6541\",\"interpolated\":false},{\"begins_at\":\"2026-08-13T00:00:00.000Z\",\"close_price\":\"28.1628\",\"interpolated\":false},{\"begins_at\":\"2026-08-14T00:00:00.000Z\",\"close_price\":\"27.6836\",\"interpolated\":false},{\"begins_at\":\"2026-08-17T00:00:00.000Z\",\"close_price\":\"27.8346\",\"interpolated\":false},{\"begins_at\":\"2026-08-18T00:00:00.000Z\",\"close_price\":\"27.9590\",\"interpolated\":false},{\"begins_at\":\"2026-08-19T00:00:00.000Z\",\"close_price\":\"27.9585\",\"interpolated\":false},{\"begins_at\":\"2026-08-20T00:00:00.000Z\",\"close_price\":\"27.8310\",\"interpolated\":false},{\"begins_at\":\"2026-08-21T00:00:00.000Z\",\"close_price\":\"27.7867\",\"interpolated\":false},{\"begins_at\":\"2026-08-24T00:00:00.000Z\",\"close_price\":\"28.1838\",\"interpolated\":false},{\"begins_at\":\"2026-08-25T00:00:00.000Z\",\"close_price\":\"27.8968\",\"interpolated\":false},{\"begins_at\":\"2026-08-26T00:00:00.000Z\",\"close_price\":\"28.1426\",\"interpolated\":false},{\"begins_at\":\"2026-08-27T00:00:00.000Z\",\"close_price\":\"28.4303\",\"interpolated\":false},{\"begins_at\":\"2026-08-28T00:00:00.000Z\",\"close_price\":\"28.7625\",\"interpolated\":false},{\"begins_at\":\"2026-08-31T00:00:00.000Z\",\"close_price\":\"29.0503\",\"interpolated\":false},{\"begins_at\":\"2026-09-01T00:00:00.000Z\",\"close_price\":\"28.5607\",\"interpolated\":false},{\"begins_at\":\"2026-09-02T00:00:00.000Z\",\"close_price\":\"28.9591\",\"interpolated\":false},{\"begins_at\":\"2026-09-03T00:00:00.000Z\",\"close_price\":\"29.4332\",\"interpolated\":false},{\"begins_at\":\"2026-09-04T00:00:00.000Z\",\"close_price\":\"29.5129\",\"interpolated\":false},{\"begins_at\":\"2026-09-07T00:00:00.000Z\",\"close_price\":\"29.5694\",\"interpolated\":false},{\"begins_at\":\"2026-09-08T00:00:00.000Z\",\"close_price\":\"29.5212\",\"interpolated\":false},{\"begins_at\":\"2026-09-09T00:00:00.000Z\",\"close_price\":\"29.5668\",\"interpolated\":false},{\"begins_at\":\"2026-09-10T00:00:00.000Z\",\"close_price\":\"29.7102\",\"interpolated\":false},{\"begins_at\":\"2026-09-11T00:00:00.000Z\",\"close_price\":\"29.2924\",\"interpolated\":false},{\"begins_at\":\"2026-09-14T00:00:00.000Z\",\"close_price\":\"29.8776\",\"interpolated\":false},{\"begins_at\":\"2026-09-15T00:00:00.000Z\",\"close_price\":\"29.6231\",\"interpolated\":false},{\"begins_at\":\"2026-09-16T00:00:00.000Z\",\"close_price\":\"30.0770\",\"interpolated\":false},{\"begins_at\":\"2026-09-17T00:00:00.000Z\",\"close_price\":\"29.6447\",\"interpolated\":false},{\"begins_at\":\"2026-09-18T00:00:00.000Z\",\"close_price\":\"29.2141\",\"interpolated\":false},{\"begins_at\":\"2026-09-21T00:00:00.000Z\",\"close_price\":\"28.6860\",\"interpolated\":false},{\"begins_at\":\"2026-09-22T00:00:00.000Z\",\"close_price\":\"28.9015\",\"interpolated\":false},{\"begins_at\":\"2026-09-23T00:00:00.000Z\",\"close_price\":\"28.5452\",\"interpolated\":false},{\"begins_at\":\"2026-09-24T00:00:00.000Z\",\"close_price\":\"28.2186\",\"interpolated\":false},{\"begins_at\":\"2026-09-25T00:00:00.000Z\",\"close_price\":\"28.2838\",\"interpolated\":false},{\"begins_at\":\"2026-09-28T00:00:00.000Z\",\"close_price\":\"28.0482\",\"interpolated\":false},{\"begins_at\":\"2026-09-29T00:00:00.000Z\",\"close_price\":\"28.3943\",\"interpolated\":false},{\"begins_at\":\"2026-09-30T00:00:00.000Z\",\"close_price\":\"27.8996\",\"interpolated\":false},{\"begins_at\":\"2026-10-01T00:00:00.000Z\",\"close_price\":\"28.0497\",\"interpolated\":false},{\"begins_at\":\"2026-10-02T00:00:00.000Z\",\"close_price\":\"27.9698\",\"interpolated\":false},{\"begins_at\":\"2026-10-05T00:00:00.000Z\",\"close_price\":\"28.3603\",\"interpolated\":false},{\"begins_at\":\"2026-10-06T00:00:00.000Z\",\"close_price\":\"28.1124\",\"interpolated\":false},{\"begins_at\":\"2026-10-07T00:00:00.000Z\",\"close_price\":\"28.0000\",\"interpolated\":false},{\"begins_at\":\"2026-10-08T00:00:00.000Z\",\"close_price\":\"27.4755\",\"interpolated\":false},{\"begins_at\":\"2026-10-09T00:00:00.000Z\",\"close_price\":\"27.0634\",\"interpolated\":false},{\"begins_at\":\"2026-10-12T00:00:00.000Z\",\"close_price\":\"26.6828\",\"interpolated\":false},{\"begins_at\":\"2026-10-13T00:00:00.000Z\",\"close_price\":\"26.4145\",\"interpolated\":false},{\"begins_at\":\"2026-10-14T00:00:00.000Z\",\"close_price\":\"26.2631\",\"interpolated\":false},{\"begins_at\":\"2026-10-15T00:00:00.000Z\",\"close_price\":\"26.1091\",\"interpolated\":false},{\"begins_at\":\"2026-10-16T00:00:00.000Z\",\"close_price\":\"26.2007\",\"interpolated\":false},{\"begins_at\":\"2026-10-19T00:00:00.000Z\",\"close_price\":\"26.0559\",\"interpolated\":false},{\"begins_at\":\"2026-10-20T00:00:00.000Z\",\"close_price\":\"25.7549\",\"interpolated\":false},{\"begins_at\":\"2026-10-21T00:00:00.000Z\",\"close_price\":\"26.2611\",\"interpolated\":false},{\"begins_at\":\"2026-10-22T00:00:00.000Z\",\"close_price\":\"26.7542\",\"interpolated\":false},{\"begins_at\":\"2026-10-23T00:00:00.000Z\",\"close_price\":\"27.2566\",\"interpolated\":false},{\"begins_at\":\"2026-10-26T00:00:00.000Z\",\"close_price\":\"27.7419\",\"interpolated\":false},{\"begins_at\":\"2026-10-27T00:00:00.000Z\",\"close_price\":\"27.9141\",\"interpolated\":false},{\"begins_at\":\"2026-10-28T00:00:00.000Z\",\"close_price\":\"28.0000\",\"interpolated\":false}]}]}",
-        "observedAt": "2026-10-29T13:44:53.402Z",
-        "confidence": "probable",
-        "limitations": [
-          "source-reported by MCP server; not independently audited"
-        ]
-      }
-    ],
+    "status": "ok",
     "truthLevel": "probable",
     "failureClass": "unknown",
-    "status": "ok",
     "problems": [],
-    "data": {
-      "account": {
-        "accountRef": "acct_ref_1",
-        "type": "margin",
-        "cash": 3000,
-        "buyingPower": 6000,
-        "marginEnabled": true
-      },
-      "accountCount": 1,
-      "portfolio": {
-        "equity": 56000,
-        "marketValue": 53000
-      },
-      "positions": [
-        {
-          "symbol": "AAPL",
-          "quantity": 40,
-          "averageCost": 150
-        },
-        {
-          "symbol": "MSFT",
-          "quantity": 25,
-          "averageCost": 300
-        },
-        {
-          "symbol": "VTI",
-          "quantity": 60,
-          "averageCost": 220
-        },
-        {
-          "symbol": "NVDA",
-          "quantity": 120,
-          "averageCost": 40
-        }
-      ],
-      "quotes": {
-        "AAPL": {
-          "symbol": "AAPL",
-          "last": 230,
-          "bid": 229.98,
-          "ask": 230.02,
-          "updatedAt": "2026-10-29T13:44:53.391Z"
-        },
-        "MSFT": {
-          "symbol": "MSFT",
-          "last": 420,
-          "bid": 419.98,
-          "ask": 420.02,
-          "updatedAt": "2026-10-29T13:44:53.391Z"
-        },
-        "VTI": {
-          "symbol": "VTI",
-          "last": 285,
-          "bid": 284.98,
-          "ask": 285.02,
-          "updatedAt": "2026-10-29T13:44:53.391Z"
-        },
-        "NVDA": {
-          "symbol": "NVDA",
-          "last": 135,
-          "bid": 134.98,
-          "ask": 135.02,
-          "updatedAt": "2026-10-29T13:44:53.391Z"
-        },
-        "SCHD": {
-          "symbol": "SCHD",
-          "last": 28,
-          "bid": 27.98,
-          "ask": 28.02,
-          "updatedAt": "2026-10-29T13:44:53.391Z"
-        }
-      },
-      "series": {
-        "AAPL": [
-          {
-            "at": "2026-08-03T00:00:00.000Z",
-            "close": 260.5428
-          },
-          {
-            "at": "2026-08-04T00:00:00.000Z",
-            "close": 264.5635
-          },
-          {
-            "at": "2026-08-05T00:00:00.000Z",
-            "close": 268.658
-          },
-          {
-            "at": "2026-08-06T00:00:00.000Z",
-            "close": 266.4535
-          },
-          {
-            "at": "2026-08-07T00:00:00.000Z",
-            "close": 261.5856
-          },
-          {
-            "at": "2026-08-10T00:00:00.000Z",
-            "close": 265.6193
-          },
-          {
-            "at": "2026-08-11T00:00:00.000Z",
-            "close": 267.0582
-          },
-          {
-            "at": "2026-08-12T00:00:00.000Z",
-            "close": 268.7213
-          },
-          {
-            "at": "2026-08-13T00:00:00.000Z",
-            "close": 263.9342
-          },
-          {
-            "at": "2026-08-14T00:00:00.000Z",
-            "close": 261.7936
-          },
-          {
-            "at": "2026-08-17T00:00:00.000Z",
-            "close": 264.8995
-          },
-          {
-            "at": "2026-08-18T00:00:00.000Z",
-            "close": 263.9066
-          },
-          {
-            "at": "2026-08-19T00:00:00.000Z",
-            "close": 268.5104
-          },
-          {
-            "at": "2026-08-20T00:00:00.000Z",
-            "close": 272.6149
-          },
-          {
-            "at": "2026-08-21T00:00:00.000Z",
-            "close": 273.9924
-          },
-          {
-            "at": "2026-08-24T00:00:00.000Z",
-            "close": 272.5626
-          },
-          {
-            "at": "2026-08-25T00:00:00.000Z",
-            "close": 277.8544
-          },
-          {
-            "at": "2026-08-26T00:00:00.000Z",
-            "close": 276.8658
-          },
-          {
-            "at": "2026-08-27T00:00:00.000Z",
-            "close": 272.6011
-          },
-          {
-            "at": "2026-08-28T00:00:00.000Z",
-            "close": 276.8846
-          },
-          {
-            "at": "2026-08-31T00:00:00.000Z",
-            "close": 274.6302
-          },
-          {
-            "at": "2026-09-01T00:00:00.000Z",
-            "close": 271.2696
-          },
-          {
-            "at": "2026-09-02T00:00:00.000Z",
-            "close": 265.9023
-          },
-          {
-            "at": "2026-09-03T00:00:00.000Z",
-            "close": 261.93
-          },
-          {
-            "at": "2026-09-04T00:00:00.000Z",
-            "close": 265.769
-          },
-          {
-            "at": "2026-09-07T00:00:00.000Z",
-            "close": 266.8018
-          },
-          {
-            "at": "2026-09-08T00:00:00.000Z",
-            "close": 262.2631
-          },
-          {
-            "at": "2026-09-09T00:00:00.000Z",
-            "close": 264.7116
-          },
-          {
-            "at": "2026-09-10T00:00:00.000Z",
-            "close": 264.0332
-          },
-          {
-            "at": "2026-09-11T00:00:00.000Z",
-            "close": 263.4532
-          },
-          {
-            "at": "2026-09-14T00:00:00.000Z",
-            "close": 264.292
-          },
-          {
-            "at": "2026-09-15T00:00:00.000Z",
-            "close": 262.9747
-          },
-          {
-            "at": "2026-09-16T00:00:00.000Z",
-            "close": 260.6289
-          },
-          {
-            "at": "2026-09-17T00:00:00.000Z",
-            "close": 257.6458
-          },
-          {
-            "at": "2026-09-18T00:00:00.000Z",
-            "close": 253.3663
-          },
-          {
-            "at": "2026-09-21T00:00:00.000Z",
-            "close": 254.7981
-          },
-          {
-            "at": "2026-09-22T00:00:00.000Z",
-            "close": 250.8653
-          },
-          {
-            "at": "2026-09-23T00:00:00.000Z",
-            "close": 249.2946
-          },
-          {
-            "at": "2026-09-24T00:00:00.000Z",
-            "close": 245.2305
-          },
-          {
-            "at": "2026-09-25T00:00:00.000Z",
-            "close": 243.3569
-          },
-          {
-            "at": "2026-09-28T00:00:00.000Z",
-            "close": 246.8761
-          },
-          {
-            "at": "2026-09-29T00:00:00.000Z",
-            "close": 243.7471
-          },
-          {
-            "at": "2026-09-30T00:00:00.000Z",
-            "close": 241.4742
-          },
-          {
-            "at": "2026-10-01T00:00:00.000Z",
-            "close": 237.4092
-          },
-          {
-            "at": "2026-10-02T00:00:00.000Z",
-            "close": 241.8384
-          },
-          {
-            "at": "2026-10-05T00:00:00.000Z",
-            "close": 239.7602
-          },
-          {
-            "at": "2026-10-06T00:00:00.000Z",
-            "close": 236.0199
-          },
-          {
-            "at": "2026-10-07T00:00:00.000Z",
-            "close": 232.75
-          },
-          {
-            "at": "2026-10-08T00:00:00.000Z",
-            "close": 231.8879
-          },
-          {
-            "at": "2026-10-09T00:00:00.000Z",
-            "close": 228.5521
-          },
-          {
-            "at": "2026-10-12T00:00:00.000Z",
-            "close": 226.8716
-          },
-          {
-            "at": "2026-10-13T00:00:00.000Z",
-            "close": 225.4711
-          },
-          {
-            "at": "2026-10-14T00:00:00.000Z",
-            "close": 227.7942
-          },
-          {
-            "at": "2026-10-15T00:00:00.000Z",
-            "close": 228.1021
-          },
-          {
-            "at": "2026-10-16T00:00:00.000Z",
-            "close": 226.4869
-          },
-          {
-            "at": "2026-10-19T00:00:00.000Z",
-            "close": 226.9576
-          },
-          {
-            "at": "2026-10-20T00:00:00.000Z",
-            "close": 229.4132
-          },
-          {
-            "at": "2026-10-21T00:00:00.000Z",
-            "close": 226.0499
-          },
-          {
-            "at": "2026-10-22T00:00:00.000Z",
-            "close": 227.456
-          },
-          {
-            "at": "2026-10-23T00:00:00.000Z",
-            "close": 229.8841
-          },
-          {
-            "at": "2026-10-26T00:00:00.000Z",
-            "close": 229.3739
-          },
-          {
-            "at": "2026-10-27T00:00:00.000Z",
-            "close": 233.6294
-          },
-          {
-            "at": "2026-10-28T00:00:00.000Z",
-            "close": 230
-          }
-        ],
-        "MSFT": [
-          {
-            "at": "2026-08-03T00:00:00.000Z",
-            "close": 384.9395
-          },
-          {
-            "at": "2026-08-04T00:00:00.000Z",
-            "close": 382.705
-          },
-          {
-            "at": "2026-08-05T00:00:00.000Z",
-            "close": 389.1178
-          },
-          {
-            "at": "2026-08-06T00:00:00.000Z",
-            "close": 388.7889
-          },
-          {
-            "at": "2026-08-07T00:00:00.000Z",
-            "close": 391.2065
-          },
-          {
-            "at": "2026-08-10T00:00:00.000Z",
-            "close": 393.2422
-          },
-          {
-            "at": "2026-08-11T00:00:00.000Z",
-            "close": 398.4867
-          },
-          {
-            "at": "2026-08-12T00:00:00.000Z",
-            "close": 405.6523
-          },
-          {
-            "at": "2026-08-13T00:00:00.000Z",
-            "close": 409.9507
-          },
-          {
-            "at": "2026-08-14T00:00:00.000Z",
-            "close": 402.9255
-          },
-          {
-            "at": "2026-08-17T00:00:00.000Z",
-            "close": 404.6285
-          },
-          {
-            "at": "2026-08-18T00:00:00.000Z",
-            "close": 402.1428
-          },
-          {
-            "at": "2026-08-19T00:00:00.000Z",
-            "close": 406.0801
-          },
-          {
-            "at": "2026-08-20T00:00:00.000Z",
-            "close": 400.5488
-          },
-          {
-            "at": "2026-08-21T00:00:00.000Z",
-            "close": 396.2071
-          },
-          {
-            "at": "2026-08-24T00:00:00.000Z",
-            "close": 395.2185
-          },
-          {
-            "at": "2026-08-25T00:00:00.000Z",
-            "close": 393.5679
-          },
-          {
-            "at": "2026-08-26T00:00:00.000Z",
-            "close": 397.4464
-          },
-          {
-            "at": "2026-08-27T00:00:00.000Z",
-            "close": 394.5413
-          },
-          {
-            "at": "2026-08-28T00:00:00.000Z",
-            "close": 396.6141
-          },
-          {
-            "at": "2026-08-31T00:00:00.000Z",
-            "close": 389.9795
-          },
-          {
-            "at": "2026-09-01T00:00:00.000Z",
-            "close": 395.2843
-          },
-          {
-            "at": "2026-09-02T00:00:00.000Z",
-            "close": 389.0221
-          },
-          {
-            "at": "2026-09-03T00:00:00.000Z",
-            "close": 388.0876
-          },
-          {
-            "at": "2026-09-04T00:00:00.000Z",
-            "close": 394.3715
-          },
-          {
-            "at": "2026-09-07T00:00:00.000Z",
-            "close": 395.1177
-          },
-          {
-            "at": "2026-09-08T00:00:00.000Z",
-            "close": 400.5106
-          },
-          {
-            "at": "2026-09-09T00:00:00.000Z",
-            "close": 395.4388
-          },
-          {
-            "at": "2026-09-10T00:00:00.000Z",
-            "close": 398.2632
-          },
-          {
-            "at": "2026-09-11T00:00:00.000Z",
-            "close": 397.5581
-          },
-          {
-            "at": "2026-09-14T00:00:00.000Z",
-            "close": 391.8399
-          },
-          {
-            "at": "2026-09-15T00:00:00.000Z",
-            "close": 396.8682
-          },
-          {
-            "at": "2026-09-16T00:00:00.000Z",
-            "close": 392.4111
-          },
-          {
-            "at": "2026-09-17T00:00:00.000Z",
-            "close": 398.8843
-          },
-          {
-            "at": "2026-09-18T00:00:00.000Z",
-            "close": 404.7992
-          },
-          {
-            "at": "2026-09-21T00:00:00.000Z",
-            "close": 398.1476
-          },
-          {
-            "at": "2026-09-22T00:00:00.000Z",
-            "close": 402.8218
-          },
-          {
-            "at": "2026-09-23T00:00:00.000Z",
-            "close": 394.9612
-          },
-          {
-            "at": "2026-09-24T00:00:00.000Z",
-            "close": 397.0416
-          },
-          {
-            "at": "2026-09-25T00:00:00.000Z",
-            "close": 393.6297
-          },
-          {
-            "at": "2026-09-28T00:00:00.000Z",
-            "close": 399.0595
-          },
-          {
-            "at": "2026-09-29T00:00:00.000Z",
-            "close": 395.9901
-          },
-          {
-            "at": "2026-09-30T00:00:00.000Z",
-            "close": 403.7236
-          },
-          {
-            "at": "2026-10-01T00:00:00.000Z",
-            "close": 402.0285
-          },
-          {
-            "at": "2026-10-02T00:00:00.000Z",
-            "close": 398.3223
-          },
-          {
-            "at": "2026-10-05T00:00:00.000Z",
-            "close": 398.3289
-          },
-          {
-            "at": "2026-10-06T00:00:00.000Z",
-            "close": 404.18
-          },
-          {
-            "at": "2026-10-07T00:00:00.000Z",
-            "close": 402.4391
-          },
-          {
-            "at": "2026-10-08T00:00:00.000Z",
-            "close": 408.3361
-          },
-          {
-            "at": "2026-10-09T00:00:00.000Z",
-            "close": 409.7947
-          },
-          {
-            "at": "2026-10-12T00:00:00.000Z",
-            "close": 417.0762
-          },
-          {
-            "at": "2026-10-13T00:00:00.000Z",
-            "close": 423.8756
-          },
-          {
-            "at": "2026-10-14T00:00:00.000Z",
-            "close": 427.9242
-          },
-          {
-            "at": "2026-10-15T00:00:00.000Z",
-            "close": 424.7745
-          },
-          {
-            "at": "2026-10-16T00:00:00.000Z",
-            "close": 430.0485
-          },
-          {
-            "at": "2026-10-19T00:00:00.000Z",
-            "close": 431.9156
-          },
-          {
-            "at": "2026-10-20T00:00:00.000Z",
-            "close": 437.0472
-          },
-          {
-            "at": "2026-10-21T00:00:00.000Z",
-            "close": 443.5262
-          },
-          {
-            "at": "2026-10-22T00:00:00.000Z",
-            "close": 439.4959
-          },
-          {
-            "at": "2026-10-23T00:00:00.000Z",
-            "close": 430.8083
-          },
-          {
-            "at": "2026-10-26T00:00:00.000Z",
-            "close": 432.6084
-          },
-          {
-            "at": "2026-10-27T00:00:00.000Z",
-            "close": 426.2329
-          },
-          {
-            "at": "2026-10-28T00:00:00.000Z",
-            "close": 420
-          }
-        ],
-        "VTI": [
-          {
-            "at": "2026-08-03T00:00:00.000Z",
-            "close": 320.9299
-          },
-          {
-            "at": "2026-08-04T00:00:00.000Z",
-            "close": 320.7631
-          },
-          {
-            "at": "2026-08-05T00:00:00.000Z",
-            "close": 316.8411
-          },
-          {
-            "at": "2026-08-06T00:00:00.000Z",
-            "close": 314.2807
-          },
-          {
-            "at": "2026-08-07T00:00:00.000Z",
-            "close": 310.0179
-          },
-          {
-            "at": "2026-08-10T00:00:00.000Z",
-            "close": 315.4873
-          },
-          {
-            "at": "2026-08-11T00:00:00.000Z",
-            "close": 320.3966
-          },
-          {
-            "at": "2026-08-12T00:00:00.000Z",
-            "close": 318.4722
-          },
-          {
-            "at": "2026-08-13T00:00:00.000Z",
-            "close": 318.9424
-          },
-          {
-            "at": "2026-08-14T00:00:00.000Z",
-            "close": 317.6197
-          },
-          {
-            "at": "2026-08-17T00:00:00.000Z",
-            "close": 319.0937
-          },
-          {
-            "at": "2026-08-18T00:00:00.000Z",
-            "close": 320.9084
-          },
-          {
-            "at": "2026-08-19T00:00:00.000Z",
-            "close": 315.274
-          },
-          {
-            "at": "2026-08-20T00:00:00.000Z",
-            "close": 309.1759
-          },
-          {
-            "at": "2026-08-21T00:00:00.000Z",
-            "close": 304.0831
-          },
-          {
-            "at": "2026-08-24T00:00:00.000Z",
-            "close": 301.146
-          },
-          {
-            "at": "2026-08-25T00:00:00.000Z",
-            "close": 302.4081
-          },
-          {
-            "at": "2026-08-26T00:00:00.000Z",
-            "close": 297.3133
-          },
-          {
-            "at": "2026-08-27T00:00:00.000Z",
-            "close": 295.4259
-          },
-          {
-            "at": "2026-08-28T00:00:00.000Z",
-            "close": 289.9165
-          },
-          {
-            "at": "2026-08-31T00:00:00.000Z",
-            "close": 288.1374
-          },
-          {
-            "at": "2026-09-01T00:00:00.000Z",
-            "close": 287.2605
-          },
-          {
-            "at": "2026-09-02T00:00:00.000Z",
-            "close": 292.8198
-          },
-          {
-            "at": "2026-09-03T00:00:00.000Z",
-            "close": 296.0759
-          },
-          {
-            "at": "2026-09-04T00:00:00.000Z",
-            "close": 296.1559
-          },
-          {
-            "at": "2026-09-07T00:00:00.000Z",
-            "close": 300.5886
-          },
-          {
-            "at": "2026-09-08T00:00:00.000Z",
-            "close": 297.1747
-          },
-          {
-            "at": "2026-09-09T00:00:00.000Z",
-            "close": 295.0888
-          },
-          {
-            "at": "2026-09-10T00:00:00.000Z",
-            "close": 299.428
-          },
-          {
-            "at": "2026-09-11T00:00:00.000Z",
-            "close": 299.3838
-          },
-          {
-            "at": "2026-09-14T00:00:00.000Z",
-            "close": 300.4054
-          },
-          {
-            "at": "2026-09-15T00:00:00.000Z",
-            "close": 297.5854
-          },
-          {
-            "at": "2026-09-16T00:00:00.000Z",
-            "close": 295.9078
-          },
-          {
-            "at": "2026-09-17T00:00:00.000Z",
-            "close": 300.2359
-          },
-          {
-            "at": "2026-09-18T00:00:00.000Z",
-            "close": 297.9477
-          },
-          {
-            "at": "2026-09-21T00:00:00.000Z",
-            "close": 299.8618
-          },
-          {
-            "at": "2026-09-22T00:00:00.000Z",
-            "close": 299.1727
-          },
-          {
-            "at": "2026-09-23T00:00:00.000Z",
-            "close": 299.2557
-          },
-          {
-            "at": "2026-09-24T00:00:00.000Z",
-            "close": 299.8658
-          },
-          {
-            "at": "2026-09-25T00:00:00.000Z",
-            "close": 295.6124
-          },
-          {
-            "at": "2026-09-28T00:00:00.000Z",
-            "close": 290.7581
-          },
-          {
-            "at": "2026-09-29T00:00:00.000Z",
-            "close": 287.9801
-          },
-          {
-            "at": "2026-09-30T00:00:00.000Z",
-            "close": 283.7037
-          },
-          {
-            "at": "2026-10-01T00:00:00.000Z",
-            "close": 279.3069
-          },
-          {
-            "at": "2026-10-02T00:00:00.000Z",
-            "close": 279.923
-          },
-          {
-            "at": "2026-10-05T00:00:00.000Z",
-            "close": 277.0814
-          },
-          {
-            "at": "2026-10-06T00:00:00.000Z",
-            "close": 275.9024
-          },
-          {
-            "at": "2026-10-07T00:00:00.000Z",
-            "close": 281.1571
-          },
-          {
-            "at": "2026-10-08T00:00:00.000Z",
-            "close": 279.6407
-          },
-          {
-            "at": "2026-10-09T00:00:00.000Z",
-            "close": 280.9513
-          },
-          {
-            "at": "2026-10-12T00:00:00.000Z",
-            "close": 279.4519
-          },
-          {
-            "at": "2026-10-13T00:00:00.000Z",
-            "close": 281.2361
-          },
-          {
-            "at": "2026-10-14T00:00:00.000Z",
-            "close": 276.1895
-          },
-          {
-            "at": "2026-10-15T00:00:00.000Z",
-            "close": 274.8689
-          },
-          {
-            "at": "2026-10-16T00:00:00.000Z",
-            "close": 272.6472
-          },
-          {
-            "at": "2026-10-19T00:00:00.000Z",
-            "close": 276.2888
-          },
-          {
-            "at": "2026-10-20T00:00:00.000Z",
-            "close": 277.6485
-          },
-          {
-            "at": "2026-10-21T00:00:00.000Z",
-            "close": 281.655
-          },
-          {
-            "at": "2026-10-22T00:00:00.000Z",
-            "close": 278.9359
-          },
-          {
-            "at": "2026-10-23T00:00:00.000Z",
-            "close": 278.9597
-          },
-          {
-            "at": "2026-10-26T00:00:00.000Z",
-            "close": 283.6311
-          },
-          {
-            "at": "2026-10-27T00:00:00.000Z",
-            "close": 285.2802
-          },
-          {
-            "at": "2026-10-28T00:00:00.000Z",
-            "close": 285
-          }
-        ],
-        "NVDA": [
-          {
-            "at": "2026-08-03T00:00:00.000Z",
-            "close": 132.7032
-          },
-          {
-            "at": "2026-08-04T00:00:00.000Z",
-            "close": 133.5674
-          },
-          {
-            "at": "2026-08-05T00:00:00.000Z",
-            "close": 134.168
-          },
-          {
-            "at": "2026-08-06T00:00:00.000Z",
-            "close": 136.6227
-          },
-          {
-            "at": "2026-08-07T00:00:00.000Z",
-            "close": 138.2152
-          },
-          {
-            "at": "2026-08-10T00:00:00.000Z",
-            "close": 139.7163
-          },
-          {
-            "at": "2026-08-11T00:00:00.000Z",
-            "close": 140.3953
-          },
-          {
-            "at": "2026-08-12T00:00:00.000Z",
-            "close": 138.2721
-          },
-          {
-            "at": "2026-08-13T00:00:00.000Z",
-            "close": 137.2574
-          },
-          {
-            "at": "2026-08-14T00:00:00.000Z",
-            "close": 137.1839
-          },
-          {
-            "at": "2026-08-17T00:00:00.000Z",
-            "close": 139.3157
-          },
-          {
-            "at": "2026-08-18T00:00:00.000Z",
-            "close": 138.9206
-          },
-          {
-            "at": "2026-08-19T00:00:00.000Z",
-            "close": 139.3765
-          },
-          {
-            "at": "2026-08-20T00:00:00.000Z",
-            "close": 140.771
-          },
-          {
-            "at": "2026-08-21T00:00:00.000Z",
-            "close": 138.4203
-          },
-          {
-            "at": "2026-08-24T00:00:00.000Z",
-            "close": 140.5358
-          },
-          {
-            "at": "2026-08-25T00:00:00.000Z",
-            "close": 138.5854
-          },
-          {
-            "at": "2026-08-26T00:00:00.000Z",
-            "close": 136.7621
-          },
-          {
-            "at": "2026-08-27T00:00:00.000Z",
-            "close": 134.4399
-          },
-          {
-            "at": "2026-08-28T00:00:00.000Z",
-            "close": 134.3069
-          },
-          {
-            "at": "2026-08-31T00:00:00.000Z",
-            "close": 135.2576
-          },
-          {
-            "at": "2026-09-01T00:00:00.000Z",
-            "close": 133.207
-          },
-          {
-            "at": "2026-09-02T00:00:00.000Z",
-            "close": 135.8702
-          },
-          {
-            "at": "2026-09-03T00:00:00.000Z",
-            "close": 136.7694
-          },
-          {
-            "at": "2026-09-04T00:00:00.000Z",
-            "close": 135.384
-          },
-          {
-            "at": "2026-09-07T00:00:00.000Z",
-            "close": 135.3624
-          },
-          {
-            "at": "2026-09-08T00:00:00.000Z",
-            "close": 136.4697
-          },
-          {
-            "at": "2026-09-09T00:00:00.000Z",
-            "close": 136.266
-          },
-          {
-            "at": "2026-09-10T00:00:00.000Z",
-            "close": 134.7364
-          },
-          {
-            "at": "2026-09-11T00:00:00.000Z",
-            "close": 134.8022
-          },
-          {
-            "at": "2026-09-14T00:00:00.000Z",
-            "close": 137.0163
-          },
-          {
-            "at": "2026-09-15T00:00:00.000Z",
-            "close": 138.2286
-          },
-          {
-            "at": "2026-09-16T00:00:00.000Z",
-            "close": 138.004
-          },
-          {
-            "at": "2026-09-17T00:00:00.000Z",
-            "close": 135.5869
-          },
-          {
-            "at": "2026-09-18T00:00:00.000Z",
-            "close": 135.4682
-          },
-          {
-            "at": "2026-09-21T00:00:00.000Z",
-            "close": 134.0959
-          },
-          {
-            "at": "2026-09-22T00:00:00.000Z",
-            "close": 132.009
-          },
-          {
-            "at": "2026-09-23T00:00:00.000Z",
-            "close": 132.0054
-          },
-          {
-            "at": "2026-09-24T00:00:00.000Z",
-            "close": 133.1063
-          },
-          {
-            "at": "2026-09-25T00:00:00.000Z",
-            "close": 134.2993
-          },
-          {
-            "at": "2026-09-28T00:00:00.000Z",
-            "close": 133.0192
-          },
-          {
-            "at": "2026-09-29T00:00:00.000Z",
-            "close": 135.5025
-          },
-          {
-            "at": "2026-09-30T00:00:00.000Z",
-            "close": 135.6348
-          },
-          {
-            "at": "2026-10-01T00:00:00.000Z",
-            "close": 136.3975
-          },
-          {
-            "at": "2026-10-02T00:00:00.000Z",
-            "close": 134.9098
-          },
-          {
-            "at": "2026-10-05T00:00:00.000Z",
-            "close": 134.6405
-          },
-          {
-            "at": "2026-10-06T00:00:00.000Z",
-            "close": 137.0274
-          },
-          {
-            "at": "2026-10-07T00:00:00.000Z",
-            "close": 137.9625
-          },
-          {
-            "at": "2026-10-08T00:00:00.000Z",
-            "close": 136.474
-          },
-          {
-            "at": "2026-10-09T00:00:00.000Z",
-            "close": 135.6961
-          },
-          {
-            "at": "2026-10-12T00:00:00.000Z",
-            "close": 134.2607
-          },
-          {
-            "at": "2026-10-13T00:00:00.000Z",
-            "close": 132.7472
-          },
-          {
-            "at": "2026-10-14T00:00:00.000Z",
-            "close": 133.8763
-          },
-          {
-            "at": "2026-10-15T00:00:00.000Z",
-            "close": 132.3808
-          },
-          {
-            "at": "2026-10-16T00:00:00.000Z",
-            "close": 133.2251
-          },
-          {
-            "at": "2026-10-19T00:00:00.000Z",
-            "close": 130.9722
-          },
-          {
-            "at": "2026-10-20T00:00:00.000Z",
-            "close": 131.6006
-          },
-          {
-            "at": "2026-10-21T00:00:00.000Z",
-            "close": 133.0326
-          },
-          {
-            "at": "2026-10-22T00:00:00.000Z",
-            "close": 133.8531
-          },
-          {
-            "at": "2026-10-23T00:00:00.000Z",
-            "close": 133.3247
-          },
-          {
-            "at": "2026-10-26T00:00:00.000Z",
-            "close": 132.3266
-          },
-          {
-            "at": "2026-10-27T00:00:00.000Z",
-            "close": 133.0686
-          },
-          {
-            "at": "2026-10-28T00:00:00.000Z",
-            "close": 135
-          }
-        ],
-        "SCHD": [
-          {
-            "at": "2026-08-03T00:00:00.000Z",
-            "close": 26.9127
-          },
-          {
-            "at": "2026-08-04T00:00:00.000Z",
-            "close": 27.2387
-          },
-          {
-            "at": "2026-08-05T00:00:00.000Z",
-            "close": 26.9164
-          },
-          {
-            "at": "2026-08-06T00:00:00.000Z",
-            "close": 26.9652
-          },
-          {
-            "at": "2026-08-07T00:00:00.000Z",
-            "close": 27.4056
-          },
-          {
-            "at": "2026-08-10T00:00:00.000Z",
-            "close": 27.4591
-          },
-          {
-            "at": "2026-08-11T00:00:00.000Z",
-            "close": 27.1087
-          },
-          {
-            "at": "2026-08-12T00:00:00.000Z",
-            "close": 27.6541
-          },
-          {
-            "at": "2026-08-13T00:00:00.000Z",
-            "close": 28.1628
-          },
-          {
-            "at": "2026-08-14T00:00:00.000Z",
-            "close": 27.6836
-          },
-          {
-            "at": "2026-08-17T00:00:00.000Z",
-            "close": 27.8346
-          },
-          {
-            "at": "2026-08-18T00:00:00.000Z",
-            "close": 27.959
-          },
-          {
-            "at": "2026-08-19T00:00:00.000Z",
-            "close": 27.9585
-          },
-          {
-            "at": "2026-08-20T00:00:00.000Z",
-            "close": 27.831
-          },
-          {
-            "at": "2026-08-21T00:00:00.000Z",
-            "close": 27.7867
-          },
-          {
-            "at": "2026-08-24T00:00:00.000Z",
-            "close": 28.1838
-          },
-          {
-            "at": "2026-08-25T00:00:00.000Z",
-            "close": 27.8968
-          },
-          {
-            "at": "2026-08-26T00:00:00.000Z",
-            "close": 28.1426
-          },
-          {
-            "at": "2026-08-27T00:00:00.000Z",
-            "close": 28.4303
-          },
-          {
-            "at": "2026-08-28T00:00:00.000Z",
-            "close": 28.7625
-          },
-          {
-            "at": "2026-08-31T00:00:00.000Z",
-            "close": 29.0503
-          },
-          {
-            "at": "2026-09-01T00:00:00.000Z",
-            "close": 28.5607
-          },
-          {
-            "at": "2026-09-02T00:00:00.000Z",
-            "close": 28.9591
-          },
-          {
-            "at": "2026-09-03T00:00:00.000Z",
-            "close": 29.4332
-          },
-          {
-            "at": "2026-09-04T00:00:00.000Z",
-            "close": 29.5129
-          },
-          {
-            "at": "2026-09-07T00:00:00.000Z",
-            "close": 29.5694
-          },
-          {
-            "at": "2026-09-08T00:00:00.000Z",
-            "close": 29.5212
-          },
-          {
-            "at": "2026-09-09T00:00:00.000Z",
-            "close": 29.5668
-          },
-          {
-            "at": "2026-09-10T00:00:00.000Z",
-            "close": 29.7102
-          },
-          {
-            "at": "2026-09-11T00:00:00.000Z",
-            "close": 29.2924
-          },
-          {
-            "at": "2026-09-14T00:00:00.000Z",
-            "close": 29.8776
-          },
-          {
-            "at": "2026-09-15T00:00:00.000Z",
-            "close": 29.6231
-          },
-          {
-            "at": "2026-09-16T00:00:00.000Z",
-            "close": 30.077
-          },
-          {
-            "at": "2026-09-17T00:00:00.000Z",
-            "close": 29.6447
-          },
-          {
-            "at": "2026-09-18T00:00:00.000Z",
-            "close": 29.2141
-          },
-          {
-            "at": "2026-09-21T00:00:00.000Z",
-            "close": 28.686
-          },
-          {
-            "at": "2026-09-22T00:00:00.000Z",
-            "close": 28.9015
-          },
-          {
-            "at": "2026-09-23T00:00:00.000Z",
-            "close": 28.5452
-          },
-          {
-            "at": "2026-09-24T00:00:00.000Z",
-            "close": 28.2186
-          },
-          {
-            "at": "2026-09-25T00:00:00.000Z",
-            "close": 28.2838
-          },
-          {
-            "at": "2026-09-28T00:00:00.000Z",
-            "close": 28.0482
-          },
-          {
-            "at": "2026-09-29T00:00:00.000Z",
-            "close": 28.3943
-          },
-          {
-            "at": "2026-09-30T00:00:00.000Z",
-            "close": 27.8996
-          },
-          {
-            "at": "2026-10-01T00:00:00.000Z",
-            "close": 28.0497
-          },
-          {
-            "at": "2026-10-02T00:00:00.000Z",
-            "close": 27.9698
-          },
-          {
-            "at": "2026-10-05T00:00:00.000Z",
-            "close": 28.3603
-          },
-          {
-            "at": "2026-10-06T00:00:00.000Z",
-            "close": 28.1124
-          },
-          {
-            "at": "2026-10-07T00:00:00.000Z",
-            "close": 28
-          },
-          {
-            "at": "2026-10-08T00:00:00.000Z",
-            "close": 27.4755
-          },
-          {
-            "at": "2026-10-09T00:00:00.000Z",
-            "close": 27.0634
-          },
-          {
-            "at": "2026-10-12T00:00:00.000Z",
-            "close": 26.6828
-          },
-          {
-            "at": "2026-10-13T00:00:00.000Z",
-            "close": 26.4145
-          },
-          {
-            "at": "2026-10-14T00:00:00.000Z",
-            "close": 26.2631
-          },
-          {
-            "at": "2026-10-15T00:00:00.000Z",
-            "close": 26.1091
-          },
-          {
-            "at": "2026-10-16T00:00:00.000Z",
-            "close": 26.2007
-          },
-          {
-            "at": "2026-10-19T00:00:00.000Z",
-            "close": 26.0559
-          },
-          {
-            "at": "2026-10-20T00:00:00.000Z",
-            "close": 25.7549
-          },
-          {
-            "at": "2026-10-21T00:00:00.000Z",
-            "close": 26.2611
-          },
-          {
-            "at": "2026-10-22T00:00:00.000Z",
-            "close": 26.7542
-          },
-          {
-            "at": "2026-10-23T00:00:00.000Z",
-            "close": 27.2566
-          },
-          {
-            "at": "2026-10-26T00:00:00.000Z",
-            "close": 27.7419
-          },
-          {
-            "at": "2026-10-27T00:00:00.000Z",
-            "close": 27.9141
-          },
-          {
-            "at": "2026-10-28T00:00:00.000Z",
-            "close": 28
-          }
-        ]
-      },
-      "watchlist": [
-        "SCHD"
-      ],
-      "sources": {
-        "accounts": {
-          "tool": "get_accounts",
-          "observedAt": "2026-10-29T13:44:53.381Z",
-          "evidence": {
-            "source": "tool:get_accounts",
-            "claim": "{\"results\":[{\"account_number\":\"acct_ref_1\",\"url\":\"https://fixture.invalid/accounts/acct_ref_1/\",\"type\":\"margin\",\"cash\":\"3000.00\",\"buying_power\":\"6000.00\",\"margin_limit\":\"6000.00\",\"email\":\"[REDACTED]\",\"synthetic\":true}]}",
-            "observedAt": "2026-10-29T13:44:53.381Z",
-            "confidence": "probable",
-            "limitations": [
-              "source-reported by MCP server; not independently audited"
-            ]
-          }
-        },
-        "portfolio": {
-          "tool": "get_portfolio",
-          "observedAt": "2026-10-29T13:44:53.385Z",
-          "evidence": {
-            "source": "tool:get_portfolio",
-            "claim": "{\"account\":\"acct_ref_2\",\"equity\":\"56000.00\",\"market_value\":\"53000.00\",\"synthetic\":true}",
-            "observedAt": "2026-10-29T13:44:53.385Z",
-            "confidence": "probable",
-            "limitations": [
-              "source-reported by MCP server; not independently audited"
-            ]
-          }
-        },
-        "positions": {
-          "tool": "get_positions",
-          "observedAt": "2026-10-29T13:44:53.389Z",
-          "evidence": {
-            "source": "tool:get_positions",
-            "claim": "{\"results\":[{\"symbol\":\"AAPL\",\"quantity\":\"40.0000\",\"average_buy_price\":\"150.0000\",\"account_number\":\"acct_ref_1\"},{\"symbol\":\"MSFT\",\"quantity\":\"25.0000\",\"average_buy_price\":\"300.0000\",\"account_number\":\"acct_ref_1\"},{\"symbol\":\"VTI\",\"quantity\":\"60.0000\",\"average_buy_price\":\"220.0000\",\"account_number\":\"acct_ref_1\"},{\"symbol\":\"NVDA\",\"quantity\":\"120.0000\",\"average_buy_price\":\"40.0000\",\"account_number\":\"acct_ref_1\"}]}",
-            "observedAt": "2026-10-29T13:44:53.389Z",
-            "confidence": "probable",
-            "limitations": [
-              "source-reported by MCP server; not independently audited"
-            ]
-          }
-        },
-        "quotes": {
-          "tool": "get_quotes",
-          "observedAt": "2026-10-29T13:44:53.393Z",
-          "evidence": {
-            "source": "tool:get_quotes",
-            "claim": "{\"results\":[{\"symbol\":\"AAPL\",\"last_trade_price\":\"230.0000\",\"bid_price\":\"229.9800\",\"ask_price\":\"230.0200\",\"updated_at\":\"2026-10-29T13:44:53.391Z\"},{\"symbol\":\"MSFT\",\"last_trade_price\":\"420.0000\",\"bid_price\":\"419.9800\",\"ask_price\":\"420.0200\",\"updated_at\":\"2026-10-29T13:44:53.391Z\"},{\"symbol\":\"VTI\",\"last_trade_price\":\"285.0000\",\"bid_price\":\"284.9800\",\"ask_price\":\"285.0200\",\"updated_at\":\"2026-10-29T13:44:53.391Z\"},{\"symbol\":\"NVDA\",\"last_trade_price\":\"135.0000\",\"bid_price\":\"134.9800\",\"ask_price\":\"135.0200\",\"updated_at\":\"2026-10-29T13:44:53.391Z\"},{\"symbol\":\"SCHD\",\"last_trade_price\":\"28.0000\",\"bid_price\":\"27.9800\",\"ask_price\":\"28.0200\",\"updated_at\":\"2026-10-29T13:44:53.391Z\"}]}",
-            "observedAt": "2026-10-29T13:44:53.393Z",
-            "confidence": "probable",
-            "limitations": [
-              "source-reported by MCP server; not independently audited"
-            ]
-          }
-        },
-        "historicals": {
-          "tool": "get_historicals",
-          "observedAt": "2026-10-29T13:44:53.402Z",
-          "evidence": {
-            "source": "tool:get_historicals",
-            "claim": "{\"results\":[{\"symbol\":\"AAPL\",\"interval\":\"day\",\"historicals\":[{\"begins_at\":\"2026-08-03T00:00:00.000Z\",\"close_price\":\"260.5428\",\"interpolated\":false},{\"begins_at\":\"2026-08-04T00:00:00.000Z\",\"close_price\":\"264.5635\",\"interpolated\":false},{\"begins_at\":\"2026-08-05T00:00:00.000Z\",\"close_price\":\"268.6580\",\"interpolated\":false},{\"begins_at\":\"2026-08-06T00:00:00.000Z\",\"close_price\":\"266.4535\",\"interpolated\":false},{\"begins_at\":\"2026-08-07T00:00:00.000Z\",\"close_price\":\"261.5856\",\"interpolated\":false},{\"begins_at\":\"2026-08-10T00:00:00.000Z\",\"close_price\":\"265.6193\",\"interpolated\":false},{\"begins_at\":\"2026-08-11T00:00:00.000Z\",\"close_price\":\"267.0582\",\"interpolated\":false},{\"begins_at\":\"2026-08-12T00:00:00.000Z\",\"close_price\":\"268.7213\",\"interpolated\":false},{\"begins_at\":\"2026-08-13T00:00:00.000Z\",\"close_price\":\"263.9342\",\"interpolated\":false},{\"begins_at\":\"2026-08-14T00:00:00.000Z\",\"close_price\":\"261.7936\",\"interpolated\":false},{\"begins_at\":\"2026-08-17T00:00:00.000Z\",\"close_price\":\"264.8995\",\"interpolated\":false},{\"begins_at\":\"2026-08-18T00:00:00.000Z\",\"close_price\":\"263.9066\",\"interpolated\":false},{\"begins_at\":\"2026-08-19T00:00:00.000Z\",\"close_price\":\"268.5104\",\"interpolated\":false},{\"begins_at\":\"2026-08-20T00:00:00.000Z\",\"close_price\":\"272.6149\",\"interpolated\":false},{\"begins_at\":\"2026-08-21T00:00:00.000Z\",\"close_price\":\"273.9924\",\"interpolated\":false},{\"begins_at\":\"2026-08-24T00:00:00.000Z\",\"close_price\":\"272.5626\",\"interpolated\":false},{\"begins_at\":\"2026-08-25T00:00:00.000Z\",\"close_price\":\"277.8544\",\"interpolated\":false},{\"begins_at\":\"2026-08-26T00:00:00.000Z\",\"close_price\":\"276.8658\",\"interpolated\":false},{\"begins_at\":\"2026-08-27T00:00:00.000Z\",\"close_price\":\"272.6011\",\"interpolated\":false},{\"begins_at\":\"2026-08-28T00:00:00.000Z\",\"close_price\":\"276.8846\",\"interpolated\":false},{\"begins_at\":\"2026-08-31T00:00:00.000Z\",\"close_price\":\"274.6302\",\"interpolated\":false},{\"begins_at\":\"2026-09-01T00:00:00.000Z\",\"close_price\":\"271.2696\",\"interpolated\":false},{\"begins_at\":\"2026-09-02T00:00:00.000Z\",\"close_price\":\"265.9023\",\"interpolated\":false},{\"begins_at\":\"2026-09-03T00:00:00.000Z\",\"close_price\":\"261.9300\",\"interpolated\":false},{\"begins_at\":\"2026-09-04T00:00:00.000Z\",\"close_price\":\"265.7690\",\"interpolated\":false},{\"begins_at\":\"2026-09-07T00:00:00.000Z\",\"close_price\":\"266.8018\",\"interpolated\":false},{\"begins_at\":\"2026-09-08T00:00:00.000Z\",\"close_price\":\"262.2631\",\"interpolated\":false},{\"begins_at\":\"2026-09-09T00:00:00.000Z\",\"close_price\":\"264.7116\",\"interpolated\":false},{\"begins_at\":\"2026-09-10T00:00:00.000Z\",\"close_price\":\"264.0332\",\"interpolated\":false},{\"begins_at\":\"2026-09-11T00:00:00.000Z\",\"close_price\":\"263.4532\",\"interpolated\":false},{\"begins_at\":\"2026-09-14T00:00:00.000Z\",\"close_price\":\"264.2920\",\"interpolated\":false},{\"begins_at\":\"2026-09-15T00:00:00.000Z\",\"close_price\":\"262.9747\",\"interpolated\":false},{\"begins_at\":\"2026-09-16T00:00:00.000Z\",\"close_price\":\"260.6289\",\"interpolated\":false},{\"begins_at\":\"2026-09-17T00:00:00.000Z\",\"close_price\":\"257.6458\",\"interpolated\":false},{\"begins_at\":\"2026-09-18T00:00:00.000Z\",\"close_price\":\"253.3663\",\"interpolated\":false},{\"begins_at\":\"2026-09-21T00:00:00.000Z\",\"close_price\":\"254.7981\",\"interpolated\":false},{\"begins_at\":\"2026-09-22T00:00:00.000Z\",\"close_price\":\"250.8653\",\"interpolated\":false},{\"begins_at\":\"2026-09-23T00:00:00.000Z\",\"close_price\":\"249.2946\",\"interpolated\":false},{\"begins_at\":\"2026-09-24T00:00:00.000Z\",\"close_price\":\"245.2305\",\"interpolated\":false},{\"begins_at\":\"2026-09-25T00:00:00.000Z\",\"close_price\":\"243.3569\",\"interpolated\":false},{\"begins_at\":\"2026-09-28T00:00:00.000Z\",\"close_price\":\"246.8761\",\"interpolated\":false},{\"begins_at\":\"2026-09-29T00:00:00.000Z\",\"close_price\":\"243.7471\",\"interpolated\":false},{\"begins_at\":\"2026-09-30T00:00:00.000Z\",\"close_price\":\"241.4742\",\"interpolated\":false},{\"begins_at\":\"2026-10-01T00:00:00.000Z\",\"close_price\":\"237.4092\",\"interpolated\":false},{\"begins_at\":\"2026-10-02T00:00:00.000Z\",\"close_price\":\"241.8384\",\"interpolated\":false},{\"begins_at\":\"2026-10-05T00:00:00.000Z\",\"close_price\":\"239.7602\",\"interpolated\":false},{\"begins_at\":\"2026-10-06T00:00:00.000Z\",\"close_price\":\"236.0199\",\"interpolated\":false},{\"begins_at\":\"2026-10-07T00:00:00.000Z\",\"close_price\":\"232.7500\",\"interpolated\":false},{\"begins_at\":\"2026-10-08T00:00:00.000Z\",\"close_price\":\"231.8879\",\"interpolated\":false},{\"begins_at\":\"2026-10-09T00:00:00.000Z\",\"close_price\":\"228.5521\",\"interpolated\":false},{\"begins_at\":\"2026-10-12T00:00:00.000Z\",\"close_price\":\"226.8716\",\"interpolated\":false},{\"begins_at\":\"2026-10-13T00:00:00.000Z\",\"close_price\":\"225.4711\",\"interpolated\":false},{\"begins_at\":\"2026-10-14T00:00:00.000Z\",\"close_price\":\"227.7942\",\"interpolated\":false},{\"begins_at\":\"2026-10-15T00:00:00.000Z\",\"close_price\":\"228.1021\",\"interpolated\":false},{\"begins_at\":\"2026-10-16T00:00:00.000Z\",\"close_price\":\"226.4869\",\"interpolated\":false},{\"begins_at\":\"2026-10-19T00:00:00.000Z\",\"close_price\":\"226.9576\",\"interpolated\":false},{\"begins_at\":\"2026-10-20T00:00:00.000Z\",\"close_price\":\"229.4132\",\"interpolated\":false},{\"begins_at\":\"2026-10-21T00:00:00.000Z\",\"close_price\":\"226.0499\",\"interpolated\":false},{\"begins_at\":\"2026-10-22T00:00:00.000Z\",\"close_price\":\"227.4560\",\"interpolated\":false},{\"begins_at\":\"2026-10-23T00:00:00.000Z\",\"close_price\":\"229.8841\",\"interpolated\":false},{\"begins_at\":\"2026-10-26T00:00:00.000Z\",\"close_price\":\"229.3739\",\"interpolated\":false},{\"begins_at\":\"2026-10-27T00:00:00.000Z\",\"close_price\":\"233.6294\",\"interpolated\":false},{\"begins_at\":\"2026-10-28T00:00:00.000Z\",\"close_price\":\"230.0000\",\"interpolated\":false}]},{\"symbol\":\"MSFT\",\"interval\":\"day\",\"historicals\":[{\"begins_at\":\"2026-08-03T00:00:00.000Z\",\"close_price\":\"384.9395\",\"interpolated\":false},{\"begins_at\":\"2026-08-04T00:00:00.000Z\",\"close_price\":\"382.7050\",\"interpolated\":false},{\"begins_at\":\"2026-08-05T00:00:00.000Z\",\"close_price\":\"389.1178\",\"interpolated\":false},{\"begins_at\":\"2026-08-06T00:00:00.000Z\",\"close_price\":\"388.7889\",\"interpolated\":false},{\"begins_at\":\"2026-08-07T00:00:00.000Z\",\"close_price\":\"391.2065\",\"interpolated\":false},{\"begins_at\":\"2026-08-10T00:00:00.000Z\",\"close_price\":\"393.2422\",\"interpolated\":false},{\"begins_at\":\"2026-08-11T00:00:00.000Z\",\"close_price\":\"398.4867\",\"interpolated\":false},{\"begins_at\":\"2026-08-12T00:00:00.000Z\",\"close_price\":\"405.6523\",\"interpolated\":false},{\"begins_at\":\"2026-08-13T00:00:00.000Z\",\"close_price\":\"409.9507\",\"interpolated\":false},{\"begins_at\":\"2026-08-14T00:00:00.000Z\",\"close_price\":\"402.9255\",\"interpolated\":false},{\"begins_at\":\"2026-08-17T00:00:00.000Z\",\"close_price\":\"404.6285\",\"interpolated\":false},{\"begins_at\":\"2026-08-18T00:00:00.000Z\",\"close_price\":\"402.1428\",\"interpolated\":false},{\"begins_at\":\"2026-08-19T00:00:00.000Z\",\"close_price\":\"406.0801\",\"interpolated\":false},{\"begins_at\":\"2026-08-20T00:00:00.000Z\",\"close_price\":\"400.5488\",\"interpolated\":false},{\"begins_at\":\"2026-08-21T00:00:00.000Z\",\"close_price\":\"396.2071\",\"interpolated\":false},{\"begins_at\":\"2026-08-24T00:00:00.000Z\",\"close_price\":\"395.2185\",\"interpolated\":false},{\"begins_at\":\"2026-08-25T00:00:00.000Z\",\"close_price\":\"393.5679\",\"interpolated\":false},{\"begins_at\":\"2026-08-26T00:00:00.000Z\",\"close_price\":\"397.4464\",\"interpolated\":false},{\"begins_at\":\"2026-08-27T00:00:00.000Z\",\"close_price\":\"394.5413\",\"interpolated\":false},{\"begins_at\":\"2026-08-28T00:00:00.000Z\",\"close_price\":\"396.6141\",\"interpolated\":false},{\"begins_at\":\"2026-08-31T00:00:00.000Z\",\"close_price\":\"389.9795\",\"interpolated\":false},{\"begins_at\":\"2026-09-01T00:00:00.000Z\",\"close_price\":\"395.2843\",\"interpolated\":false},{\"begins_at\":\"2026-09-02T00:00:00.000Z\",\"close_price\":\"389.0221\",\"interpolated\":false},{\"begins_at\":\"2026-09-03T00:00:00.000Z\",\"close_price\":\"388.0876\",\"interpolated\":false},{\"begins_at\":\"2026-09-04T00:00:00.000Z\",\"close_price\":\"394.3715\",\"interpolated\":false},{\"begins_at\":\"2026-09-07T00:00:00.000Z\",\"close_price\":\"395.1177\",\"interpolated\":false},{\"begins_at\":\"2026-09-08T00:00:00.000Z\",\"close_price\":\"400.5106\",\"interpolated\":false},{\"begins_at\":\"2026-09-09T00:00:00.000Z\",\"close_price\":\"395.4388\",\"interpolated\":false},{\"begins_at\":\"2026-09-10T00:00:00.000Z\",\"close_price\":\"398.2632\",\"interpolated\":false},{\"begins_at\":\"2026-09-11T00:00:00.000Z\",\"close_price\":\"397.5581\",\"interpolated\":false},{\"begins_at\":\"2026-09-14T00:00:00.000Z\",\"close_price\":\"391.8399\",\"interpolated\":false},{\"begins_at\":\"2026-09-15T00:00:00.000Z\",\"close_price\":\"396.8682\",\"interpolated\":false},{\"begins_at\":\"2026-09-16T00:00:00.000Z\",\"close_price\":\"392.4111\",\"interpolated\":false},{\"begins_at\":\"2026-09-17T00:00:00.000Z\",\"close_price\":\"398.8843\",\"interpolated\":false},{\"begins_at\":\"2026-09-18T00:00:00.000Z\",\"close_price\":\"404.7992\",\"interpolated\":false},{\"begins_at\":\"2026-09-21T00:00:00.000Z\",\"close_price\":\"398.1476\",\"interpolated\":false},{\"begins_at\":\"2026-09-22T00:00:00.000Z\",\"close_price\":\"402.8218\",\"interpolated\":false},{\"begins_at\":\"2026-09-23T00:00:00.000Z\",\"close_price\":\"394.9612\",\"interpolated\":false},{\"begins_at\":\"2026-09-24T00:00:00.000Z\",\"close_price\":\"397.0416\",\"interpolated\":false},{\"begins_at\":\"2026-09-25T00:00:00.000Z\",\"close_price\":\"393.6297\",\"interpolated\":false},{\"begins_at\":\"2026-09-28T00:00:00.000Z\",\"close_price\":\"399.0595\",\"interpolated\":false},{\"begins_at\":\"2026-09-29T00:00:00.000Z\",\"close_price\":\"395.9901\",\"interpolated\":false},{\"begins_at\":\"2026-09-30T00:00:00.000Z\",\"close_price\":\"403.7236\",\"interpolated\":false},{\"begins_at\":\"2026-10-01T00:00:00.000Z\",\"close_price\":\"402.0285\",\"interpolated\":false},{\"begins_at\":\"2026-10-02T00:00:00.000Z\",\"close_price\":\"398.3223\",\"interpolated\":false},{\"begins_at\":\"2026-10-05T00:00:00.000Z\",\"close_price\":\"398.3289\",\"interpolated\":false},{\"begins_at\":\"2026-10-06T00:00:00.000Z\",\"close_price\":\"404.1800\",\"interpolated\":false},{\"begins_at\":\"2026-10-07T00:00:00.000Z\",\"close_price\":\"402.4391\",\"interpolated\":false},{\"begins_at\":\"2026-10-08T00:00:00.000Z\",\"close_price\":\"408.3361\",\"interpolated\":false},{\"begins_at\":\"2026-10-09T00:00:00.000Z\",\"close_price\":\"409.7947\",\"interpolated\":false},{\"begins_at\":\"2026-10-12T00:00:00.000Z\",\"close_price\":\"417.0762\",\"interpolated\":false},{\"begins_at\":\"2026-10-13T00:00:00.000Z\",\"close_price\":\"423.8756\",\"interpolated\":false},{\"begins_at\":\"2026-10-14T00:00:00.000Z\",\"close_price\":\"427.9242\",\"interpolated\":false},{\"begins_at\":\"2026-10-15T00:00:00.000Z\",\"close_price\":\"424.7745\",\"interpolated\":false},{\"begins_at\":\"2026-10-16T00:00:00.000Z\",\"close_price\":\"430.0485\",\"interpolated\":false},{\"begins_at\":\"2026-10-19T00:00:00.000Z\",\"close_price\":\"431.9156\",\"interpolated\":false},{\"begins_at\":\"2026-10-20T00:00:00.000Z\",\"close_price\":\"437.0472\",\"interpolated\":false},{\"begins_at\":\"2026-10-21T00:00:00.000Z\",\"close_price\":\"443.5262\",\"interpolated\":false},{\"begins_at\":\"2026-10-22T00:00:00.000Z\",\"close_price\":\"439.4959\",\"interpolated\":false},{\"begins_at\":\"2026-10-23T00:00:00.000Z\",\"close_price\":\"430.8083\",\"interpolated\":false},{\"begins_at\":\"2026-10-26T00:00:00.000Z\",\"close_price\":\"432.6084\",\"interpolated\":false},{\"begins_at\":\"2026-10-27T00:00:00.000Z\",\"close_price\":\"426.2329\",\"interpolated\":false},{\"begins_at\":\"2026-10-28T00:00:00.000Z\",\"close_price\":\"420.0000\",\"interpolated\":false}]},{\"symbol\":\"VTI\",\"interval\":\"day\",\"historicals\":[{\"begins_at\":\"2026-08-03T00:00:00.000Z\",\"close_price\":\"320.9299\",\"interpolated\":false},{\"begins_at\":\"2026-08-04T00:00:00.000Z\",\"close_price\":\"320.7631\",\"interpolated\":false},{\"begins_at\":\"2026-08-05T00:00:00.000Z\",\"close_price\":\"316.8411\",\"interpolated\":false},{\"begins_at\":\"2026-08-06T00:00:00.000Z\",\"close_price\":\"314.2807\",\"interpolated\":false},{\"begins_at\":\"2026-08-07T00:00:00.000Z\",\"close_price\":\"310.0179\",\"interpolated\":false},{\"begins_at\":\"2026-08-10T00:00:00.000Z\",\"close_price\":\"315.4873\",\"interpolated\":false},{\"begins_at\":\"2026-08-11T00:00:00.000Z\",\"close_price\":\"320.3966\",\"interpolated\":false},{\"begins_at\":\"2026-08-12T00:00:00.000Z\",\"close_price\":\"318.4722\",\"interpolated\":false},{\"begins_at\":\"2026-08-13T00:00:00.000Z\",\"close_price\":\"318.9424\",\"interpolated\":false},{\"begins_at\":\"2026-08-14T00:00:00.000Z\",\"close_price\":\"317.6197\",\"interpolated\":false},{\"begins_at\":\"2026-08-17T00:00:00.000Z\",\"close_price\":\"319.0937\",\"interpolated\":false},{\"begins_at\":\"2026-08-18T00:00:00.000Z\",\"close_price\":\"320.9084\",\"interpolated\":false},{\"begins_at\":\"2026-08-19T00:00:00.000Z\",\"close_price\":\"315.2740\",\"interpolated\":false},{\"begins_at\":\"2026-08-20T00:00:00.000Z\",\"close_price\":\"309.1759\",\"interpolated\":false},{\"begins_at\":\"2026-08-21T00:00:00.000Z\",\"close_price\":\"304.0831\",\"interpolated\":false},{\"begins_at\":\"2026-08-24T00:00:00.000Z\",\"close_price\":\"301.1460\",\"interpolated\":false},{\"begins_at\":\"2026-08-25T00:00:00.000Z\",\"close_price\":\"302.4081\",\"interpolated\":false},{\"begins_at\":\"2026-08-26T00:00:00.000Z\",\"close_price\":\"297.3133\",\"interpolated\":false},{\"begins_at\":\"2026-08-27T00:00:00.000Z\",\"close_price\":\"295.4259\",\"interpolated\":false},{\"begins_at\":\"2026-08-28T00:00:00.000Z\",\"close_price\":\"289.9165\",\"interpolated\":false},{\"begins_at\":\"2026-08-31T00:00:00.000Z\",\"close_price\":\"288.1374\",\"interpolated\":false},{\"begins_at\":\"2026-09-01T00:00:00.000Z\",\"close_price\":\"287.2605\",\"interpolated\":false},{\"begins_at\":\"2026-09-02T00:00:00.000Z\",\"close_price\":\"292.8198\",\"interpolated\":false},{\"begins_at\":\"2026-09-03T00:00:00.000Z\",\"close_price\":\"296.0759\",\"interpolated\":false},{\"begins_at\":\"2026-09-04T00:00:00.000Z\",\"close_price\":\"296.1559\",\"interpolated\":false},{\"begins_at\":\"2026-09-07T00:00:00.000Z\",\"close_price\":\"300.5886\",\"interpolated\":false},{\"begins_at\":\"2026-09-08T00:00:00.000Z\",\"close_price\":\"297.1747\",\"interpolated\":false},{\"begins_at\":\"2026-09-09T00:00:00.000Z\",\"close_price\":\"295.0888\",\"interpolated\":false},{\"begins_at\":\"2026-09-10T00:00:00.000Z\",\"close_price\":\"299.4280\",\"interpolated\":false},{\"begins_at\":\"2026-09-11T00:00:00.000Z\",\"close_price\":\"299.3838\",\"interpolated\":false},{\"begins_at\":\"2026-09-14T00:00:00.000Z\",\"close_price\":\"300.4054\",\"interpolated\":false},{\"begins_at\":\"2026-09-15T00:00:00.000Z\",\"close_price\":\"297.5854\",\"interpolated\":false},{\"begins_at\":\"2026-09-16T00:00:00.000Z\",\"close_price\":\"295.9078\",\"interpolated\":false},{\"begins_at\":\"2026-09-17T00:00:00.000Z\",\"close_price\":\"300.2359\",\"interpolated\":false},{\"begins_at\":\"2026-09-18T00:00:00.000Z\",\"close_price\":\"297.9477\",\"interpolated\":false},{\"begins_at\":\"2026-09-21T00:00:00.000Z\",\"close_price\":\"299.8618\",\"interpolated\":false},{\"begins_at\":\"2026-09-22T00:00:00.000Z\",\"close_price\":\"299.1727\",\"interpolated\":false},{\"begins_at\":\"2026-09-23T00:00:00.000Z\",\"close_price\":\"299.2557\",\"interpolated\":false},{\"begins_at\":\"2026-09-24T00:00:00.000Z\",\"close_price\":\"299.8658\",\"interpolated\":false},{\"begins_at\":\"2026-09-25T00:00:00.000Z\",\"close_price\":\"295.6124\",\"interpolated\":false},{\"begins_at\":\"2026-09-28T00:00:00.000Z\",\"close_price\":\"290.7581\",\"interpolated\":false},{\"begins_at\":\"2026-09-29T00:00:00.000Z\",\"close_price\":\"287.9801\",\"interpolated\":false},{\"begins_at\":\"2026-09-30T00:00:00.000Z\",\"close_price\":\"283.7037\",\"interpolated\":false},{\"begins_at\":\"2026-10-01T00:00:00.000Z\",\"close_price\":\"279.3069\",\"interpolated\":false},{\"begins_at\":\"2026-10-02T00:00:00.000Z\",\"close_price\":\"279.9230\",\"interpolated\":false},{\"begins_at\":\"2026-10-05T00:00:00.000Z\",\"close_price\":\"277.0814\",\"interpolated\":false},{\"begins_at\":\"2026-10-06T00:00:00.000Z\",\"close_price\":\"275.9024\",\"interpolated\":false},{\"begins_at\":\"2026-10-07T00:00:00.000Z\",\"close_price\":\"281.1571\",\"interpolated\":false},{\"begins_at\":\"2026-10-08T00:00:00.000Z\",\"close_price\":\"279.6407\",\"interpolated\":false},{\"begins_at\":\"2026-10-09T00:00:00.000Z\",\"close_price\":\"280.9513\",\"interpolated\":false},{\"begins_at\":\"2026-10-12T00:00:00.000Z\",\"close_price\":\"279.4519\",\"interpolated\":false},{\"begins_at\":\"2026-10-13T00:00:00.000Z\",\"close_price\":\"281.2361\",\"interpolated\":false},{\"begins_at\":\"2026-10-14T00:00:00.000Z\",\"close_price\":\"276.1895\",\"interpolated\":false},{\"begins_at\":\"2026-10-15T00:00:00.000Z\",\"close_price\":\"274.8689\",\"interpolated\":false},{\"begins_at\":\"2026-10-16T00:00:00.000Z\",\"close_price\":\"272.6472\",\"interpolated\":false},{\"begins_at\":\"2026-10-19T00:00:00.000Z\",\"close_price\":\"276.2888\",\"interpolated\":false},{\"begins_at\":\"2026-10-20T00:00:00.000Z\",\"close_price\":\"277.6485\",\"interpolated\":false},{\"begins_at\":\"2026-10-21T00:00:00.000Z\",\"close_price\":\"281.6550\",\"interpolated\":false},{\"begins_at\":\"2026-10-22T00:00:00.000Z\",\"close_price\":\"278.9359\",\"interpolated\":false},{\"begins_at\":\"2026-10-23T00:00:00.000Z\",\"close_price\":\"278.9597\",\"interpolated\":false},{\"begins_at\":\"2026-10-26T00:00:00.000Z\",\"close_price\":\"283.6311\",\"interpolated\":false},{\"begins_at\":\"2026-10-27T00:00:00.000Z\",\"close_price\":\"285.2802\",\"interpolated\":false},{\"begins_at\":\"2026-10-28T00:00:00.000Z\",\"close_price\":\"285.0000\",\"interpolated\":false}]},{\"symbol\":\"NVDA\",\"interval\":\"day\",\"historicals\":[{\"begins_at\":\"2026-08-03T00:00:00.000Z\",\"close_price\":\"132.7032\",\"interpolated\":false},{\"begins_at\":\"2026-08-04T00:00:00.000Z\",\"close_price\":\"133.5674\",\"interpolated\":false},{\"begins_at\":\"2026-08-05T00:00:00.000Z\",\"close_price\":\"134.1680\",\"interpolated\":false},{\"begins_at\":\"2026-08-06T00:00:00.000Z\",\"close_price\":\"136.6227\",\"interpolated\":false},{\"begins_at\":\"2026-08-07T00:00:00.000Z\",\"close_price\":\"138.2152\",\"interpolated\":false},{\"begins_at\":\"2026-08-10T00:00:00.000Z\",\"close_price\":\"139.7163\",\"interpolated\":false},{\"begins_at\":\"2026-08-11T00:00:00.000Z\",\"close_price\":\"140.3953\",\"interpolated\":false},{\"begins_at\":\"2026-08-12T00:00:00.000Z\",\"close_price\":\"138.2721\",\"interpolated\":false},{\"begins_at\":\"2026-08-13T00:00:00.000Z\",\"close_price\":\"137.2574\",\"interpolated\":false},{\"begins_at\":\"2026-08-14T00:00:00.000Z\",\"close_price\":\"137.1839\",\"interpolated\":false},{\"begins_at\":\"2026-08-17T00:00:00.000Z\",\"close_price\":\"139.3157\",\"interpolated\":false},{\"begins_at\":\"2026-08-18T00:00:00.000Z\",\"close_price\":\"138.9206\",\"interpolated\":false},{\"begins_at\":\"2026-08-19T00:00:00.000Z\",\"close_price\":\"139.3765\",\"interpolated\":false},{\"begins_at\":\"2026-08-20T00:00:00.000Z\",\"close_price\":\"140.7710\",\"interpolated\":false},{\"begins_at\":\"2026-08-21T00:00:00.000Z\",\"close_price\":\"138.4203\",\"interpolated\":false},{\"begins_at\":\"2026-08-24T00:00:00.000Z\",\"close_price\":\"140.5358\",\"interpolated\":false},{\"begins_at\":\"2026-08-25T00:00:00.000Z\",\"close_price\":\"138.5854\",\"interpolated\":false},{\"begins_at\":\"2026-08-26T00:00:00.000Z\",\"close_price\":\"136.7621\",\"interpolated\":false},{\"begins_at\":\"2026-08-27T00:00:00.000Z\",\"close_price\":\"134.4399\",\"interpolated\":false},{\"begins_at\":\"2026-08-28T00:00:00.000Z\",\"close_price\":\"134.3069\",\"interpolated\":false},{\"begins_at\":\"2026-08-31T00:00:00.000Z\",\"close_price\":\"135.2576\",\"interpolated\":false},{\"begins_at\":\"2026-09-01T00:00:00.000Z\",\"close_price\":\"133.2070\",\"interpolated\":false},{\"begins_at\":\"2026-09-02T00:00:00.000Z\",\"close_price\":\"135.8702\",\"interpolated\":false},{\"begins_at\":\"2026-09-03T00:00:00.000Z\",\"close_price\":\"136.7694\",\"interpolated\":false},{\"begins_at\":\"2026-09-04T00:00:00.000Z\",\"close_price\":\"135.3840\",\"interpolated\":false},{\"begins_at\":\"2026-09-07T00:00:00.000Z\",\"close_price\":\"135.3624\",\"interpolated\":false},{\"begins_at\":\"2026-09-08T00:00:00.000Z\",\"close_price\":\"136.4697\",\"interpolated\":false},{\"begins_at\":\"2026-09-09T00:00:00.000Z\",\"close_price\":\"136.2660\",\"interpolated\":false},{\"begins_at\":\"2026-09-10T00:00:00.000Z\",\"close_price\":\"134.7364\",\"interpolated\":false},{\"begins_at\":\"2026-09-11T00:00:00.000Z\",\"close_price\":\"134.8022\",\"interpolated\":false},{\"begins_at\":\"2026-09-14T00:00:00.000Z\",\"close_price\":\"137.0163\",\"interpolated\":false},{\"begins_at\":\"2026-09-15T00:00:00.000Z\",\"close_price\":\"138.2286\",\"interpolated\":false},{\"begins_at\":\"2026-09-16T00:00:00.000Z\",\"close_price\":\"138.0040\",\"interpolated\":false},{\"begins_at\":\"2026-09-17T00:00:00.000Z\",\"close_price\":\"135.5869\",\"interpolated\":false},{\"begins_at\":\"2026-09-18T00:00:00.000Z\",\"close_price\":\"135.4682\",\"interpolated\":false},{\"begins_at\":\"2026-09-21T00:00:00.000Z\",\"close_price\":\"134.0959\",\"interpolated\":false},{\"begins_at\":\"2026-09-22T00:00:00.000Z\",\"close_price\":\"132.0090\",\"interpolated\":false},{\"begins_at\":\"2026-09-23T00:00:00.000Z\",\"close_price\":\"132.0054\",\"interpolated\":false},{\"begins_at\":\"2026-09-24T00:00:00.000Z\",\"close_price\":\"133.1063\",\"interpolated\":false},{\"begins_at\":\"2026-09-25T00:00:00.000Z\",\"close_price\":\"134.2993\",\"interpolated\":false},{\"begins_at\":\"2026-09-28T00:00:00.000Z\",\"close_price\":\"133.0192\",\"interpolated\":false},{\"begins_at\":\"2026-09-29T00:00:00.000Z\",\"close_price\":\"135.5025\",\"interpolated\":false},{\"begins_at\":\"2026-09-30T00:00:00.000Z\",\"close_price\":\"135.6348\",\"interpolated\":false},{\"begins_at\":\"2026-10-01T00:00:00.000Z\",\"close_price\":\"136.3975\",\"interpolated\":false},{\"begins_at\":\"2026-10-02T00:00:00.000Z\",\"close_price\":\"134.9098\",\"interpolated\":false},{\"begins_at\":\"2026-10-05T00:00:00.000Z\",\"close_price\":\"134.6405\",\"interpolated\":false},{\"begins_at\":\"2026-10-06T00:00:00.000Z\",\"close_price\":\"137.0274\",\"interpolated\":false},{\"begins_at\":\"2026-10-07T00:00:00.000Z\",\"close_price\":\"137.9625\",\"interpolated\":false},{\"begins_at\":\"2026-10-08T00:00:00.000Z\",\"close_price\":\"136.4740\",\"interpolated\":false},{\"begins_at\":\"2026-10-09T00:00:00.000Z\",\"close_price\":\"135.6961\",\"interpolated\":false},{\"begins_at\":\"2026-10-12T00:00:00.000Z\",\"close_price\":\"134.2607\",\"interpolated\":false},{\"begins_at\":\"2026-10-13T00:00:00.000Z\",\"close_price\":\"132.7472\",\"interpolated\":false},{\"begins_at\":\"2026-10-14T00:00:00.000Z\",\"close_price\":\"133.8763\",\"interpolated\":false},{\"begins_at\":\"2026-10-15T00:00:00.000Z\",\"close_price\":\"132.3808\",\"interpolated\":false},{\"begins_at\":\"2026-10-16T00:00:00.000Z\",\"close_price\":\"133.2251\",\"interpolated\":false},{\"begins_at\":\"2026-10-19T00:00:00.000Z\",\"close_price\":\"130.9722\",\"interpolated\":false},{\"begins_at\":\"2026-10-20T00:00:00.000Z\",\"close_price\":\"131.6006\",\"interpolated\":false},{\"begins_at\":\"2026-10-21T00:00:00.000Z\",\"close_price\":\"133.0326\",\"interpolated\":false},{\"begins_at\":\"2026-10-22T00:00:00.000Z\",\"close_price\":\"133.8531\",\"interpolated\":false},{\"begins_at\":\"2026-10-23T00:00:00.000Z\",\"close_price\":\"133.3247\",\"interpolated\":false},{\"begins_at\":\"2026-10-26T00:00:00.000Z\",\"close_price\":\"132.3266\",\"interpolated\":false},{\"begins_at\":\"2026-10-27T00:00:00.000Z\",\"close_price\":\"133.0686\",\"interpolated\":false},{\"begins_at\":\"2026-10-28T00:00:00.000Z\",\"close_price\":\"135.0000\",\"interpolated\":false}]},{\"symbol\":\"SCHD\",\"interval\":\"day\",\"historicals\":[{\"begins_at\":\"2026-08-03T00:00:00.000Z\",\"close_price\":\"26.9127\",\"interpolated\":false},{\"begins_at\":\"2026-08-04T00:00:00.000Z\",\"close_price\":\"27.2387\",\"interpolated\":false},{\"begins_at\":\"2026-08-05T00:00:00.000Z\",\"close_price\":\"26.9164\",\"interpolated\":false},{\"begins_at\":\"2026-08-06T00:00:00.000Z\",\"close_price\":\"26.9652\",\"interpolated\":false},{\"begins_at\":\"2026-08-07T00:00:00.000Z\",\"close_price\":\"27.4056\",\"interpolated\":false},{\"begins_at\":\"2026-08-10T00:00:00.000Z\",\"close_price\":\"27.4591\",\"interpolated\":false},{\"begins_at\":\"2026-08-11T00:00:00.000Z\",\"close_price\":\"27.1087\",\"interpolated\":false},{\"begins_at\":\"2026-08-12T00:00:00.000Z\",\"close_price\":\"27.6541\",\"interpolated\":false},{\"begins_at\":\"2026-08-13T00:00:00.000Z\",\"close_price\":\"28.1628\",\"interpolated\":false},{\"begins_at\":\"2026-08-14T00:00:00.000Z\",\"close_price\":\"27.6836\",\"interpolated\":false},{\"begins_at\":\"2026-08-17T00:00:00.000Z\",\"close_price\":\"27.8346\",\"interpolated\":false},{\"begins_at\":\"2026-08-18T00:00:00.000Z\",\"close_price\":\"27.9590\",\"interpolated\":false},{\"begins_at\":\"2026-08-19T00:00:00.000Z\",\"close_price\":\"27.9585\",\"interpolated\":false},{\"begins_at\":\"2026-08-20T00:00:00.000Z\",\"close_price\":\"27.8310\",\"interpolated\":false},{\"begins_at\":\"2026-08-21T00:00:00.000Z\",\"close_price\":\"27.7867\",\"interpolated\":false},{\"begins_at\":\"2026-08-24T00:00:00.000Z\",\"close_price\":\"28.1838\",\"interpolated\":false},{\"begins_at\":\"2026-08-25T00:00:00.000Z\",\"close_price\":\"27.8968\",\"interpolated\":false},{\"begins_at\":\"2026-08-26T00:00:00.000Z\",\"close_price\":\"28.1426\",\"interpolated\":false},{\"begins_at\":\"2026-08-27T00:00:00.000Z\",\"close_price\":\"28.4303\",\"interpolated\":false},{\"begins_at\":\"2026-08-28T00:00:00.000Z\",\"close_price\":\"28.7625\",\"interpolated\":false},{\"begins_at\":\"2026-08-31T00:00:00.000Z\",\"close_price\":\"29.0503\",\"interpolated\":false},{\"begins_at\":\"2026-09-01T00:00:00.000Z\",\"close_price\":\"28.5607\",\"interpolated\":false},{\"begins_at\":\"2026-09-02T00:00:00.000Z\",\"close_price\":\"28.9591\",\"interpolated\":false},{\"begins_at\":\"2026-09-03T00:00:00.000Z\",\"close_price\":\"29.4332\",\"interpolated\":false},{\"begins_at\":\"2026-09-04T00:00:00.000Z\",\"close_price\":\"29.5129\",\"interpolated\":false},{\"begins_at\":\"2026-09-07T00:00:00.000Z\",\"close_price\":\"29.5694\",\"interpolated\":false},{\"begins_at\":\"2026-09-08T00:00:00.000Z\",\"close_price\":\"29.5212\",\"interpolated\":false},{\"begins_at\":\"2026-09-09T00:00:00.000Z\",\"close_price\":\"29.5668\",\"interpolated\":false},{\"begins_at\":\"2026-09-10T00:00:00.000Z\",\"close_price\":\"29.7102\",\"interpolated\":false},{\"begins_at\":\"2026-09-11T00:00:00.000Z\",\"close_price\":\"29.2924\",\"interpolated\":false},{\"begins_at\":\"2026-09-14T00:00:00.000Z\",\"close_price\":\"29.8776\",\"interpolated\":false},{\"begins_at\":\"2026-09-15T00:00:00.000Z\",\"close_price\":\"29.6231\",\"interpolated\":false},{\"begins_at\":\"2026-09-16T00:00:00.000Z\",\"close_price\":\"30.0770\",\"interpolated\":false},{\"begins_at\":\"2026-09-17T00:00:00.000Z\",\"close_price\":\"29.6447\",\"interpolated\":false},{\"begins_at\":\"2026-09-18T00:00:00.000Z\",\"close_price\":\"29.2141\",\"interpolated\":false},{\"begins_at\":\"2026-09-21T00:00:00.000Z\",\"close_price\":\"28.6860\",\"interpolated\":false},{\"begins_at\":\"2026-09-22T00:00:00.000Z\",\"close_price\":\"28.9015\",\"interpolated\":false},{\"begins_at\":\"2026-09-23T00:00:00.000Z\",\"close_price\":\"28.5452\",\"interpolated\":false},{\"begins_at\":\"2026-09-24T00:00:00.000Z\",\"close_price\":\"28.2186\",\"interpolated\":false},{\"begins_at\":\"2026-09-25T00:00:00.000Z\",\"close_price\":\"28.2838\",\"interpolated\":false},{\"begins_at\":\"2026-09-28T00:00:00.000Z\",\"close_price\":\"28.0482\",\"interpolated\":false},{\"begins_at\":\"2026-09-29T00:00:00.000Z\",\"close_price\":\"28.3943\",\"interpolated\":false},{\"begins_at\":\"2026-09-30T00:00:00.000Z\",\"close_price\":\"27.8996\",\"interpolated\":false},{\"begins_at\":\"2026-10-01T00:00:00.000Z\",\"close_price\":\"28.0497\",\"interpolated\":false},{\"begins_at\":\"2026-10-02T00:00:00.000Z\",\"close_price\":\"27.9698\",\"interpolated\":false},{\"begins_at\":\"2026-10-05T00:00:00.000Z\",\"close_price\":\"28.3603\",\"interpolated\":false},{\"begins_at\":\"2026-10-06T00:00:00.000Z\",\"close_price\":\"28.1124\",\"interpolated\":false},{\"begins_at\":\"2026-10-07T00:00:00.000Z\",\"close_price\":\"28.0000\",\"interpolated\":false},{\"begins_at\":\"2026-10-08T00:00:00.000Z\",\"close_price\":\"27.4755\",\"interpolated\":false},{\"begins_at\":\"2026-10-09T00:00:00.000Z\",\"close_price\":\"27.0634\",\"interpolated\":false},{\"begins_at\":\"2026-10-12T00:00:00.000Z\",\"close_price\":\"26.6828\",\"interpolated\":false},{\"begins_at\":\"2026-10-13T00:00:00.000Z\",\"close_price\":\"26.4145\",\"interpolated\":false},{\"begins_at\":\"2026-10-14T00:00:00.000Z\",\"close_price\":\"26.2631\",\"interpolated\":false},{\"begins_at\":\"2026-10-15T00:00:00.000Z\",\"close_price\":\"26.1091\",\"interpolated\":false},{\"begins_at\":\"2026-10-16T00:00:00.000Z\",\"close_price\":\"26.2007\",\"interpolated\":false},{\"begins_at\":\"2026-10-19T00:00:00.000Z\",\"close_price\":\"26.0559\",\"interpolated\":false},{\"begins_at\":\"2026-10-20T00:00:00.000Z\",\"close_price\":\"25.7549\",\"interpolated\":false},{\"begins_at\":\"2026-10-21T00:00:00.000Z\",\"close_price\":\"26.2611\",\"interpolated\":false},{\"begins_at\":\"2026-10-22T00:00:00.000Z\",\"close_price\":\"26.7542\",\"interpolated\":false},{\"begins_at\":\"2026-10-23T00:00:00.000Z\",\"close_price\":\"27.2566\",\"interpolated\":false},{\"begins_at\":\"2026-10-26T00:00:00.000Z\",\"close_price\":\"27.7419\",\"interpolated\":false},{\"begins_at\":\"2026-10-27T00:00:00.000Z\",\"close_price\":\"27.9141\",\"interpolated\":false},{\"begins_at\":\"2026-10-28T00:00:00.000Z\",\"close_price\":\"28.0000\",\"interpolated\":false}]}]}",
-            "observedAt": "2026-10-29T13:44:53.402Z",
-            "confidence": "probable",
-            "limitations": [
-              "source-reported by MCP server; not independently audited"
-            ]
-          }
-        }
-      }
-    }
+    "result": "Inspected 1 account(s); 4 position(s); 5 quote(s); 5 price series."
   },
   "quant": {
-    "result": "Total equity 56000 across 4 holding(s); top weight 30.54%.",
-    "evidence": [
-      {
-        "source": "deterministic:pi-investment-lab/quant",
-        "claim": "portfolio snapshot, per-symbol statistics and historical VaR computed from inspected data",
-        "observedAt": "2026-10-29T13:44:53.414Z",
-        "confidence": "probable",
-        "limitations": [
-          "inputs are source-reported; past returns do not predict future returns"
-        ]
-      }
-    ],
+    "status": "ok",
     "truthLevel": "probable",
     "failureClass": "unknown",
-    "status": "ok",
     "problems": [],
     "data": {
       "snapshot": {
@@ -1691,19 +226,9 @@
     }
   },
   "risk": {
-    "result": "2 risk flag(s); 2/4 proposed order(s) approved for simulation.",
-    "evidence": [
-      {
-        "source": "deterministic:pi-investment-lab/risk",
-        "claim": "limits {\"maxPositionWeight\":0.25,\"minCashWeight\":0.02,\"maxPortfolioVolatility\":0.3,\"maxHistoricalVaR1d\":0.03}",
-        "observedAt": "2026-10-29T13:44:53.414Z",
-        "confidence": "probable",
-        "limitations": []
-      }
-    ],
+    "status": "ok",
     "truthLevel": "probable",
     "failureClass": "unknown",
-    "status": "ok",
     "problems": [],
     "data": {
       "limits": {
@@ -1774,21 +299,9 @@
     }
   },
   "simulation": {
-    "result": "2 simulated fill(s), 0 simulated rejection(s). No order was sent to any broker.",
-    "evidence": [
-      {
-        "source": "deterministic:pi-investment-lab/paper-broker",
-        "claim": "local paper ledger; hypothetical fills priced from inspected quotes",
-        "observedAt": "2026-10-29T13:44:53.415Z",
-        "confidence": "probable",
-        "limitations": [
-          "simulated fills ignore market impact beyond fixed slippage and do not reflect real execution"
-        ]
-      }
-    ],
+    "status": "ok",
     "truthLevel": "probable",
     "failureClass": "unknown",
-    "status": "ok",
     "problems": [],
     "data": {
       "paper": {
@@ -1827,7 +340,7 @@
             "submittedToBroker": false,
             "status": "simulated_fill",
             "id": "sim_1",
-            "at": "2026-10-29T13:44:53.415Z",
+            "at": "2026-10-29T23:44:00.280Z",
             "side": "buy",
             "symbol": "SCHD",
             "quantity": 10,
@@ -1843,7 +356,7 @@
             "submittedToBroker": false,
             "status": "simulated_fill",
             "id": "sim_2",
-            "at": "2026-10-29T13:44:53.415Z",
+            "at": "2026-10-29T23:44:00.280Z",
             "side": "sell",
             "symbol": "AAPL",
             "quantity": 5,
@@ -1887,20 +400,11 @@
     }
   },
   "verification": {
-    "result": "14/14 verification checks passed.",
-    "evidence": [
-      {
-        "source": "deterministic:pi-investment-lab/verification",
-        "claim": "[[\"equity_recomputed_independently\",true],[\"equity_matches_source_reported\",true],[\"evidence_accounts\",true],[\"evidence_portfolio\",true],[\"evidence_positions\",true],[\"evidence_quotes\",true],[\"evidence_historicals\",true],[\"quotes_fresh_per_source_timestamp\",true],[\"gateway_only_called_read_classified_tools\",true],[\"gateway_never_called_denied_tools\",true],[\"all_trades_simulated_not_submitted\",true],[\"paper_ledger_reconciles\",true],[\"paper_ledger_cash_non_negative_no_margin\",true],[\"live_execution_refused\",true]]",
-        "observedAt": "2026-10-29T13:44:53.416Z",
-        "confidence": "verified",
-        "limitations": []
-      }
-    ],
+    "status": "ok",
     "truthLevel": "verified",
     "failureClass": "unknown",
-    "status": "ok",
     "problems": [],
+    "result": "14/14 verification checks passed.",
     "data": {
       "checks": [
         {
@@ -1916,27 +420,27 @@
         {
           "name": "evidence_accounts",
           "ok": true,
-          "detail": "tool:get_accounts observed 2026-10-29T13:44:53.381Z"
+          "detail": "tool:get_accounts observed 2026-10-29T23:44:00.251Z"
         },
         {
           "name": "evidence_portfolio",
           "ok": true,
-          "detail": "tool:get_portfolio observed 2026-10-29T13:44:53.385Z"
+          "detail": "tool:get_portfolio observed 2026-10-29T23:44:00.255Z"
         },
         {
           "name": "evidence_positions",
           "ok": true,
-          "detail": "tool:get_positions observed 2026-10-29T13:44:53.389Z"
+          "detail": "tool:get_positions observed 2026-10-29T23:44:00.258Z"
         },
         {
           "name": "evidence_quotes",
           "ok": true,
-          "detail": "tool:get_quotes observed 2026-10-29T13:44:53.393Z"
+          "detail": "tool:get_quotes observed 2026-10-29T23:44:00.261Z"
         },
         {
           "name": "evidence_historicals",
           "ok": true,
-          "detail": "tool:get_historicals observed 2026-10-29T13:44:53.402Z"
+          "detail": "tool:get_historicals observed 2026-10-29T23:44:00.269Z"
         },
         {
           "name": "quotes_fresh_per_source_timestamp",
@@ -1951,7 +455,7 @@
         {
           "name": "gateway_never_called_denied_tools",
           "ok": true,
-          "detail": "8 tool(s) denied at discovery"
+          "detail": "9 tool(s) denied at discovery"
         },
         {
           "name": "all_trades_simulated_not_submitted",
@@ -1980,52 +484,53 @@
   "audit": [
     {
       "seq": 1,
-      "at": "2026-10-29T13:44:53.375Z",
+      "at": "2026-10-29T23:44:00.243Z",
       "type": "discovery",
       "decision": "info",
-      "toolsSeen": 13,
-      "toolsAllowed": 5
+      "toolsSeen": 14,
+      "toolsAllowed": 5,
+      "reviewedEntries": 5
     },
     {
       "seq": 2,
-      "at": "2026-10-29T13:44:53.381Z",
+      "at": "2026-10-29T23:44:00.251Z",
       "type": "inspect",
       "capability": "accounts",
       "tool": "get_accounts",
       "decision": "allow",
       "ok": true,
       "argKeys": [],
-      "latencyMs": 5
+      "latencyMs": 7
     },
     {
       "seq": 3,
-      "at": "2026-10-29T13:44:53.385Z",
+      "at": "2026-10-29T23:44:00.255Z",
       "type": "inspect",
       "capability": "portfolio",
       "tool": "get_portfolio",
       "decision": "allow",
       "ok": true,
       "argKeys": [
-        "account_number"
+        "accountRef"
       ],
       "latencyMs": 4
     },
     {
       "seq": 4,
-      "at": "2026-10-29T13:44:53.389Z",
+      "at": "2026-10-29T23:44:00.258Z",
       "type": "inspect",
       "capability": "positions",
       "tool": "get_positions",
       "decision": "allow",
       "ok": true,
       "argKeys": [
-        "account_number"
+        "accountRef"
       ],
-      "latencyMs": 4
+      "latencyMs": 3
     },
     {
       "seq": 5,
-      "at": "2026-10-29T13:44:53.393Z",
+      "at": "2026-10-29T23:44:00.261Z",
       "type": "inspect",
       "capability": "quotes",
       "tool": "get_quotes",
@@ -2038,7 +543,7 @@
     },
     {
       "seq": 6,
-      "at": "2026-10-29T13:44:53.402Z",
+      "at": "2026-10-29T23:44:00.269Z",
       "type": "inspect",
       "capability": "historicals",
       "tool": "get_historicals",
@@ -2049,14 +554,14 @@
         "interval",
         "span"
       ],
-      "latencyMs": 9
+      "latencyMs": 8
     }
   ],
   "trace": {
-    "runId": "lab_demo_1793281493333",
-    "taskId": "lab_demo_1793281493333",
+    "runId": "lab_demo_1793317440202",
+    "taskId": "lab_demo_1793317440202",
     "eventCount": 7,
-    "totalLatencyMs": 51,
+    "totalLatencyMs": 48,
     "totalCostUsd": 0,
     "failures": []
   },
@@ -2067,10 +572,6 @@
       "get_positions",
       "get_quotes",
       "get_historicals"
-    ],
-    "leakage": {
-      "tokenInOutput": false,
-      "rawAccountNumberInOutput": false
-    }
+    ]
   }
 }

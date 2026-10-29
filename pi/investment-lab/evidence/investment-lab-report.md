@@ -3,24 +3,25 @@
 > **READ-ONLY INSPECTION · SIMULATED TRADES ONLY · NOT INVESTMENT ADVICE.** No order was submitted, no funds moved, no margin used.
 > **DATA PROVENANCE: SYNTHETIC FIXTURE.** All account figures below come from a local test MCP server, not a real Robinhood account.
 
-Generated: 2026-10-29T13:44:53.416Z · Mission: lab_demo_1793281493333
+Generated: 2026-10-29T23:44:00.282Z · Mission: lab_demo_1793317440202
 
 ## Source
-- MCP server: pi-synthetic-broker-fixture 0.1.0 at 127.0.0.1:41179 (protocol 2025-11-25)
-- Tools discovered: 13; allowed (read-only): 5; denied: 8
-  - `get_accounts` → **allow** (inferred_read_tool; accounts)
-  - `get_portfolio` → **allow** (inferred_read_tool; portfolio)
-  - `get_positions` → **allow** (inferred_read_tool; positions)
-  - `get_quotes` → **allow** (inferred_read_tool; quotes)
-  - `get_historicals` → **allow** (inferred_read_tool; historicals)
+- MCP server: pi-synthetic-broker-fixture 0.1.0 at 127.0.0.1:43533 (protocol 2025-11-25)
+- Tools discovered: 14; allowed (read-only): 5; denied: 9
+  - `get_accounts` → **allow** (reviewed_exact_match; accounts)
+  - `get_portfolio` → **allow** (reviewed_exact_match; portfolio)
+  - `get_positions` → **allow** (reviewed_exact_match; positions)
+  - `get_quotes` → **allow** (reviewed_exact_match; quotes)
+  - `get_historicals` → **allow** (reviewed_exact_match; historicals)
   - `get_order_history` → **deny** (deny_token:order)
   - `get_account_settings` → **deny** (annotation_not_read_only)
-  - `refresh_positions` → **deny** (no_read_intent)
+  - `refresh_positions` → **deny** (not_in_reviewed_allowlist)
   - `place_equity_order` → **deny** (deny_token:place)
   - `cancel_order` → **deny** (deny_token:cancel)
   - `transfer_funds` → **deny** (deny_token:transfer)
   - `enable_margin` → **deny** (deny_token:enable)
   - `getQuoteAndPlaceOrder` → **deny** (deny_token:place)
+  - `get_holdings` → **deny** (not_in_reviewed_allowlist)
 
 ## Account (probable)
 - Account reference: acct_ref_1 (real identifier withheld by gateway)
@@ -65,14 +66,14 @@ Portfolio annualized volatility 7.27%; 1-day 95% historical VaR 0.78% over 62 ov
 ## Verification (verified)
 - PASS equity_recomputed_independently: independent 56000.00 vs quant 56000
 - PASS equity_matches_source_reported: source-reported 56000; relative difference 0.000% (tolerance 0.5%)
-- PASS evidence_accounts: tool:get_accounts observed 2026-10-29T13:44:53.381Z
-- PASS evidence_portfolio: tool:get_portfolio observed 2026-10-29T13:44:53.385Z
-- PASS evidence_positions: tool:get_positions observed 2026-10-29T13:44:53.389Z
-- PASS evidence_quotes: tool:get_quotes observed 2026-10-29T13:44:53.393Z
-- PASS evidence_historicals: tool:get_historicals observed 2026-10-29T13:44:53.402Z
+- PASS evidence_accounts: tool:get_accounts observed 2026-10-29T23:44:00.251Z
+- PASS evidence_portfolio: tool:get_portfolio observed 2026-10-29T23:44:00.255Z
+- PASS evidence_positions: tool:get_positions observed 2026-10-29T23:44:00.258Z
+- PASS evidence_quotes: tool:get_quotes observed 2026-10-29T23:44:00.261Z
+- PASS evidence_historicals: tool:get_historicals observed 2026-10-29T23:44:00.269Z
 - PASS quotes_fresh_per_source_timestamp: all quotes within 120s
 - PASS gateway_only_called_read_classified_tools: 5 call(s), all to read-classified tools
-- PASS gateway_never_called_denied_tools: 8 tool(s) denied at discovery
+- PASS gateway_never_called_denied_tools: 9 tool(s) denied at discovery
 - PASS all_trades_simulated_not_submitted: 2 fill(s), 0 rejection(s)
 - PASS paper_ledger_reconciles: start 3000 + flows 868.984950 = end 3868.98495
 - PASS paper_ledger_cash_non_negative_no_margin: end cash 3868.98495

@@ -6,6 +6,7 @@
 export const MCP_PROTOCOL_VERSION = '2025-11-25';
 const ACCEPTED_PROTOCOL_VERSIONS = new Set(['2025-11-25', '2025-06-18', '2025-03-26']);
 const LOOPBACK = new Set(['127.0.0.1', 'localhost', '[::1]', '::1']);
+const MAX_RESPONSE_CHARS = 4_000_000;
 
 export class McpTransportError extends Error {
   constructor(code, detail = {}) {
@@ -24,6 +25,29 @@ function assertSafeEndpoint(endpoint) {
   if (url.protocol === 'https:') return url;
   if (url.protocol === 'http:' && LOOPBACK.has(url.hostname)) return url;
   throw new McpTransportError('https_required');
+}
+
+// Reads the body incrementally and aborts once the cap is passed, so a hostile server cannot make
+// the client buffer an unbounded (e.g. chunked, no content-length) response before the check.
+async function readCapped(response, maxChars) {
+  if (!response.body || typeof response.body.getReader !== 'function') {
+    const text = await response.text();
+    if (text.length > maxChars) throw new McpTransportError('response_too_large');
+    return text;
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let text = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    text += decoder.decode(value, { stream: true });
+    if (text.length > maxChars) {
+      await reader.cancel().catch(() => {});
+      throw new McpTransportError('response_too_large');
+    }
+  }
+  return text + decoder.decode();
 }
 
 function parseSse(text) {
@@ -64,9 +88,13 @@ export function createMcpClient({
     }
     let response;
     try {
-      response = await fetchImpl(url.href, { method: 'POST', headers, body: JSON.stringify(message), signal: AbortSignal.timeout(timeoutMs) });
+      // Never follow redirects: a redirect could forward the request body (and, same-origin, the token) elsewhere.
+      response = await fetchImpl(url.href, { method: 'POST', headers, body: JSON.stringify(message), redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) });
     } catch (error) {
       throw new McpTransportError('network_failure', { cause: String(error?.cause?.code || error?.name || 'unknown') });
+    }
+    if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
+      throw new McpTransportError('redirect_refused', { status: response.status });
     }
     const sid = response.headers.get('mcp-session-id');
     if (sid) sessionId = sid;
@@ -76,8 +104,12 @@ export function createMcpClient({
     if (response.status === 202) return null;
     if (!response.ok) throw new McpTransportError('http_error', { status: response.status });
     const type = response.headers.get('content-type') || '';
-    const text = await response.text();
-    const messages = type.includes('text/event-stream') ? parseSse(text) : text ? [JSON.parse(text)] : [];
+    const declared = Number(response.headers.get('content-length'));
+    if (Number.isFinite(declared) && declared > MAX_RESPONSE_CHARS) throw new McpTransportError('response_too_large');
+    const text = await readCapped(response, MAX_RESPONSE_CHARS);
+    let messages;
+    try { messages = type.includes('text/event-stream') ? parseSse(text) : text ? [JSON.parse(text)] : []; }
+    catch (error) { if (error instanceof McpTransportError) throw error; throw new McpTransportError('malformed_json_payload'); }
     if (message.id === undefined) return null;
     const reply = messages.find(item => item && item.id === message.id);
     if (!reply) throw new McpTransportError('missing_response');

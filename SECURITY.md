@@ -36,7 +36,8 @@ Credentials, paid activation, legal commitments, financial transfers, protected 
 
 ## Investment Lab boundary
 
-- `pi/investment-lab/` is read-only inspection plus local paper simulation. It contains no order, funding, transfer, margin or automated-trading path.
-- Only the permission gateway holds the MCP client. Tools are deny-by-default and write/credential tools are blocked by name and annotation. Agents receive opaque account references, never real identifiers or tokens.
-- Broker OAuth tokens are supplied by the owner at runtime (`ROBINHOOD_MCP_ACCESS_TOKEN`), are never committed, stored, logged or returned, and are scrubbed if echoed by a server.
-- Any future execution capability requires explicit owner approval and a reviewed code change; see `PI_INVESTMENT_LAB.md`.
+- `pi/investment-lab/` is offline read-only inspection plus local paper simulation. It contains no order, funding, transfer, settings, margin or automated-trading path.
+- Broker tools are authorized only by an exact, code-reviewed allowlist pinned by SHA-256 fingerprint of each tool's full definition (`reviewed-allowlist.mjs`); tool names and server annotations can only deny. The Robinhood allowlist is empty, so the live path refuses before any network I/O.
+- Robinhood documents that an external agent token grants read access to all of the customer's accounts, including account numbers. Agent-account funding and trade approvals do not limit that read scope; the gateway's data minimization and the output guard are the controls.
+- The MCP client never follows redirects. Agents receive opaque account references only; broker free text, names, contact, tax, bank and identifier fields are withheld. Reports and output files are scanned and refused if they contain tokens, raw identifiers or PII patterns; live output is never written inside the repository.
+- Broker OAuth tokens are supplied by the owner at runtime (`ROBINHOOD_MCP_ACCESS_TOKEN`) and are never committed, stored, logged or returned. Any future execution capability requires explicit owner approval and a reviewed code change; see `PI_INVESTMENT_LAB.md`.

@@ -8,8 +8,10 @@ import { maxDrawdown, portfolioSnapshot, seriesStats } from './quant.mjs';
 import { verificationAgent, AGENT_ROLES } from './agents.mjs';
 import { runInvestmentMission } from './orchestrator.mjs';
 import { startFixtureServer, FIXTURE_ACCOUNT_NUMBER, FIXTURE_TOOLS } from './fixture-mcp-server.mjs';
-import { runFixtureDemo, DEMO_CONSTRAINTS } from './demo.mjs';
+import { runFixtureDemo, DEMO_CONSTRAINTS, reviewToolsList } from './demo.mjs';
 import { getTeamRole } from '../team-manifest.mjs';
+import { FIXTURE_REVIEWED_ALLOWLIST, ROBINHOOD_REVIEWED_ALLOWLIST } from './reviewed-allowlist.mjs';
+import { fingerprintTool } from './permission-gateway.mjs';
 
 const READ_TOOLS = ['get_accounts', 'get_portfolio', 'get_positions', 'get_quotes', 'get_historicals'];
 const TOKEN = 'fixture-only-test-token-0123456789';
@@ -60,8 +62,10 @@ assert.throws(() => createMcpClient({ endpoint: 'https://example.com/mcp?token=x
   const fixture = await startFixtureServer({ token: TOKEN });
   try {
     const client = createMcpClient({ endpoint: fixture.url, getAccessToken: async () => TOKEN });
-    const gateway = createPermissionGateway({ client, maxCalls: 4, secretCanaries: [TOKEN] });
-    assert.deepEqual(Object.keys(gateway).sort(), ['auditLog', 'capabilities', 'connect', 'discovery', 'inspect'], 'no generic tool-call surface');
+    const unreviewed = createPermissionGateway({ client: createMcpClient({ endpoint: fixture.url, getAccessToken: async () => TOKEN }) });
+    assert.deepEqual((await unreviewed.connect()).routes, {}, 'no reviewed allowlist => nothing is callable');
+    const gateway = createPermissionGateway({ client, reviewedAllowlist: FIXTURE_REVIEWED_ALLOWLIST, maxCalls: 4, secretCanaries: [TOKEN] });
+    assert.deepEqual(Object.keys(gateway).sort(), ['auditLog', 'capabilities', 'connect', 'containsKnownIdentifier', 'discovery', 'inspect'], 'no generic tool-call surface');
     assert.equal((await gateway.inspect('accounts')).reason, 'gateway_not_connected');
     const discovery = await gateway.connect();
     assert.deepEqual(discovery.tools.filter(t => t.decision === 'allow').map(t => t.name).sort(), [...READ_TOOLS].sort());
@@ -69,14 +73,16 @@ assert.throws(() => createMcpClient({ endpoint: 'https://example.com/mcp?token=x
     assert.equal((await gateway.inspect('place_equity_order')).reason, 'capability_not_allowed');
     assert.equal((await gateway.inspect('quotes', { symbols: 'AAPL', quantity: 5 })).reason, 'forbidden_arg:quantity');
     assert.equal((await gateway.inspect('quotes', { symbols: 'AAPL', side: 'buy' })).reason, 'forbidden_arg:side');
-    assert.equal((await gateway.inspect('positions', { account_number: FIXTURE_ACCOUNT_NUMBER })).reason, 'unknown_account_ref', 'raw account numbers are not accepted from agents');
+    assert.equal((await gateway.inspect('positions', { account_number: FIXTURE_ACCOUNT_NUMBER })).reason, 'account_must_use_accountRef', 'raw account numbers are not accepted from agents');
+    assert.equal((await gateway.inspect('positions', {}, { accountRef: 'acct_ref_9' })).reason, 'unknown_account_ref');
+    assert.ok(discovery.tools.find(t => t.name === 'get_holdings').reason === 'not_in_reviewed_allowlist', 'read-looking but unreviewed tool is denied');
     const accounts = await gateway.inspect('accounts');
     assert.ok(accounts.ok);
     const row = accounts.data.results[0];
     assert.equal(row.account_number, 'acct_ref_1');
     assert.equal(row.email, '[REDACTED]');
-    assert.ok(!row.url.includes(FIXTURE_ACCOUNT_NUMBER), 'account number scrubbed from free text');
-    assert.ok((await gateway.inspect('positions', { account_number: 'acct_ref_1' })).ok);
+    assert.equal(row.url, '[REDACTED]', 'URLs embedding account numbers are withheld');
+    assert.ok((await gateway.inspect('positions', {}, { accountRef: 'acct_ref_1' })).ok);
     assert.equal(fixture.calls.at(-1).args.account_number, FIXTURE_ACCOUNT_NUMBER, 'gateway translates ref back only at the transport boundary');
     await gateway.inspect('quotes', { symbols: 'AAPL' });
     await gateway.inspect('quotes', { symbols: 'MSFT' });
@@ -88,16 +94,19 @@ assert.throws(() => createMcpClient({ endpoint: 'https://example.com/mcp?token=x
 
 // 4. Canary scrubbing: a server echoing the bearer token never gets it through to agents.
 {
+  const ECHO_TOOL = { name: 'get_quotes', annotations: { readOnlyHint: true }, inputSchema: { type: 'object', properties: { symbols: { type: 'string' } } } };
   const echoClient = {
     endpointHost: 'stub', initialize: async () => ({ protocolVersion: '2025-11-25', serverInfo: { name: 'stub', version: '0' } }),
-    listTools: async () => [{ name: 'get_quotes', annotations: { readOnlyHint: true } }],
-    callTool: async () => ({ content: [{ type: 'text', text: JSON.stringify({ results: [{ symbol: 'AAPL', last_trade_price: '1', note: `echo ${TOKEN}`, session_token: 'abc' }] }) }] })
+    listTools: async () => [ECHO_TOOL],
+    callTool: async () => ({ content: [{ type: 'text', text: JSON.stringify({ results: [{ symbol: 'AAPL', last_trade_price: '1', note: `echo ${TOKEN}`, status: TOKEN, session_token: 'abc' }] }) }] })
   };
-  const gateway = createPermissionGateway({ client: echoClient, secretCanaries: [TOKEN] });
+  const gateway = createPermissionGateway({ client: echoClient, reviewedAllowlist: [{ capability: 'quotes', name: 'get_quotes', fingerprint: fingerprintTool(ECHO_TOOL), args: { symbols: 'string' } }], secretCanaries: [TOKEN] });
   await gateway.connect();
   const out = await gateway.inspect('quotes', { symbols: 'AAPL' });
   assert.ok(!JSON.stringify(out).includes(TOKEN));
+  assert.ok(out.ok);
   assert.equal(out.data.results[0].session_token, '[REDACTED]');
+  assert.equal(out.data.results[0].status, '[REDACTED]');
 }
 
 // 5. Paper broker: cash-only, no shorting, fresh quotes, simulated flags.
@@ -149,7 +158,7 @@ for (const [responseMode, structured] of [['json', true], ['sse', true], ['json'
   const fixture = await startFixtureServer({ token: TOKEN, responseMode, structured });
   try {
     const client = createMcpClient({ endpoint: fixture.url, getAccessToken: async () => TOKEN });
-    const gateway = createPermissionGateway({ client, secretCanaries: [TOKEN] });
+    const gateway = createPermissionGateway({ client, reviewedAllowlist: FIXTURE_REVIEWED_ALLOWLIST, secretCanaries: [TOKEN] });
     const result = await runInvestmentMission({ gateway, provenance: 'synthetic-fixture', constraints: DEMO_CONSTRAINTS, missionId: `t_${responseMode}_${structured}` });
     assert.equal(result.ok, true, `${responseMode}/${structured}: ${result.verification?.problems}`);
     assert.equal(result.verification.truthLevel, 'verified');
@@ -170,16 +179,20 @@ for (const [responseMode, structured] of [['json', true], ['sse', true], ['json'
 
 // 9. Fail closed on unrecognized response shapes (e.g. a real server whose schema differs).
 {
+  let weirdBody = '';
   const weird = {
     endpointHost: 'stub', initialize: async () => ({ protocolVersion: '2025-11-25', serverInfo: { name: 'stub', version: '0' } }),
-    listTools: async () => READ_TOOLS.map(name => ({ name, annotations: { readOnlyHint: true } })),
-    callTool: async () => ({ content: [{ type: 'text', text: 'Your account looks great!' }] })
+    listTools: async () => FIXTURE_TOOLS,
+    callTool: async () => ({ content: [{ type: 'text', text: weirdBody }] })
   };
-  const gateway = createPermissionGateway({ client: weird });
-  const result = await runInvestmentMission({ gateway, provenance: 'live-robinhood-mcp', missionId: 't_weird' });
-  assert.equal(result.ok, false);
-  assert.equal(result.stoppedAt, 'research');
-  assert.ok(result.research.problems.includes('accounts:accounts_shape_unrecognized'));
+  for (const [body, problem] of [['Your account looks great!', 'accounts:tool_result_not_json'], ['{"unexpected":1}', 'accounts:accounts_shape_unrecognized']]) {
+    weirdBody = body;
+    const gateway = createPermissionGateway({ client: weird, reviewedAllowlist: FIXTURE_REVIEWED_ALLOWLIST });
+    const result = await runInvestmentMission({ gateway, provenance: 'live-robinhood-mcp', missionId: 't_weird' });
+    assert.equal(result.ok, false);
+    assert.equal(result.stoppedAt, 'research');
+    assert.ok(result.research.problems.includes(problem), result.research.problems.join());
+  }
 }
 
 // 10. Verification catches tampering instead of trusting other agents.
@@ -187,7 +200,7 @@ for (const [responseMode, structured] of [['json', true], ['sse', true], ['json'
   const fixture = await startFixtureServer({ token: TOKEN });
   try {
     const client = createMcpClient({ endpoint: fixture.url, getAccessToken: async () => TOKEN });
-    const gateway = createPermissionGateway({ client });
+    const gateway = createPermissionGateway({ client, reviewedAllowlist: FIXTURE_REVIEWED_ALLOWLIST });
     const good = await runInvestmentMission({ gateway, provenance: 'synthetic-fixture', constraints: DEMO_CONSTRAINTS, missionId: 't_tamper' });
     const base = { missionId: 't_tamper', objective: 'verify', constraints: {} };
     const tamperedQuant = { ...good.quant.data, snapshot: { ...good.quant.data.snapshot, totalEquity: 99999 } };
@@ -216,6 +229,10 @@ for (const [responseMode, structured] of [['json', true], ['sse', true], ['json'
   const agents = fs.readFileSync(new URL('agents.mjs', dir), 'utf8');
   assert.ok(!/mcp-client|fetch\(/.test(agents), 'agents have no transport access');
   assert.ok(!/process\.env/.test(fs.readFileSync(new URL('execution-gate.mjs', dir), 'utf8')), 'execution cannot be toggled by environment');
+  assert.ok(!/process\.env|readFileSync|import\(/.test(fs.readFileSync(new URL('reviewed-allowlist.mjs', dir), 'utf8')), 'allowlist is code-reviewed data only');
+  assert.equal(ROBINHOOD_REVIEWED_ALLOWLIST.length, 0, 'no Robinhood tool is authorized until an owner-controlled review is committed');
+  assert.ok(Object.isFrozen(ROBINHOOD_REVIEWED_ALLOWLIST));
+  for (const pinned of FIXTURE_REVIEWED_ALLOWLIST) assert.equal(fingerprintTool(FIXTURE_TOOLS.find(t => t.name === pinned.name)), pinned.fingerprint, `${pinned.name} pin matches fixture`);
 }
 
 // 12. Roles map onto the existing PI team.
@@ -225,8 +242,24 @@ for (const role of [...Object.values(AGENT_ROLES), 'Krishna', 'Durga']) assert.o
 {
   const demo = await runFixtureDemo();
   assert.equal(demo.result.ok, true);
-  assert.deepEqual(demo.leakage, { tokenInOutput: false, rawAccountNumberInOutput: false });
+  const text = `${demo.outputs.report}${demo.outputs.json}`;
+  assert.ok(!text.includes(FIXTURE_ACCOUNT_NUMBER), 'raw account number absent from rendered outputs');
+  assert.ok(!/fixture-only-[0-9a-f]{24}/.test(text), 'token absent from rendered outputs');
   assert.deepEqual([...new Set(demo.serverCalls)].sort(), [...READ_TOOLS].sort());
+}
+
+// 14. Offline review aid drafts entries from a saved tools/list but never authorizes anything itself.
+{
+  const review = reviewToolsList({ tools: FIXTURE_TOOLS });
+  for (const pinned of FIXTURE_REVIEWED_ALLOWLIST) {
+    const row = review.find(item => item.name === pinned.name);
+    assert.equal(row.draftEntry.fingerprint, pinned.fingerprint);
+    assert.equal(row.draftEntry.status, 'DRAFT_REQUIRES_HUMAN_REVIEW_AGAINST_OFFICIAL_DOCS');
+    assert.deepEqual(row.draftEntry.args, pinned.args);
+    assert.equal(row.draftEntry.accountArg, pinned.accountArg);
+  }
+  for (const name of ['place_equity_order', 'transfer_funds', 'getQuoteAndPlaceOrder', 'get_order_history', 'enable_margin']) assert.equal(review.find(item => item.name === name).draftEntry, null, `${name} gets no draft`);
+  assert.equal(ROBINHOOD_REVIEWED_ALLOWLIST.length, 0, 'review aid does not modify the allowlist');
 }
 
 console.log(JSON.stringify({ ok: true, suite: 'pi-investment-lab', readOnlyGateway: true, simulatedTradesOnly: true, executionRefused: true, transports: ['json', 'sse', 'text-only'] }));

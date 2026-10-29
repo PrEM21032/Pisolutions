@@ -39,8 +39,8 @@ export async function researchAgent(input, { gateway }) {
   const evidence = [];
   const problems = [];
   const sources = {};
-  const take = async (capability, args, normalizer) => {
-    const response = await gateway.inspect(capability, args);
+  const take = async (capability, args, normalizer, options = {}) => {
+    const response = await gateway.inspect(capability, args, options);
     if (!response.ok) { problems.push(`${capability}:${response.reason}`); return null; }
     evidence.push(response.evidence);
     sources[capability] = { tool: response.tool, observedAt: response.observedAt, evidence: response.evidence };
@@ -53,9 +53,9 @@ export async function researchAgent(input, { gateway }) {
   if (!accounts?.accounts?.length) return failed('No account could be inspected.', 'evidence-insufficient', problems);
   const wanted = input.constraints.accountRef;
   const account = accounts.accounts.find(item => item.accountRef === wanted) || accounts.accounts[0];
-  const scope = account.accountRef ? { account_number: account.accountRef } : {};
-  const portfolio = await take('portfolio', scope, normalizePortfolio);
-  const positions = await take('positions', scope, normalizePositions);
+  const scope = account.accountRef ? { accountRef: account.accountRef } : {};
+  const portfolio = await take('portfolio', {}, normalizePortfolio, scope);
+  const positions = await take('positions', {}, normalizePositions, scope);
   if (!positions) return failed('Positions could not be inspected.', 'tool-failure', problems);
   const watchlist = (input.constraints.watchlist || []).map(symbol => String(symbol).toUpperCase()).filter(symbol => TICKER.test(symbol));
   const symbols = [...new Set([...positions.positions.map(position => position.symbol), ...watchlist])].slice(0, 25);
