@@ -12,9 +12,10 @@
     "test:v1.02": "node pi/commerce-engine-test.mjs && node worker/src/customer-journey-test.mjs && node worker/src/session-store-test.mjs && node pi/customer-ui-regression-test.mjs && node pi/customer-ui-behavior-test.mjs && node netlify/functions/pi-v102-test.mjs && node worker/src/live-provider-fallback-test.mjs && node worker/src/provider-budget-test.mjs && node worker/src/hard-compact-retry-contract-test.mjs && node worker/src/customer-core-routing-test.mjs && node worker/scripts/verify-provider-configuration-test.mjs && node worker/src/provider-error-test.mjs && node worker/src/deterministic-capability-test.mjs && node worker/src/chat-response-deadline-test.mjs && node worker/src/owner-workspace-test.mjs && node pi/owner-workspace-ui-test.mjs && node worker/src/billing-test.mjs && node pi/billing-ui-test.mjs && node pi/v102-completion-contract-test.mjs && node pi/v102-autonomy-persistence-test.mjs && node pi/v102-resume-unfinished-test.mjs && node worker/src/execution-kernel-test.mjs && node worker/src/state-trace-test.mjs && node worker/src/krishna-core-test.mjs && node pi/v102-tool-risk-policy-test.mjs && node pi/v102-runtime-tool-risk-test.mjs && node pi/owner-dashboard-test.mjs",
     "test:customer-reliability": "node pi/customer-response-test.mjs && node pi/customer-ui-behavior-test.mjs",
     "test:payments": "node pi/payments-test.mjs",
-    "test:investment-lab": "node pi/investment-lab/investment-lab-test.mjs && node pi/investment-lab/adversarial-gateway-test.mjs",
+    "test:investment-lab": "node pi/investment-lab/investment-lab-test.mjs && node pi/investment-lab/adversarial-gateway-test.mjs && node pi/investment-lab/rebalance-test.mjs",
     "demo:investment-lab": "node pi/investment-lab/demo.mjs",
     "walkthrough:investment-lab": "node pi/investment-lab/walkthrough.mjs",
+    "rebalance:investment-lab": "node pi/investment-lab/rebalance-scenario.mjs",
     "test:release:v1.02": "npm run test:v1 && npm run test:v1.02 && npm run test:customer-reliability && npm run test:payments && npm run test:security",
     "test:security": "node pi/security-static-test.mjs && node pi/browser-security-policy-test.mjs"
   }

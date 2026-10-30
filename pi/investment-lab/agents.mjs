@@ -130,8 +130,10 @@ export async function riskAgent(input) {
     const delta = quote.last * quantity * (side === 'buy' ? 1 : -1);
     const value = (projected.get(symbol) || 0) + delta;
     const cash = projectedCash - delta;
-    if (value / equity > limits.maxPositionWeight) return { order, approvedForSimulation: false, reason: `post_trade_weight_${(value / equity * 100).toFixed(2)}pct_exceeds_limit` };
-    if (cash / equity < limits.minCashWeight) return { order, approvedForSimulation: false, reason: 'post_trade_cash_below_minimum' };
+    // Limits gate orders that can worsen them (buys). A sell only lowers its position and raises cash,
+    // so it is never blocked for leaving a position above the cap or cash below the floor it improves.
+    if (side === 'buy' && value / equity > limits.maxPositionWeight) return { order, approvedForSimulation: false, reason: `post_trade_weight_${(value / equity * 100).toFixed(2)}pct_exceeds_limit` };
+    if (side === 'buy' && cash / equity < limits.minCashWeight) return { order, approvedForSimulation: false, reason: 'post_trade_cash_below_minimum' };
     projected.set(symbol, value);
     projectedCash = cash;
     return { order, approvedForSimulation: true, reason: 'within_limits' };

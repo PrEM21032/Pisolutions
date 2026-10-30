@@ -141,6 +141,49 @@ Four concrete defects were found. Each was reproduced first by a failing offline
 5. **Paper-trade decisions.** Risk-blocked orders, simulated fills with `submittedToBroker=false`, and the refused live-execution request.
 6. **Verification summary.**
 
+## Owner-controlled rebalancing (paper only)
+
+Run it with `npm run rebalance:investment-lab`, or pass your own plan with `-- --plan plan.json`, for example `{"targets":{"VTI":0.25,"SCHD":0.1},"minCashWeight":0.05}`. Captured output is in `evidence/rebalance-scenario.md`.
+
+**Inputs.** The **owner** supplies target weights, a cash minimum, an optional position cap (default 25%, never above 50%) and an optional drift band (default 1%). Holdings left out of the plan get an explicit 0% target. **The lab never picks targets and never uses price history or forecasts.** Orders are sized only from the current quotes and the current holdings.
+
+**Refusals.** Impossible or unsafe plans are refused before any paper trade:
+- negative (short) weights, weights above 100% or not numbers, and duplicate or invalid symbols;
+- unquoted symbols, and targets above the position cap;
+- targets plus the cash minimum exceeding 100%;
+- out-of-range cash, cap, band or slippage settings.
+
+**Sizing.**
+- Sells come first. They round up, so a holding ends at or below its target.
+- Buys round down, and are funded only by cash above the owner's floor.
+- Whole shares only, with fills priced at the quote's bid or ask plus fixed slippage (5 bps by default).
+
+**Reused controls.**
+- `riskAgent` runs the pre-check, using the owner's cap and floor.
+- `createPaperBroker` produces the fills: cash-only, no shorting, fresh quotes required.
+- **All or nothing:** any blocked or rejected order refuses the whole plan.
+
+**Output.** Each proposal is shown next to an explicit **do nothing** column (0 trades, $0 cost). It includes:
+- current vs target vs post-trade weight and residual drift, per symbol;
+- the paper-only fills, with `submittedToBroker=false`;
+- the total cost, split into slippage and spread against last-price marks;
+- concentration before and after (largest holding, effective holdings);
+- cash against the owner's minimum.
+
+The decision stays with the owner.
+
+**Defect found while reusing `riskAgent`, fixed with a regression first.** The pre-check blocked risk-reducing **sells**: a sell that raised cash, but not yet above the floor, or that trimmed an over-cap holding but not yet below the cap. That blocked exactly the trades a rebalance needs. Caps and floors now gate buys only (`evidence/rebalance-pre-fix.log`).
+
+**Synthetic example** (`evidence/rebalance-scenario.md`):
+- The example owner plan gives a paper proposal. The largest holding goes from 30.54% to 24.94%, effective holdings from 4.18 to 5.84, and cash from 5.36% to 11.04% against an 8% floor. That takes 5 simulated fills and costs $12.65.
+- A deliberately unsafe plan is **refused** at validation: NVDA 45% and VTI 30% exceed the 25% cap, and the targets plus cash add up to 105%.
+
+**Mutation checks.**
+- Eight mutations are caught: removing the cap, sum, short or quote validation; allowing a partial rebalance; reverting either sell fix; and dropping the buy cash floor.
+- Three redundant defence layers are **not** exercised independently by tests: the risk pre-check refusal branch, the cash floor in the buy budget, and the post-trade cash and cap check. In every tested plan, target-capped sizing alone already keeps cash at or above the floor and positions under the cap.
+
+Coordination with the separate Codex T0/T1 decision proof is recorded in `pi/investment-lab/HANDOFF.md`.
+
 ## Evidence (offline, 2026-10-29)
 
 All figures below are synthetic. The files are in `pi/investment-lab/evidence/`.
@@ -206,6 +249,7 @@ The 17 mutations listed below, plus 11 more for the review fixes (findings 1–8
 npm run test:investment-lab                           # unit + adversarial suites (also part of npm test)
 npm run demo:investment-lab -- --out /tmp/lab         # synthetic end-to-end demo
 npm run walkthrough:investment-lab                    # concise synthetic owner walkthrough
+npm run rebalance:investment-lab                     # owner target rebalancing, paper only (-- --plan plan.json)
 node pi/investment-lab/demo.mjs --allowlist-digest    # offline: digest of the reviewed Robinhood allowlist
 node pi/investment-lab/demo.mjs --review-tools tools-list.json   # offline draft review of a saved tools/list
 MCP_SDK_DIR=…/node_modules/@modelcontextprotocol/sdk node pi/investment-lab/sdk-conformance-check.mjs
