@@ -3,8 +3,11 @@
 //
 //   node pi/investment-lab/demo.mjs [--out DIR]          offline: synthetic MCP fixture over loopback HTTP
 //   node pi/investment-lab/demo.mjs --review-tools FILE  offline: draft allowlist review of an owner-saved tools/list JSON
-//   node pi/investment-lab/demo.mjs --live [--out DIR]   live read-only inspection — REFUSES while the reviewed
-//                                                        Robinhood allowlist is empty (it is, in this version)
+//   node pi/investment-lab/demo.mjs --allowlist-digest   offline: digest of the reviewed Robinhood allowlist
+//   node pi/investment-lab/demo.mjs --live --approve-allowlist DIGEST --out DIR
+//                                                        live read-only inspection — REFUSES while the reviewed
+//                                                        Robinhood allowlist is empty (it is, in this version),
+//                                                        and whenever DIGEST does not match the current list
 //
 // The live path never logs in, never stores or prints the token, and never sends proposed orders anywhere.
 
@@ -13,7 +16,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { createMcpClient } from './mcp-client.mjs';
-import { createPermissionGateway, classifyTool, fingerprintTool, auditInputSchema, safeLabel, FORBIDDEN_FIELD } from './permission-gateway.mjs';
+import { createPermissionGateway, classifyTool, fingerprintTool, auditInputSchema, safeLabel, isOrderShapedField, allowlistDigest } from './permission-gateway.mjs';
 import { runInvestmentMission } from './orchestrator.mjs';
 import { startFixtureServer, FIXTURE_ACCOUNT_NUMBER } from './fixture-mcp-server.mjs';
 import { ROBINHOOD_REVIEWED_ALLOWLIST, FIXTURE_REVIEWED_ALLOWLIST } from './reviewed-allowlist.mjs';
@@ -136,11 +139,16 @@ export async function runFixtureDemo({ outDir = null, responseMode = 'json' } = 
   }
 }
 
-// Live read-only path. Fails closed before ANY network I/O while the reviewed allowlist is empty.
-export async function runLive({ env = process.env, fetchImpl = globalThis.fetch, outDir = null } = {}) {
+export const currentLiveAllowlistDigest = () => allowlistDigest(ROBINHOOD_REVIEWED_ALLOWLIST, LIVE_ENDPOINT);
+
+// Live read-only path. Fails closed before ANY network I/O unless the reviewed allowlist is non-empty AND
+// the operator presents the digest of exactly that list (printed by --allowlist-digest after review).
+export async function runLive({ env = process.env, fetchImpl = globalThis.fetch, outDir = null, approvedDigest = null } = {}) {
   if (!ROBINHOOD_REVIEWED_ALLOWLIST.length) {
     return { ok: false, reason: 'no_reviewed_allowlist', detail: 'ROBINHOOD_REVIEWED_ALLOWLIST is empty; complete the owner-controlled review in PI_INVESTMENT_LAB.md first.' };
   }
+  if (!approvedDigest) return { ok: false, reason: 'owner_allowlist_digest_required' };
+  if (approvedDigest !== currentLiveAllowlistDigest()) return { ok: false, reason: 'owner_allowlist_digest_mismatch' };
   const token = env.ROBINHOOD_MCP_ACCESS_TOKEN;
   if (!token) return { ok: false, reason: 'token_not_supplied' };
   if (!outDir) return { ok: false, reason: 'out_dir_required_outside_repository' };
@@ -160,7 +168,7 @@ export function reviewToolsList(listing) {
     const screen = classifyTool(tool);
     const properties = tool?.inputSchema?.properties || {};
     const primitive = Object.entries(properties).filter(([, sub]) => ['string', 'number', 'boolean'].includes(sub?.type));
-    const args = Object.fromEntries(primitive.filter(([name]) => !/account/i.test(name) && !FORBIDDEN_FIELD.test(name)).map(([name, sub]) => [name, sub.type]));
+    const args = Object.fromEntries(primitive.filter(([name]) => !/account/i.test(name) && !isOrderShapedField(name)).map(([name, sub]) => [name, sub.type]));
     const accountArg = primitive.map(([name]) => name).find(name => /account/i.test(name)) || null;
     const draft = { capability: screen.capability, name: String(tool?.name || ''), fingerprint: fingerprintTool(tool), args, accountArg };
     const audit = auditInputSchema(tool?.inputSchema, draft);
@@ -182,10 +190,12 @@ if (isMain) {
     if (process.argv.includes('--probe')) {
       console.log(JSON.stringify({ ok: false, reason: 'probe_removed_lab_is_offline_until_reviewed_allowlist' }));
       process.exitCode = 1;
+    } else if (process.argv.includes('--allowlist-digest')) {
+      console.log(JSON.stringify({ entries: ROBINHOOD_REVIEWED_ALLOWLIST.length, endpoint: LIVE_ENDPOINT, digest: currentLiveAllowlistDigest() }, null, 2));
     } else if (process.argv.includes('--review-tools')) {
       console.log(JSON.stringify(reviewToolsList(JSON.parse(fs.readFileSync(arg('--review-tools'), 'utf8'))), null, 2));
     } else if (process.argv.includes('--live')) {
-      const out = await runLive({ outDir });
+      const out = await runLive({ outDir, approvedDigest: arg('--approve-allowlist') });
       console.log(JSON.stringify(out, null, 2));
       if (!out.ok) process.exitCode = 1;
     } else {

@@ -3,10 +3,10 @@
 > **READ-ONLY INSPECTION · SIMULATED TRADES ONLY · NOT INVESTMENT ADVICE.** No order was submitted, no funds moved, no margin used.
 > **DATA PROVENANCE: SYNTHETIC FIXTURE.** All account figures below come from a local test MCP server, not a real Robinhood account.
 
-Generated: 2026-10-29T23:44:00.282Z · Mission: lab_demo_1793317440202
+Generated: 2026-10-30T00:20:09.050Z · Mission: lab_demo_1793319608975
 
 ## Source
-- MCP server: pi-synthetic-broker-fixture 0.1.0 at 127.0.0.1:43533 (protocol 2025-11-25)
+- MCP server: pi-synthetic-broker-fixture 0.1.0 at 127.0.0.1:46733 (protocol 2025-11-25)
 - Tools discovered: 14; allowed (read-only): 5; denied: 9
   - `get_accounts` → **allow** (reviewed_exact_match; accounts)
   - `get_portfolio` → **allow** (reviewed_exact_match; portfolio)
@@ -66,11 +66,11 @@ Portfolio annualized volatility 7.27%; 1-day 95% historical VaR 0.78% over 62 ov
 ## Verification (verified)
 - PASS equity_recomputed_independently: independent 56000.00 vs quant 56000
 - PASS equity_matches_source_reported: source-reported 56000; relative difference 0.000% (tolerance 0.5%)
-- PASS evidence_accounts: tool:get_accounts observed 2026-10-29T23:44:00.251Z
-- PASS evidence_portfolio: tool:get_portfolio observed 2026-10-29T23:44:00.255Z
-- PASS evidence_positions: tool:get_positions observed 2026-10-29T23:44:00.258Z
-- PASS evidence_quotes: tool:get_quotes observed 2026-10-29T23:44:00.261Z
-- PASS evidence_historicals: tool:get_historicals observed 2026-10-29T23:44:00.269Z
+- PASS evidence_accounts: tool:get_accounts observed 2026-10-30T00:20:09.021Z
+- PASS evidence_portfolio: tool:get_portfolio observed 2026-10-30T00:20:09.024Z
+- PASS evidence_positions: tool:get_positions observed 2026-10-30T00:20:09.027Z
+- PASS evidence_quotes: tool:get_quotes observed 2026-10-30T00:20:09.030Z
+- PASS evidence_historicals: tool:get_historicals observed 2026-10-30T00:20:09.037Z
 - PASS quotes_fresh_per_source_timestamp: all quotes within 120s
 - PASS gateway_only_called_read_classified_tools: 5 call(s), all to read-classified tools
 - PASS gateway_never_called_denied_tools: 9 tool(s) denied at discovery

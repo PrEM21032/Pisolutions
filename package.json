@@ -14,6 +14,7 @@
     "test:payments": "node pi/payments-test.mjs",
     "test:investment-lab": "node pi/investment-lab/investment-lab-test.mjs && node pi/investment-lab/adversarial-gateway-test.mjs",
     "demo:investment-lab": "node pi/investment-lab/demo.mjs",
+    "walkthrough:investment-lab": "node pi/investment-lab/walkthrough.mjs",
     "test:release:v1.02": "npm run test:v1 && npm run test:v1.02 && npm run test:customer-reliability && npm run test:payments && npm run test:security",
     "test:security": "node pi/security-static-test.mjs && node pi/browser-security-policy-test.mjs"
   }

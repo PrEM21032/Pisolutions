@@ -1,6 +1,6 @@
 {
   "schema": "pi.investment-lab.run.v2",
-  "missionId": "lab_demo_1793317440202",
+  "missionId": "lab_demo_1793319608975",
   "provenance": "synthetic-fixture",
   "ok": true,
   "stoppedAt": null,
@@ -18,7 +18,7 @@
       "version": "0.1.0"
     },
     "protocolVersion": "2025-11-25",
-    "endpointHost": "127.0.0.1:43533",
+    "endpointHost": "127.0.0.1:46733",
     "reviewedEntries": 5,
     "tools": [
       {
@@ -340,7 +340,7 @@
             "submittedToBroker": false,
             "status": "simulated_fill",
             "id": "sim_1",
-            "at": "2026-10-29T23:44:00.280Z",
+            "at": "2026-10-30T00:20:09.049Z",
             "side": "buy",
             "symbol": "SCHD",
             "quantity": 10,
@@ -356,7 +356,7 @@
             "submittedToBroker": false,
             "status": "simulated_fill",
             "id": "sim_2",
-            "at": "2026-10-29T23:44:00.280Z",
+            "at": "2026-10-30T00:20:09.049Z",
             "side": "sell",
             "symbol": "AAPL",
             "quantity": 5,
@@ -420,27 +420,27 @@
         {
           "name": "evidence_accounts",
           "ok": true,
-          "detail": "tool:get_accounts observed 2026-10-29T23:44:00.251Z"
+          "detail": "tool:get_accounts observed 2026-10-30T00:20:09.021Z"
         },
         {
           "name": "evidence_portfolio",
           "ok": true,
-          "detail": "tool:get_portfolio observed 2026-10-29T23:44:00.255Z"
+          "detail": "tool:get_portfolio observed 2026-10-30T00:20:09.024Z"
         },
         {
           "name": "evidence_positions",
           "ok": true,
-          "detail": "tool:get_positions observed 2026-10-29T23:44:00.258Z"
+          "detail": "tool:get_positions observed 2026-10-30T00:20:09.027Z"
         },
         {
           "name": "evidence_quotes",
           "ok": true,
-          "detail": "tool:get_quotes observed 2026-10-29T23:44:00.261Z"
+          "detail": "tool:get_quotes observed 2026-10-30T00:20:09.030Z"
         },
         {
           "name": "evidence_historicals",
           "ok": true,
-          "detail": "tool:get_historicals observed 2026-10-29T23:44:00.269Z"
+          "detail": "tool:get_historicals observed 2026-10-30T00:20:09.037Z"
         },
         {
           "name": "quotes_fresh_per_source_timestamp",
@@ -484,7 +484,7 @@
   "audit": [
     {
       "seq": 1,
-      "at": "2026-10-29T23:44:00.243Z",
+      "at": "2026-10-30T00:20:09.014Z",
       "type": "discovery",
       "decision": "info",
       "toolsSeen": 14,
@@ -493,18 +493,18 @@
     },
     {
       "seq": 2,
-      "at": "2026-10-29T23:44:00.251Z",
+      "at": "2026-10-30T00:20:09.021Z",
       "type": "inspect",
       "capability": "accounts",
       "tool": "get_accounts",
       "decision": "allow",
       "ok": true,
       "argKeys": [],
-      "latencyMs": 7
+      "latencyMs": 6
     },
     {
       "seq": 3,
-      "at": "2026-10-29T23:44:00.255Z",
+      "at": "2026-10-30T00:20:09.025Z",
       "type": "inspect",
       "capability": "portfolio",
       "tool": "get_portfolio",
@@ -517,7 +517,7 @@
     },
     {
       "seq": 4,
-      "at": "2026-10-29T23:44:00.258Z",
+      "at": "2026-10-30T00:20:09.027Z",
       "type": "inspect",
       "capability": "positions",
       "tool": "get_positions",
@@ -526,11 +526,11 @@
       "argKeys": [
         "accountRef"
       ],
-      "latencyMs": 3
+      "latencyMs": 2
     },
     {
       "seq": 5,
-      "at": "2026-10-29T23:44:00.261Z",
+      "at": "2026-10-30T00:20:09.030Z",
       "type": "inspect",
       "capability": "quotes",
       "tool": "get_quotes",
@@ -539,11 +539,11 @@
       "argKeys": [
         "symbols"
       ],
-      "latencyMs": 3
+      "latencyMs": 2
     },
     {
       "seq": 6,
-      "at": "2026-10-29T23:44:00.269Z",
+      "at": "2026-10-30T00:20:09.037Z",
       "type": "inspect",
       "capability": "historicals",
       "tool": "get_historicals",
@@ -554,14 +554,14 @@
         "interval",
         "span"
       ],
-      "latencyMs": 8
+      "latencyMs": 7
     }
   ],
   "trace": {
-    "runId": "lab_demo_1793317440202",
-    "taskId": "lab_demo_1793317440202",
+    "runId": "lab_demo_1793319608975",
+    "taskId": "lab_demo_1793319608975",
     "eventCount": 7,
-    "totalLatencyMs": 48,
+    "totalLatencyMs": 44,
     "totalCostUsd": 0,
     "failures": []
   },

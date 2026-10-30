@@ -235,6 +235,15 @@ for (const [responseMode, structured] of [['json', true], ['sse', true], ['json'
   for (const pinned of FIXTURE_REVIEWED_ALLOWLIST) assert.equal(fingerprintTool(FIXTURE_TOOLS.find(t => t.name === pinned.name)), pinned.fingerprint, `${pinned.name} pin matches fixture`);
 }
 
+// R4. A pull-request CI check must run the lab suites whenever lab code, its allowlist, or its workflow changes,
+//     so an allowlist edit or a gateway regression cannot ride a PR whose required checks never run lab tests.
+{
+  const workflows = new URL('../../.github/workflows/', import.meta.url);
+  const covering = fs.readdirSync(workflows).filter(f => /\.ya?ml$/.test(f)).map(f => fs.readFileSync(new URL(f, workflows), 'utf8'))
+    .filter(text => /^\s*pull_request:/m.test(text) && /npm run test:investment-lab/.test(text) && /['"]?pi\/investment-lab\/\*\*['"]?/.test(text) && /package\.json/.test(text));
+  assert.ok(covering.length >= 1, 'no pull_request workflow runs npm run test:investment-lab for pi/investment-lab/** changes');
+}
+
 // 12. Roles map onto the existing PI team.
 for (const role of [...Object.values(AGENT_ROLES), 'Krishna', 'Durga']) assert.ok(getTeamRole(role), `${role} is a PI team role`);
 
@@ -246,6 +255,24 @@ for (const role of [...Object.values(AGENT_ROLES), 'Krishna', 'Durga']) assert.o
   assert.ok(!text.includes(FIXTURE_ACCOUNT_NUMBER), 'raw account number absent from rendered outputs');
   assert.ok(!/fixture-only-[0-9a-f]{24}/.test(text), 'token absent from rendered outputs');
   assert.deepEqual([...new Set(demo.serverCalls)].sort(), [...READ_TOOLS].sort());
+}
+
+// 15. Synthetic owner walkthrough: live access shown as disabled by the real entry point, zero network
+//     attempts, synthetic provenance on every analysis line, simulated-only trades, no identifiers.
+{
+  const { runWalkthrough } = await import('./walkthrough.mjs');
+  const walk = await runWalkthrough();
+  assert.equal(walk.ok, true);
+  assert.equal(walk.live.reason, 'no_reviewed_allowlist');
+  assert.equal(walk.liveNetworkAttempts, 0);
+  assert.match(walk.text, /LIVE ROBINHOOD ACCESS: DISABLED/);
+  assert.match(walk.text, /SYNTHETIC FIXTURE/);
+  assert.match(walk.text, /SIMULATED fill sim_1/);
+  assert.match(walk.text, /BLOCKED by risk limits/);
+  assert.match(walk.text, /quote \$229\.98 − 5 bps slippage/);
+  for (const line of walk.text.split('\n').filter(l => / × \$/.test(l))) assert.match(line, /\[source: get_positions@.*get_quotes@.* · synthetic\]/);
+  assert.ok(!walk.text.includes(FIXTURE_ACCOUNT_NUMBER));
+  assert.ok(walk.serverCalls.every(name => READ_TOOLS.includes(name)));
 }
 
 // 14. Offline review aid drafts entries from a saved tools/list but never authorizes anything itself.

@@ -1,6 +1,6 @@
 # PI Investment Lab
 
-Status: OFFLINE ONLY. READ-ONLY INSPECTION + SIMULATED TRADES, TESTED AGAINST SYNTHETIC AND ADVERSARIAL MCP SERVERS. THE LIVE PATH REFUSES BEFORE ANY NETWORK I/O, BECAUSE NO ROBINHOOD TOOL HAS BEEN REVIEWED (`ROBINHOOD_REVIEWED_ALLOWLIST` IS EMPTY). NOT DEPLOYED. NO EXECUTION CAPABILITY EXISTS.
+Status: OFFLINE ONLY. READ-ONLY INSPECTION + SIMULATED TRADES, TESTED AGAINST SYNTHETIC AND ADVERSARIAL MCP SERVERS. THE LIVE PATH REFUSES BEFORE ANY NETWORK I/O, BECAUSE NO ROBINHOOD TOOL HAS BEEN REVIEWED (`ROBINHOOD_REVIEWED_ALLOWLIST` IS EMPTY). EVEN A POPULATED ALLOWLIST REQUIRES THE OPERATOR TO PRESENT ITS EXACT DIGEST. NOT DEPLOYED. NO EXECUTION CAPABILITY EXISTS.
 
 ## Scope
 
@@ -65,9 +65,12 @@ Names and server-supplied annotations **never authorize** a call. A tool is call
 
 1. A code-reviewed entry in `reviewed-allowlist.mjs` names it for exactly one read capability (`accounts`, `portfolio`, `positions`, `quotes`, `historicals`).
 2. Its full server definition (name, title, description, input and output schemas, annotations) hashes, as canonical SHA-256, to the pinned fingerprint. Any drift denies it, including a changed description.
-3. Its input schema declares no order- or transfer-shaped field at any depth or in any combinator. Every reviewed argument must be declared as a primitive.
+3. Its input schema declares no order- or transfer-shaped field at any depth or in any combinator. The check covers compound names (`orderQuantity`, `limit_order_price`, `dollarAmount`, `buySide`) by tokenizing camelCase and separators. Every reviewed argument must be declared as a primitive.
 4. Its name is unique on the server, after NFKC normalization and case folding.
 5. The heuristic screen does not deny it: write or credential name tokens, `destructiveHint: true`, `readOnlyHint: false`. The screen can only deny.
+6. It was allowed by the **latest** discovery. Each `connect()` clears all routes first, so re-listing after drift never leaves a stale route.
+
+The live entry point adds one more gate. `runLive` requires a non-empty `ROBINHOOD_REVIEWED_ALLOWLIST` **and** `--approve-allowlist <digest>`. The digest must equal the SHA-256 of exactly that reviewed list plus the endpoint, and `--allowlist-digest` prints it. Any later edit to the list changes the digest, so the edit cannot take effect until the owner presents the new one.
 
 ### Arguments
 
@@ -96,6 +99,47 @@ Names and server-supplied annotations **never authorize** a call. A tool is call
   - an email address, SSN, phone-like pattern or digit run of nine or more digits;
   - a bearer string.
 - Live output must go outside the repository, with mode 0600. The check resolves symlinks and percent-encoding through `realpath` and `fileURLToPath`.
+
+## Threat review of PR #224 head `6a370f8` (2026-10-30)
+
+A fresh review of the changed code looked for four kinds of path:
+
+- an unreviewed or disguised tool being called;
+- credentials, account identifiers or personal data reaching agents, logs or files;
+- output escaping its guard;
+- an allowlist edit silently enabling live access.
+
+Four concrete defects were found. Each was reproduced first by a failing offline regression (`evidence/review-2026-10-30-pre-fix.log`), then fixed, and each fix is shown to be load-bearing by a mutation that reverts it and makes the suite fail:
+
+| ID | Defect at `6a370f8` | Fix |
+|---|---|---|
+| R1 | The schema audit matched whole field names only. A pinned tool whose schema accepted `orderQuantity`, `limit_order_price`, `dollarAmount`, a nested `trailingStopPercent` or `buySide` was called. | Field names are tokenized. The same check applies to schemas, allowlist arguments and runtime arguments. |
+| R2 | A second `connect()` kept routes from the first discovery. A tool whose definition drifted was reported `fingerprint_mismatch` but stayed callable. | `connect()` clears routes and discovery before reclassifying. |
+| R3 | Editing `ROBINHOOD_REVIEWED_ALLOWLIST` alone enabled live network access with just a token. Reproduced on a temp copy of the module tree, against a counting network stub. | `runLive` requires the owner-presented digest of exactly the reviewed list and endpoint. A missing or mismatched digest refuses before any network I/O. A positive control shows the matching digest is the only remaining gate. |
+| R4 | None of PR #224's three checks (PI V1.02 Gate, PR Core, PR Gate) runs any Investment Lab test. They run `test:v1.02` and `test:release:v1.02` only. A PR that edits the allowlist or weakens the gateway would show green. | A new `.github/workflows/pi-investment-lab.yml` runs `npm run test:investment-lab` on pull requests touching lab code, its dependencies, `package.json` or the workflow itself. It is offline, needs no secrets and has `contents: read`. The V1.02 workflows are unchanged. A static test fails if no such workflow exists. |
+
+**Reviewed and found sound:**
+
+- Report and CLI strings come only from bounded codes and from values that passed the shape filter.
+- Transport errors surface codes only, never server text.
+- The token appears only in the `Authorization` header.
+- Raw account identifiers stay inside the gateway, and the output guards run before any file is written.
+
+**Not changed (accepted limitations, already documented):**
+
+- A server could lie about a pinned tool's behaviour at call time.
+- Values that fit their key's shape pass through by design.
+
+## Synthetic owner walkthrough
+
+`npm run walkthrough:investment-lab` prints a concise, owner-facing run. Captured output is in `evidence/owner-walkthrough.md`. It shows, in order:
+
+1. **Live status.** **LIVE ROBINHOOD ACCESS: DISABLED**, taken from the real live entry point with a network stub: reason `no_reviewed_allowlist`, 0 network attempts.
+2. **Gateway decisions** and the synthetic server's own call log.
+3. **Account snapshot** by reference only.
+4. **Deterministic analysis.** Every line carries provenance in the form `[source: tool@timestamp · synthetic]`.
+5. **Paper-trade decisions.** Risk-blocked orders, simulated fills with `submittedToBroker=false`, and the refused live-execution request.
+6. **Verification summary.**
 
 ## Evidence (offline, 2026-10-29)
 
@@ -161,11 +205,13 @@ The 17 mutations listed below, plus 11 more for the review fixes (findings 1–8
 ```bash
 npm run test:investment-lab                           # unit + adversarial suites (also part of npm test)
 npm run demo:investment-lab -- --out /tmp/lab         # synthetic end-to-end demo
+npm run walkthrough:investment-lab                    # concise synthetic owner walkthrough
+node pi/investment-lab/demo.mjs --allowlist-digest    # offline: digest of the reviewed Robinhood allowlist
 node pi/investment-lab/demo.mjs --review-tools tools-list.json   # offline draft review of a saved tools/list
 MCP_SDK_DIR=…/node_modules/@modelcontextprotocol/sdk node pi/investment-lab/sdk-conformance-check.mjs
 ```
 
-`--live` currently returns `no_reviewed_allowlist` before constructing a client. `--probe` returns a refusal.
+`--live` currently returns `no_reviewed_allowlist` before constructing a client. With a populated list, it also returns `owner_allowlist_digest_required` or `owner_allowlist_digest_mismatch` unless the exact digest is presented. `--probe` returns a refusal.
 
 ## Remaining unknowns
 
@@ -187,10 +233,11 @@ None of these have been performed. Each one is the owner's decision.
 2. In an environment the owner controls, connect to `https://agent.robinhood.com/mcp/trading` with an official MCP client, completing Robinhood's own sign-in. Capture **only** the `tools/list` result to a file **outside the repository**. Do not call any tool. Confirm the file contains no account data.
 3. Run `node pi/investment-lab/demo.mjs --review-tools <file>` offline. It prints fingerprints, screens, schema audits and **draft** entries. It never edits the allowlist.
 4. For each candidate (at most one tool per read capability), have a human check the tool against Robinhood's official documentation: read-only behaviour, arguments and returned fields. Reject anything that can place, modify or cancel orders, move money, change settings, or read order history.
-5. Commit the approved entries to `ROBINHOOD_REVIEWED_ALLOWLIST` through a reviewed PR, with explicit owner approval and a second reviewer. Any later change to a Robinhood tool definition breaks its fingerprint and denies the tool until it is re-reviewed.
-6. Set the agentic account as the owner prefers: leave it unfunded, and turn trade approvals on if available. These limit trading only, not reads.
-7. Allow `agent.robinhood.com` only for the supervised run. Supply the token at runtime via `ROBINHOOD_MCP_ACCESS_TOKEN`; never commit or log it. Use `--out` with a directory outside the repository.
-8. Supervise the first run and review the report before anyone else sees it. Afterwards, disconnect the agent or revoke the token in Robinhood. Expect normalizer fixes, each as a reviewed change.
+5. Commit the approved entries to `ROBINHOOD_REVIEWED_ALLOWLIST` through a reviewed PR, with explicit owner approval and a second reviewer. The `PI Investment Lab` check must pass, and its empty-list assertion must be changed deliberately in the same PR. Any later change to a Robinhood tool definition breaks its fingerprint and denies the tool until it is re-reviewed.
+6. Run `node pi/investment-lab/demo.mjs --allowlist-digest` on the reviewed commit, and record the digest with the owner's approval. Only `--approve-allowlist <that digest>` will run live, and any later edit to the list invalidates it.
+7. Set the agentic account as the owner prefers: leave it unfunded, and turn trade approvals on if available. These limit trading only, not reads.
+8. Allow `agent.robinhood.com` only for the supervised run. Supply the token at runtime via `ROBINHOOD_MCP_ACCESS_TOKEN`; never commit or log it. Use `--out` with a directory outside the repository.
+9. Supervise the first run and review the report before anyone else sees it. Afterwards, disconnect the agent or revoke the token in Robinhood. Expect normalizer fixes, each as a reviewed change.
 
 ## Future execution capability
 

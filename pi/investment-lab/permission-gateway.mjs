@@ -32,6 +32,13 @@ const CAPABILITY_TOKENS = Object.freeze([
 ]);
 // Order/transfer-shaped field names; refused anywhere in an input schema or in arguments.
 export const FORBIDDEN_FIELD = /^(?:side|legs?|orders?|order_?(?:type|id)|qty|quantity|shares|notional|amount|dollars?|price|limit_?price|stop_?price|trail\w*|time_?in_?force|leverage|margin|destination|recipient|(?:to|from)_?account|bank\w*|ach\w*|wire\w*|confirm\w*|approve\w*|execute\w*)$/i;
+// Tokens that make a field order/transfer-shaped even inside compound names (orderQuantity, limit_order_price).
+const ORDER_FIELD_TOKENS = new Set(['side', 'order', 'orders', 'qty', 'quantity', 'shares', 'notional', 'amount', 'dollar', 'dollars', 'price',
+  'stop', 'trail', 'trailing', 'leverage', 'margin', 'destination', 'recipient', 'bank', 'ach', 'wire', 'confirm', 'confirmation',
+  'approve', 'approval', 'execute', 'transfer', 'deposit', 'withdraw', 'withdrawal', 'buy', 'sell']);
+export function isOrderShapedField(name = '') {
+  return FORBIDDEN_FIELD.test(name) || tokenizeToolName(name).some(token => ORDER_FIELD_TOKENS.has(token));
+}
 const SENSITIVE_KEYS = /token|secret|password|passwd|authorization|cookie|api[_-]?key|ssn|social|tax|routing|bank|email|phone|mobile|address|street|city|zip|postal|birth|dob|name|holder|owner|beneficiar|employer|memo|note|comment|message|description|text|url|uri|link|href/i;
 const isIdKey = key => /(?:^|_)(?:id|uuid)$/.test(key.toLowerCase()) || /[a-z0-9](?:Id|ID|Uuid|UUID)$/.test(key);
 // Keys are data too: only plain letter/underscore keys survive; anything else (digits, '@', '.') is dropped.
@@ -122,7 +129,7 @@ export function auditInputSchema(schema, entry) {
     for (const key of ['items', 'prefixItems', 'additionalProperties', 'anyOf', 'oneOf', 'allOf', 'not', 'if', 'then', 'else', 'contains']) walk(node[key], depth + 1);
   };
   walk(schema, 0);
-  for (const name of names) if (FORBIDDEN_FIELD.test(name)) problems.push(`schema_forbidden_field:${name}`);
+  for (const name of names) if (isOrderShapedField(name)) problems.push(`schema_forbidden_field:${name}`);
   const declared = new Set(Object.keys(schema?.properties || {}));
   const reviewed = [...Object.keys(entry?.args || {}), ...(entry?.accountArg ? [entry.accountArg] : [])];
   for (const arg of reviewed) if (!declared.has(arg)) problems.push(`reviewed_arg_not_in_schema:${arg}`);
@@ -130,6 +137,13 @@ export function auditInputSchema(schema, entry) {
     if (reviewed.includes(arg) && sub && typeof sub === 'object' && sub.type && !ARG_TYPES.has(sub.type)) problems.push(`reviewed_arg_not_primitive:${arg}`);
   }
   return { ok: problems.length === 0, problems };
+}
+
+// Digest an owner must present to run live: binds approval to exactly this reviewed list and endpoint,
+// so any later edit to the list (or endpoint) invalidates the approval instead of silently taking effect.
+export function allowlistDigest(list = [], endpoint = '') {
+  const entries = validateReviewedAllowlist(list).map(entry => ({ ...entry, args: { ...entry.args } }));
+  return crypto.createHash('sha256').update(canonical({ schema: 'pi.investment-lab.allowlist.v1', endpoint, entries })).digest('hex');
 }
 
 export function validateReviewedAllowlist(list = []) {
@@ -144,9 +158,9 @@ export function validateReviewedAllowlist(list = []) {
     if (names.has(entry.name) || capabilities.has(entry.capability)) throw new Error(`reviewed_allowlist_${index}_duplicate`);
     const args = entry.args && typeof entry.args === 'object' && !Array.isArray(entry.args) ? entry.args : {};
     for (const [arg, type] of Object.entries(args)) {
-      if (!ARG_TYPES.has(type) || FORBIDDEN_FIELD.test(arg) || ACCOUNT_KEYS.test(arg)) throw new Error(`reviewed_allowlist_${index}_arg:${arg}`);
+      if (!ARG_TYPES.has(type) || isOrderShapedField(arg) || ACCOUNT_KEYS.test(arg)) throw new Error(`reviewed_allowlist_${index}_arg:${arg}`);
     }
-    if (entry.accountArg !== null && entry.accountArg !== undefined && (typeof entry.accountArg !== 'string' || FORBIDDEN_FIELD.test(entry.accountArg))) throw new Error(`reviewed_allowlist_${index}_accountArg`);
+    if (entry.accountArg !== null && entry.accountArg !== undefined && (typeof entry.accountArg !== 'string' || isOrderShapedField(entry.accountArg))) throw new Error(`reviewed_allowlist_${index}_accountArg`);
     names.add(entry.name);
     capabilities.add(entry.capability);
     return Object.freeze({ capability: entry.capability, name: entry.name, fingerprint: entry.fingerprint, args: Object.freeze({ ...args }), accountArg: entry.accountArg || null });
@@ -243,7 +257,7 @@ export function createPermissionGateway({ client, reviewedAllowlist = [], maxCal
     if (!args || typeof args !== 'object' || Array.isArray(args)) return { ok: false, reason: 'args_must_be_object' };
     const out = {};
     for (const [key, value] of Object.entries(args)) {
-      if (FORBIDDEN_FIELD.test(key)) return { ok: false, reason: `forbidden_arg:${key}` };
+      if (isOrderShapedField(key)) return { ok: false, reason: `forbidden_arg:${key}` };
       if (ACCOUNT_KEYS.test(key) || key === entry.accountArg) return { ok: false, reason: 'account_must_use_accountRef' };
       const type = entry.args[key];
       if (!type) return { ok: false, reason: `unreviewed_arg:${key}` };
@@ -270,6 +284,9 @@ export function createPermissionGateway({ client, reviewedAllowlist = [], maxCal
 
   return Object.freeze({
     async connect() {
+      // Each discovery fully replaces the last: no route survives a re-listing that no longer allows it.
+      routes.clear();
+      discovery = null;
       const session = await client.initialize();
       const tools = await client.listTools();
       const counts = new Map();
