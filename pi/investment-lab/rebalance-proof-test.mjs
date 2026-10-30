@@ -138,4 +138,22 @@ check(outcomes.some(o => o.vsDoNothing > 0), 'and at least one where it helps');
   check(ROBINHOOD_REVIEWED_ALLOWLIST.length === 0, 'live allowlist still empty');
 }
 
+// 8. Fail closed when no T1 outcome is available: never print an empty "proof". Uses a temp copy of the tree.
+{
+  assert.throws(() => formatRebalanceProof(frozen, []), /no_t1_outcomes/);
+  checks += 1;
+  const repo = path.resolve(here, '..', '..');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pi-rebalance-empty-'));
+  try {
+    fs.cpSync(path.join(repo, 'pi'), path.join(tmp, 'pi'), { recursive: true, filter: src => !src.includes(`investment-lab${path.sep}evidence${path.sep}`) || src.endsWith('rebalance-frozen.json') });
+    fs.mkdirSync(path.join(tmp, 'worker', 'src'), { recursive: true });
+    fs.copyFileSync(path.join(repo, 'worker/src/execution-trace.mjs'), path.join(tmp, 'worker/src/execution-trace.mjs'));
+    fs.copyFileSync(path.join(repo, 'package.json'), path.join(tmp, 'package.json'));
+    const copyFixture = path.join(tmp, 'pi/investment-lab/rebalance-proof-fixture');
+    for (const f of fs.readdirSync(copyFixture)) if (/^t1-/.test(f)) fs.rmSync(path.join(copyFixture, f));
+    const run = spawnSync(process.execPath, [path.join(tmp, 'pi/investment-lab/rebalance-proof.mjs'), 'reveal'], { encoding: 'utf8' });
+    check(run.status !== 0 && /no_t1_outcome/.test(run.stderr), `reveal with no T1 files must fail closed (status ${run.status})`);
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+}
+
 console.log(`rebalance-proof: ${checks} checks passed; T0 frozen without T1, adverse counterexample shown, replay verified`);

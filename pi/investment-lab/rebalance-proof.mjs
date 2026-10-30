@@ -168,6 +168,7 @@ const signedBar = (delta, scale, width = 14) => {
 };
 
 export function formatRebalanceProof(frozen, outcomes, { live = null } = {}) {
+  if (!Array.isArray(outcomes) || !outcomes.length) throw new Error('no_t1_outcomes'); // never render an empty proof
   const r = frozen.record;
   const c = r.choice;
   const lines = [
@@ -258,6 +259,7 @@ if (isMain) {
     } else if (stage === 'reveal') {
       const frozen = JSON.parse(fs.readFileSync(frozenPath, 'utf8'));
       const outcomes = [];
+      if (!t1Files().length) throw new Error('no_t1_outcome_files');
       for (const file of t1Files()) outcomes.push(await revealRebalance(frozen, JSON.parse(fs.readFileSync(file, 'utf8'))));
       let networkAttempts = 0;
       const liveStatus = await runLive({ env: {}, fetchImpl: async () => { networkAttempts += 1; throw new Error('proof_network_forbidden'); } });

@@ -250,6 +250,8 @@ npm run test:investment-lab                           # unit + adversarial suite
 npm run demo:investment-lab -- --out /tmp/lab         # synthetic end-to-end demo
 npm run walkthrough:investment-lab                    # concise synthetic owner walkthrough
 npm run rebalance:investment-lab                     # owner target rebalancing, paper only (-- --plan plan.json)
+npm run walkthrough:decision-proof                   # single-candidate freeze → reveal proof (Codex lane)
+npm run walkthrough:rebalance-proof                  # owner rebalancing freeze → reveal proof with counterexample
 node pi/investment-lab/demo.mjs --allowlist-digest    # offline: digest of the reviewed Robinhood allowlist
 node pi/investment-lab/demo.mjs --review-tools tools-list.json   # offline draft review of a saved tools/list
 MCP_SDK_DIR=…/node_modules/@modelcontextprotocol/sdk node pi/investment-lab/sdk-conformance-check.mjs
@@ -292,15 +294,18 @@ The proof reuses existing code rather than copying it: `proposeRebalance` (rebal
 | A: the concentrated holding falls | $52,799.69 (+$1,699.69 vs do nothing) | $51,100.00 | $54,837.07 (best) |
 | B: **adverse counterexample**, the trimmed holding rallies and the added one falls | $60,746.14 (−$2,627.86 vs do nothing) | $63,374.00 (best) | $57,634.88 |
 
-**Regressions** (`rebalance-proof-test.mjs`, 50 checks):
+**Regressions** (`rebalance-proof-test.mjs`, 52 checks):
 - **Lookahead:** static and Proxy traps, a hidden T1 directory, deterministic freezes, the committed evidence is current, and time ordering is enforced.
 - **Arithmetic:** hand-checked ending values plus independent recomputation.
 - **Counterexample:** at least one losing scenario is present.
 - **Unsafe plans:** they are frozen as refused, and forging them into proposals is detected.
 - **Costs:** fills priced with the frozen slippage, benchmark entry costs, and detection of cost-model edits, including a consistent forgery with a re-derived benchmark.
 - **Save and replay:** byte round-trip, tampering, re-hashed edits, edited inputs, non-synthetic T1, and invalid prices.
+- **No empty proof:** a reveal with no T1 files fails closed, tested on a temp copy of the tree.
 
-**Defect found by these tests, fixed after a failing run (`evidence/rebalance-proof-pre-fix.log`).** Replay used the plan's *default* slippage instead of the frozen cost model. An edited cost model was then caught only incidentally, by the benchmark arithmetic. Replay now uses the frozen costs and re-derives the frozen benchmark.
+**Defects found by these tests, each fixed after a failing run (`evidence/rebalance-proof-pre-fix.log`).**
+1. **Replay ignored the frozen costs.** It used the plan's *default* slippage, so an edited cost model was caught only incidentally, by the benchmark arithmetic. Replay now uses the frozen costs and re-derives the frozen benchmark.
+2. **An empty reveal passed.** With no T1 files present, for example after an interrupted test, the reveal exited 0 with an empty outcome section. Both the reveal CLI and the formatter now refuse.
 
 **Mutation checks.** Removing the hash, time-ordering, replay, cost binding, benchmark binding or T1 price validation, or ignoring the trades, makes the suite fail. The independent outcome recomputation is a redundant layer behind replay and is not exercised on its own.
 
