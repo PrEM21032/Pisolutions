@@ -5,6 +5,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as gw from './permission-gateway.mjs';
 import * as demo from './demo.mjs';
 import { createMcpClient } from './mcp-client.mjs';
@@ -299,7 +300,7 @@ await scenario('R2 reconnect after tool drift does not keep a stale route', asyn
 //     the operator must also present the digest of exactly that reviewed list. Reproduced on a temp copy
 //     of the module tree with an edited allowlist file; the network is a counting stub (no real I/O).
 await scenario('R3 an allowlist edit alone does not enable live access', async () => {
-  const repoRoot = new URL('../../', import.meta.url).pathname;
+  const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pi-lab-edit-'));
   try {
     fs.cpSync(path.join(repoRoot, 'pi'), path.join(tmp, 'pi'), { recursive: true, filter: src => !src.includes(`investment-lab${path.sep}evidence`) });
@@ -313,7 +314,7 @@ await scenario('R3 an allowlist edit alone does not enable live access', async (
     );
     assert.notEqual(edited, fs.readFileSync(allowlistFile, 'utf8'), 'edit applied');
     fs.writeFileSync(allowlistFile, edited);
-    const copy = await import(`${path.join(tmp, 'pi/investment-lab/demo.mjs')}?r3=${Date.now()}`);
+    const copy = await import(`${pathToFileURL(path.join(tmp, 'pi/investment-lab/demo.mjs')).href}?r3=${Date.now()}`);
     let fetches = 0;
     const fetchImpl = async () => { fetches += 1; throw new Error('stub network'); };
     const out = await copy.runLive({ env: { ROBINHOOD_MCP_ACCESS_TOKEN: 'fixture-only-not-a-real-token' }, fetchImpl, outDir: path.join(tmp, 'out') }).catch(error => ({ ok: false, reason: `threw:${error?.code || error?.message}` }));
@@ -336,14 +337,14 @@ await scenario('A11 renderOutputs refuses to emit text containing secrets or PII
   assert.throws(() => demo.renderOutputs({ ...fake, report: 'token fixture-only-canary-123' }, { canaries: ['fixture-only-canary-123'] }), /output_leak_detected/);
   assert.throws(() => demo.renderOutputs({ ...fake, report: 'clean text' }, { containsIdentifier: () => true }), /output_leak_detected/, 'gateway identifier guard is honoured');
   // Unique names, removed in finally, so a broken guard cannot leave files in the repository.
-  const repoRoot = new URL('../../', import.meta.url).pathname;
+  const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
   const probeName = `pi-lab-guard-test-${process.pid}-${Date.now()}`;
   const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'pi-lab-'));
   try {
     assert.throws(() => demo.writeOutputs(path.join(repoRoot, probeName), { report: '', json: '' }, { provenance: 'live-robinhood-mcp' }), /live_output_inside_repository_refused/);
     const link = path.join(outside, 'link-into-repo');
-    fs.symlinkSync(repoRoot, link);
-    assert.throws(() => demo.writeOutputs(path.join(link, probeName), { report: '', json: '' }, { provenance: 'live-robinhood-mcp' }), /live_output_inside_repository_refused/, 'symlinked --out into the repo is refused');
+    try { fs.symlinkSync(repoRoot, link); } catch (error) { if (error?.code !== 'EPERM') throw error; console.log('SKIP symlink guard check: Windows denied symlink creation'); }
+    if (fs.existsSync(link)) assert.throws(() => demo.writeOutputs(path.join(link, probeName), { report: '', json: '' }, { provenance: 'live-robinhood-mcp' }), /live_output_inside_repository_refused/, 'symlinked --out into the repo is refused');
   } finally {
     fs.rmSync(outside, { recursive: true, force: true });
     fs.rmSync(path.join(repoRoot, probeName), { recursive: true, force: true });

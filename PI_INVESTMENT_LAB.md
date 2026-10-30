@@ -257,6 +257,11 @@ MCP_SDK_DIR=…/node_modules/@modelcontextprotocol/sdk node pi/investment-lab/sd
 
 `--live` currently returns `no_reviewed_allowlist` before constructing a client. With a populated list, it also returns `owner_allowlist_digest_required` or `owner_allowlist_digest_mismatch` unless the exact digest is presented. `--probe` returns a refusal.
 
+## Two-stage synthetic decision proof
+
+Run `node pi/investment-lab/decision-proof.mjs plan` first. It reads only `decision-proof-fixture/t0.json` and writes `evidence/decision-frozen.json` with a hash of the owner rule, candidate, benchmark, and costs. It succeeds with the outcome file absent. Then run `node pi/investment-lab/decision-proof.mjs reveal` to read the separate synthetic T1 price fixture, verify the frozen record, independently recompute the rule and arithmetic, and write `evidence/decision-proof.md`. `node pi/investment-lab/decision-proof-test.mjs` covers the separation and tampering checks.
+
+The example starts with fictional $1,000. A proposed 30% single position violates the owner-set 25% limit, so PI holds cash. When the invented later price falls, holding avoids that loss but trails the predeclared diversified benchmark. The fixture authors knew both prices; the hash is tamper evidence, **not** an independent timestamp or proof of predictive value. No broker is connected.
 ## Remaining unknowns
 
 - **Robinhood's real tools.** Their names, descriptions, input and output schemas and annotations, and whether every read tool is free of side effects. None of this has been observed. Server annotations are hints, not guarantees.
