@@ -104,6 +104,7 @@ export async function proposeRebalance({ missionId = 'rebalance', dataset, quant
   const validation = validateRebalancePlan(ownerPlan, { quotes: dataset.quotes, holdings: snapshot.holdings });
   if (!validation.ok) return Object.freeze({ ...base, status: 'refused', stage: 'plan_validation', problems: validation.problems, orders: [], fills: [] });
   const plan = validation.plan;
+  if (!(snapshot.totalEquity > 0)) return Object.freeze({ ...base, status: 'refused', stage: 'plan_validation', problems: ['no_equity_to_rebalance'], orders: [], fills: [] });
   const orders = sizeOrders({ snapshot, quotes: dataset.quotes, plan });
 
   // Reuse the lab's risk pre-check with the owner's cash floor and position cap.
@@ -143,9 +144,15 @@ export async function proposeRebalance({ missionId = 'rebalance', dataset, quant
     postTrade: weightOf(after, symbol),
     residualDrift: round(weightOf(after, symbol) - (plan.targets[symbol] ?? 0))
   }));
+  // Never overstate success: whole-share sizing can leave targets out of reach.
+  const outside = rows.filter(row => Math.abs(row.residualDrift) > plan.driftBand + 1e-9);
+  if (!orders.length && outside.length) {
+    return Object.freeze({ ...base, status: 'refused', stage: 'sizing', plan, orders: [], fills: [], rows, problems: [`targets_unreachable_with_whole_shares:${outside.map(row => row.symbol).join(',')}`] });
+  }
   return Object.freeze({
     ...base,
     status: orders.length ? 'proposed' : 'already_within_band',
+    warnings: outside.map(row => `outside_drift_band_after_paper_trades:${row.symbol}:${(row.residualDrift * 100).toFixed(2)}pct`),
     plan,
     orders,
     fills: paper.fills,

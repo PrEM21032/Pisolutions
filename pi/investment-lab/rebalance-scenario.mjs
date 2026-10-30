@@ -53,6 +53,7 @@ function renderProposal(title, proposal, provenance) {
     `| Cash | ${usd(d.cash)} (${pct(d.cashWeight)}) | ${usd(proposal.after.cash)} (${pct(proposal.after.cashWeight)}) |`,
     '',
     ...proposal.fills.map(fill => `- SIMULATED ${fill.side} ${fill.quantity} ${fill.symbol} @ ${usd(fill.price)} (quote ${usd(fill.referencePrice)} ${fill.side === 'buy' ? '+' : '−'} ${fill.slippageBps} bps), submittedToBroker=${fill.submittedToBroker}`),
+    ...(proposal.warnings || []).map(warning => `- **WARNING** ${warning}: whole-share sizing could not bring this holding within the ${pct(proposal.plan.driftBand)} band.`),
     `- Costs are measured ${proposal.costs.basis}. Whole shares only, so small residual drift remains.`,
     ''
   );

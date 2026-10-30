@@ -172,6 +172,11 @@ Run it with `npm run rebalance:investment-lab`, or pass your own plan with `-- -
 
 The decision stays with the owner.
 
+**Status never overstates success** (fixed after a failing regression; evidence in `evidence/rebalance-pre-fix.log`). Previously, a zero-equity account, or one too small to buy whole shares, was reported as `already_within_band` while 20 percentage points from target. Now:
+- a zero-equity account is refused with `no_equity_to_rebalance`;
+- when no trade can reach the targets, the plan is refused at the `sizing` stage with `targets_unreachable_with_whole_shares`;
+- a proposal that leaves any holding outside the drift band carries explicit **WARNING** lines in the owner report.
+
 **Defect found while reusing `riskAgent`, fixed with a regression first.** The pre-check blocked risk-reducing **sells**: a sell that raised cash, but not yet above the floor, or that trimmed an over-cap holding but not yet below the cap. That blocked exactly the trades a rebalance needs. Caps and floors now gate buys only (`evidence/rebalance-pre-fix.log`).
 
 **Synthetic example** (`evidence/rebalance-scenario.md`):

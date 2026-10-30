@@ -146,4 +146,29 @@ const proposal = await propose(EXAMPLE_OWNER_PLAN);
   assert.ok(!scenario.text.includes(FIXTURE_ACCOUNT_NUMBER));
 }
 
+// 8. Status must not overstate success: no "already_within_band" when targets are unreachable, and
+//    proposals that leave holdings outside the band say so.
+{
+  const { portfolioSnapshot } = await import('./quant.mjs');
+  const t0 = Date.parse('2026-10-01T15:00:00Z');
+  const q = symbol => ({ symbol, last: 100, bid: 99.98, ask: 100.02, updatedAt: '2026-10-01T15:00:00.000Z' });
+  const account = (cash, positions = []) => {
+    const quotes = { AAA: q('AAA'), BBB: q('BBB') };
+    return { dataset: { account: { cash, marginEnabled: false }, positions, quotes, series: {}, sources: {} }, quant: { snapshot: portfolioSnapshot({ positions, quotes, cash }), portfolioRisk: { ok: false, reason: 'n/a' } } };
+  };
+  const plan = { targets: { AAA: 0.2, BBB: 0.2 }, minCashWeight: 0.05 };
+  const zero = await proposeRebalance({ ...account(0), plan, now: () => t0 });
+  assert.equal(zero.status, 'refused');
+  assert.ok(zero.problems.includes('no_equity_to_rebalance'), String(zero.problems));
+  const tiny = await proposeRebalance({ ...account(50), plan, now: () => t0 });
+  assert.notEqual(tiny.status, 'already_within_band', 'unreachable targets must not be reported as satisfied');
+  assert.equal(tiny.status, 'refused');
+  assert.equal(tiny.stage, 'sizing');
+  assert.ok(tiny.problems.some(problem => /targets_unreachable_with_whole_shares:AAA,BBB/.test(problem)), String(tiny.problems));
+  const coarse = await proposeRebalance({ ...account(1000), plan: { targets: { AAA: 0.25, BBB: 0.25 }, minCashWeight: 0.05 }, now: () => t0 });
+  assert.equal(coarse.status, 'proposed');
+  assert.ok(coarse.warnings.some(w => /outside_drift_band_after_paper_trades:AAA/.test(w)), String(coarse.warnings));
+  assert.deepEqual(proposal.warnings, [], 'the example plan lands within band');
+}
+
 console.log(JSON.stringify({ ok: true, suite: 'pi-investment-lab-rebalance', paperOnly: true, forecasts: false }));
