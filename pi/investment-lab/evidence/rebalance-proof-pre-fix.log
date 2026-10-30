@@ -1,0 +1,2 @@
+# rebalance-proof-test run before binding the frozen cost model into replay (2026-10-30)
+AssertionError: changing the frozen cost model is detected — expected decision_rule_inconsistent, got independent_outcome_check_failed (replay used default slippage, so an edited cost model was only caught incidentally by benchmark arithmetic)

@@ -262,6 +262,50 @@ MCP_SDK_DIR=…/node_modules/@modelcontextprotocol/sdk node pi/investment-lab/sd
 Run `node pi/investment-lab/decision-proof.mjs plan` first. It reads only `decision-proof-fixture/t0.json` and writes `evidence/decision-frozen.json` with a hash of the owner rule, candidate, benchmark, and costs. It succeeds with the outcome file absent. Then run `node pi/investment-lab/decision-proof.mjs reveal` to read the separate synthetic T1 price fixture, verify the frozen record, independently recompute the rule and arithmetic, and write `evidence/decision-proof.md`. `node pi/investment-lab/decision-proof-test.mjs` covers the separation and tampering checks.
 
 The example starts with fictional $1,000. A proposed 30% single position violates the owner-set 25% limit, so PI holds cash. When the invented later price falls, holding avoids that loss but trails the predeclared diversified benchmark. The fixture authors knew both prices; the hash is tamper evidence, **not** an independent timestamp or proof of predictive value. No broker is connected.
+## Rebalancing freeze → reveal proof (owner targets joined to the decision proof)
+
+Run `npm run walkthrough:rebalance-proof`. Output is in `evidence/rebalance-proof.md`, and the frozen record in `evidence/rebalance-frozen.json`.
+
+The proof reuses existing code rather than copying it: `proposeRebalance` (rebalancing lane), `portfolioSnapshot` (quant), and the decision proof's `digest` (now exported).
+
+**Plan stage (T0).**
+- It runs the synthetic fixture on the owner's pinned clock (`rebalance-proof-fixture/owner-plan.json`, T0 `2026-10-01T15:00Z`) and applies the owner's target plan and a deliberately unsafe plan.
+- It freezes: the inputs (cash, holdings, quotes), both plans, the paper choice and fills, the refused unsafe plan, the cost model, and the predeclared benchmark entry (convert everything into VTI at T0 with the same costs).
+- It never opens T1. The CLI succeeds with every T1 file hidden, and produces the identical hash.
+
+**Reveal stage (T1).** Each `t1-*.json` is revealed separately, and each reveal:
+- verifies the hash and requires synthetic provenance, with T1 after both the source and decision timestamps;
+- **replays the owner's rule from the frozen inputs, under the frozen cost model**, and re-derives the benchmark entry;
+- marks every path at the T1 last price (entry costs only, no exit costs);
+- recomputes the PI and benchmark paths independently from the raw fills and quotes.
+
+**Owner view.**
+- Text bar charts of current, target and post-trade weights against the cash floor.
+- The paper trades with their costs, and the refused unsafe plan.
+- The frozen hash, and source, decision and outcome timestamps.
+- PI paper vs do nothing vs benchmark, for each scenario.
+
+**Two scenarios, deliberately not cherry-picked.**
+
+| Scenario | PI paper rebalance | Do nothing | Benchmark |
+|---|---:|---:|---:|
+| A: the concentrated holding falls | $52,799.69 (+$1,699.69 vs do nothing) | $51,100.00 | $54,837.07 (best) |
+| B: **adverse counterexample**, the trimmed holding rallies and the added one falls | $60,746.14 (−$2,627.86 vs do nothing) | $63,374.00 (best) | $57,634.88 |
+
+**Regressions** (`rebalance-proof-test.mjs`, 50 checks):
+- **Lookahead:** static and Proxy traps, a hidden T1 directory, deterministic freezes, the committed evidence is current, and time ordering is enforced.
+- **Arithmetic:** hand-checked ending values plus independent recomputation.
+- **Counterexample:** at least one losing scenario is present.
+- **Unsafe plans:** they are frozen as refused, and forging them into proposals is detected.
+- **Costs:** fills priced with the frozen slippage, benchmark entry costs, and detection of cost-model edits, including a consistent forgery with a re-derived benchmark.
+- **Save and replay:** byte round-trip, tampering, re-hashed edits, edited inputs, non-synthetic T1, and invalid prices.
+
+**Defect found by these tests, fixed after a failing run (`evidence/rebalance-proof-pre-fix.log`).** Replay used the plan's *default* slippage instead of the frozen cost model. An edited cost model was then caught only incidentally, by the benchmark arithmetic. Replay now uses the frozen costs and re-derives the frozen benchmark.
+
+**Mutation checks.** Removing the hash, time-ordering, replay, cost binding, benchmark binding or T1 price validation, or ignoring the trades, makes the suite fail. The independent outcome recomputation is a redundant layer behind replay and is not exercised on its own.
+
+**Limits.** The fixtures were written together by the lab authors; the hash detects edits but is not an independent timestamp. Two invented scenarios show mechanics and that the rule can lose; they show no skill, alpha or forecast.
+
 ## Remaining unknowns
 
 - **Robinhood's real tools.** Their names, descriptions, input and output schemas and annotations, and whether every read tool is free of side effects. None of this has been observed. Server annotations are hints, not guarantees.

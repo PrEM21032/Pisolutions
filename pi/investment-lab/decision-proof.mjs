@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 // Synthetic two-stage proof: no broker, network, or credential imports.
 const round = n => Math.round(n * 100) / 100;
 const usd = n => (n < 0 ? '-$' : '$') + Math.abs(round(n)).toFixed(2);
-const digest = record => crypto.createHash('sha256').update(JSON.stringify(record)).digest('hex');
+export const digest = record => crypto.createHash('sha256').update(JSON.stringify(record)).digest('hex');
 const positive = (n, label) => { if (!Number.isFinite(n) || n <= 0) throw new Error('invalid_' + label); return n; };
 
 export function freezeDecision(t0) {

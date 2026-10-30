@@ -122,13 +122,14 @@ export function writeOutputs(outDir, outputs, { provenance }) {
   return { reportPath, jsonPath };
 }
 
-export async function runFixtureDemo({ outDir = null, responseMode = 'json' } = {}) {
+// `now` pins a synthetic clock for the fixture server, gateway and mission (default: wall clock).
+export async function runFixtureDemo({ outDir = null, responseMode = 'json', now = () => Date.now() } = {}) {
   const token = `fixture-only-${crypto.randomBytes(12).toString('hex')}`;
-  const fixture = await startFixtureServer({ token, responseMode });
+  const fixture = await startFixtureServer({ token, responseMode, now });
   try {
     const client = createMcpClient({ endpoint: fixture.url, getAccessToken: async () => token });
-    const gateway = createPermissionGateway({ client, reviewedAllowlist: FIXTURE_REVIEWED_ALLOWLIST, secretCanaries: [token] });
-    const result = await runInvestmentMission({ gateway, provenance: 'synthetic-fixture', constraints: DEMO_CONSTRAINTS, missionId: `lab_demo_${Date.now()}` });
+    const gateway = createPermissionGateway({ client, reviewedAllowlist: FIXTURE_REVIEWED_ALLOWLIST, secretCanaries: [token], now });
+    const result = await runInvestmentMission({ gateway, provenance: 'synthetic-fixture', constraints: DEMO_CONSTRAINTS, missionId: `lab_demo_${now()}`, now });
     const serverCalls = fixture.calls.map(call => call.name);
     // renderOutputs throws if the token, the raw fixture account number, or any identifier the gateway saw appears.
     const outputs = renderOutputs(result, { canaries: [token], rawIdentifiers: [FIXTURE_ACCOUNT_NUMBER], containsIdentifier: gateway.containsKnownIdentifier, extra: { demoEvidence: { serverCalls } } });
